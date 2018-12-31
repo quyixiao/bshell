@@ -37,6 +37,8 @@ public class AspectException extends RuntimeException {
 	}
 
 	/**
+	 *
+	 *
 	 * Constructor for AspectException.
 	 * @param message the exception message
 	 * @param cause the root cause, if any
