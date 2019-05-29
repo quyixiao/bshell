@@ -74,6 +74,19 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * 主要是对Bean注册之后的处理
  *
+ *
+ 		而DefaultListableBeanFactory 是整个bean加载的核心部分，是Spring注册及加载bean的默认实现，
+ * 	而对于XmlBeanfactory与DefalultListableBeanFactory不同的地方其实是在XmlBeanFactory中使用了自定义的xml读取器
+ * 	XmlBeanDefinitionReader，实现了个性化的BeanDefinitionReader读取，DefailtListableBeanFactory
+ * 	继承了AbstractAutowireCapableBeanFactory并实现了ConfigurableListableBeanFactory以及BeanDefinitionRegistry
+ * 	接口，以下是ConfigurableListableBeanFactory的层次结构图，以及相关类图
+ *
+ * 	从上面的类图以及层和次结构图中，我们可以很清晰的全局角度也了解DefaultListableBeanFactory的脉络，如果记者没有了解
+ * 	过Spring源码可能对上面的类图不是很理解，不过没关系，通过后续的学习，你会逐渐的了解每个类的作用，那么，让我们先简单的
+ * 	也了解一下上面的类图中的和个类的作用
+ *
+ *
+ *
  * 
  *
  *

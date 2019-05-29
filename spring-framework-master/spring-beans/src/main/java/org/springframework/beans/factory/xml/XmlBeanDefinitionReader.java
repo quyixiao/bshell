@@ -74,6 +74,20 @@ import org.springframework.util.xml.XmlValidationModeDetector;
  * @see BeanDefinitionRegistry
  * @see org.springframework.beans.factory.support.DefaultListableBeanFactory
  * @see org.springframework.context.support.GenericApplicationContext
+ *
+ *
+ *
+ *
+ * XML配制文件的读取是Spring中重要的功能，因为Spring的在部分功能都是以配制作为切入点
+ * 的，那么我们可以从XmlBeanDefinitionReader中梳理一下资源文件读取，解析及注册大致脉络，
+ * 首先我们看看各个类的功能
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
@@ -297,6 +311,15 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @param resource the resource descriptor for the XML file
 	 * @return the number of bean definitions found
 	 * @throws BeanDefinitionStoreException in case of loading or parsing errors
+	 *
+	 *
+	 * 获取输入流，从 Resource 中获取对应的 InputStream 并构造 InputSource
+	 * 通过构造的 InputSource 实例和 Resource 实例继续调用函数 doLoadBeanDefinitinos\
+	 *
+	 *
+	 * 那么 EncodeResource 的作用是
+	 *
+	 *
 	 */
 	@Override
 	public int loadBeanDefinitions(Resource resource) throws BeanDefinitionStoreException {

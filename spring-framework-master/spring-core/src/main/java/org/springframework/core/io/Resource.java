@@ -48,6 +48,9 @@ import org.springframework.lang.Nullable;
  * @see PathResource
  * @see ByteArrayResource
  * @see InputStreamResource
+ *
+ *
+ * 比如 File ,URL ，Classpath等，首先，它定义了3个判断当前资源状态的方法
  */
 public interface Resource extends InputStreamSource {
 
@@ -56,6 +59,8 @@ public interface Resource extends InputStreamSource {
 	 * <p>This method performs a definitive existence check, whereas the
 	 * existence of a {@code Resource} handle only guarantees a valid
 	 * descriptor handle.
+	 * 存在性
+	 *
 	 */
 	boolean exists();
 
@@ -67,6 +72,9 @@ public interface Resource extends InputStreamSource {
 	 * However, a value of {@code false} is a definitive indication
 	 * that the resource content cannot be read.
 	 * @see #getInputStream()
+	 *
+	 *
+	 * 可读性
 	 */
 	default boolean isReadable() {
 		return true;
@@ -77,6 +85,10 @@ public interface Resource extends InputStreamSource {
 	 * If {@code true}, the InputStream cannot be read multiple times,
 	 * and must be read and closed to avoid resource leaks.
 	 * <p>Will be {@code false} for typical resource descriptors.
+	 *
+	 *
+	 *
+	 *  开状态
 	 */
 	default boolean isOpen() {
 		return false;
@@ -89,6 +101,11 @@ public interface Resource extends InputStreamSource {
 	 * <p>This is conservatively {@code false} by default.
 	 * @since 5.0
 	 * @see #getFile()
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	default boolean isFile() {
 		return false;
