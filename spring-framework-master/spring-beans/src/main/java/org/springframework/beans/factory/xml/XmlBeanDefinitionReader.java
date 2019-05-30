@@ -339,6 +339,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 			logger.info("Loading XML bean definitions from " + encodedResource.getResource());
 		}
 
+		//通过属性来记录已经加载的资源
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 		if (currentResources == null) {
 			currentResources = new HashSet<>(4);
@@ -349,15 +350,19 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 					"Detected cyclic loading of " + encodedResource + " - check your import definitions!");
 		}
 		try {
+			//从encodedResource 获取已经封装的 Resource 对象，并再次从 Resource 对象获取其中的 inputStream
 			InputStream inputStream = encodedResource.getResource().getInputStream();
 			try {
+				//InputStream 这个类并不是来自于 Spring,它的全路径是 org.xml.sax.InputStream
 				InputSource inputSource = new InputSource(inputStream);
 				if (encodedResource.getEncoding() != null) {
 					inputSource.setEncoding(encodedResource.getEncoding());
 				}
+				//真正进入了逻辑的核心部分
 				return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
 			}
 			finally {
+				//关闭输入流
 				inputStream.close();
 			}
 		}
@@ -406,6 +411,14 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @throws BeanDefinitionStoreException in case of loading or parsing errors
 	 * @see #doLoadDocument
 	 * @see #registerBeanDefinitions
+	 *
+	 * 获取对 XML文件的验证模式
+	 * 加载XML 文件，并得到对应 Document
+	 * 根据返回的 Document 注册 Bean 信息
+	 * 一个 DTD 文档包含，元素的定义规则，元素间的关系的定义规则，元素可使用的属性，可使用的实体或
+	 * 符号规则
+	 *
+	 *
 	 */
 	protected int doLoadBeanDefinitions(InputSource inputSource, Resource resource)
 			throws BeanDefinitionStoreException {
@@ -527,13 +540,17 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
 		//得到BeanDefinitionDocumentReader来对xml格式的BeanDefinition解析
+		//使用 DefalutDefinitionDocumentReader 实例化 BeanDefinitionDocumentReader
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
 		//获得容器中注册的Bean数量
+		//实例化 BeanDefinitionReader 时候会将 BeanDefinitionRegistry 传入，默认使用继承自DefaultListableBeanFactory 的子类
 		int countBefore = getRegistry().getBeanDefinitionCount();
 		//解析过程入口，这里使用了委派模式，BeanDefinitionDocumentReader只是个接口，
 		// 具体的解析实现过程有实现类DefaultBeanDefinitionDocumentReader完成
+		//加载及注册bean
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
 		//统计解析的Bean数量
+		//记录本次加载的 BeanDefinition 个数
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
 

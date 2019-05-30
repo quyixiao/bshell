@@ -139,6 +139,12 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
 		if (this.delegate.isDefaultNamespace(root)) {
+			//处理 profile 属性，
+			//有了这个特性我们就可以同时在配置文件中部署两套配置来适用于生产环境和开发环境，
+			//这样可以方便的进行切换，部署环境，最常用的就是更换不同数据库，
+			//了解了 profile 的使用，再来看代码会清晰多了，首先程序会获取beans 节点是否定义了 profile属性
+			//如果定义了 profile 则会到环境变量中去寻找，所以这里首先断言，environment 不可能为空，因为 profile
+			// 是可以同时指定多个的，需要程序对其拆分，并解析每个 profile 都是符合环境定义的，不定义则不会费性能去解析
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -153,8 +159,13 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 
+		//解析前处理，留给子类实现
 		preProcessXml(root);
 		parseBeanDefinitions(root, this.delegate);
+		//解析后处理，留给子类实现，就像面向对象设计方法常用的一句话，一个类要么是面向继承设计的，要么就是
+		//final修饰的，在 DefaultBeanDefinitionDocumentReader 中并没有用 final 修饰的，所以它就是面向继承设计的
+		//这两个类方法正是为子类设计的，如果读者有了解过设计模式，可以很快的反映这是模版方法模式，如果继承自己 DefaultBeanDefinitionDocumentReader 的子类需要在
+		//解析前后做一些处理的话，那么需要重写这两个方法就可以了
 		postProcessXml(root);
 
 		this.delegate = parent;
@@ -176,7 +187,17 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 *             使用Spring的Bean规则从Document的根元素开始进行Bean定义的Document对象
 	 */
 	protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
-		//Bean定义的Document对象使用了Spring默认的XML命名空间
+		//Bean定义的Document对象使用了Spring默认的XML命名空间，对 Beans 进行处理
+		//这个代码看起来逻辑还是蛮清晰的，因为在 Spring 的 XML 配置里有两大类 Bean 声明，一个是默认的如：
+		// <bean id="test" class="test.TestBean">
+		//另一类是自定义的，如
+		//<tx:annotation-driven/>
+		// 而两个方式的读取及解析差别还是非常大的，如果采用 Spring 默认的配置，Spring 那当然知道该怎样做
+		// 但是如果是自己定义的，那么就需要用户实现一些接口及配置了，对于根节点或者子节点如果是默认的命名空间
+		// 的话则采用 parseDefaultElement 方法进行解析，否则使用 delegate.parsecustomElement 方法对自定义命名空间进行
+		//解析，而判断是否默认命名空间还是自定义命名空间的墨汁其实是使用 node.getNamespaceUri()获取命名空间，并与 Spring
+		//中的固定的命名空间 http://www.Springframework.org/schemea/beans进行对比，如果一致则认为是默认的，否则就认为是
+		//自定义的，而对于默认的标签解析与自定义标签解析我们将会在下一章进行讨论
 		if (delegate.isDefaultNamespace(root)) {
 			//获取Bean定义的Document对象根元素的所有子节点
 			NodeList nl = root.getChildNodes();
@@ -187,10 +208,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 					Element ele = (Element) node;
 					//Bean定义的Document的元素节点使用的是Spring默认的XML命名空间
 					if (delegate.isDefaultNamespace(ele)) {
-						//使用Spring的Bean规则解析元素节点
+						//使用Spring的Bean规则解析元素节点，对 Bean 进行处理
 						parseDefaultElement(ele, delegate);
 					} else {
 						//没有使用Spring默认的XML命名空间，则使用用户自定义的解//析规则解析元素节点
+						//对 Bean 的处理
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -315,10 +337,18 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
+	 * 在4种标签的解析中，对 bean 标签的解析最为复杂也最为重要，所以我们从此标签开始
+	 * 深入分析，如果能理解此标签的解析过程，其他的标签的解析自然会迎刃而解，首先我们进入函数 processBeanDefinition(ele,delegate)
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
+		//首先委托BeanDefinitionParserDelegate类的parseBeanDefinitionElement方法进行解析元素，
+		//返回BeanDefinitionHolder类型的实例，bdHolder，经过这个方法后，bdHolder 实例已经包含我
+		//们的配置文件中配置各种属性，例如 class,name,id,alias 之类的属性
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		if (bdHolder != null) {
+			// 当返回的 bdHolder 不为空的情况下，若存在默认标签的子节点下再有自定义属性，还需要再次对自定义标签进行解析。
+			// 解析完成后，需要对解析后的 bdHolder 进行注册，同样，注册操作委托给了 BeanDefinitionReaderUtils 的 registerBeanDefinition 方法
+			// 最后发出响应事件，通知想关的监听器，这个bean 已经加载完成了
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.

@@ -385,9 +385,12 @@ public class BeanDefinitionParserDelegate {
 	 */
 	@Nullable
 	public BeanDefinitionHolder parseBeanDefinitionElement(Element ele, @Nullable BeanDefinition containingBean) {
+		// id 属性
 		String id = ele.getAttribute(ID_ATTRIBUTE);
+		// 解析 name 属性
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 
+		// 分割 name 属性
 		List<String> aliases = new ArrayList<>();
 		if (StringUtils.hasLength(nameAttr)) {
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
@@ -403,10 +406,16 @@ public class BeanDefinitionParserDelegate {
 			}
 		}
 
+		// 如果不存在beanName 那么根据 Spring 中提供的命名规则为当前bean 生成对应的beanName
 		if (containingBean == null) {
 			checkNameUniqueness(beanName, aliases, ele);
 		}
-
+		//以上便是对默认的标签的全部解析过程了，当然，对 Spring 的解析犹如洋葱剥皮一样，一层一层地进行，尽管现在能看到的属性 id 以及 name
+		//解析，但是庆幸的思路我们已经也了解到了，在开始对属性展开全面的解析前，Spring 外层又做了一个当前层的功能架构，在当前层完成的主要工作包括如下内容
+		// 提取元素的 id 及 name 属性
+		// 进行步的解析其他的属性并统一封装到 GenericBeanDefinition 类型中的实例中
+		// 如果检测到了bean 没有指定 beanName，那么使用默认规则为此 bean 生成 beanName
+		// 将获取到的信息封装到 BeanDefinitionHolder 的实例中生成beanName
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
 		if (beanDefinition != null) {
 			if (!StringUtils.hasText(beanName)) {
@@ -474,26 +483,36 @@ public class BeanDefinitionParserDelegate {
 		this.parseState.push(new BeanEntry(beanName));
 
 		String className = null;
+		//解析 class 属性
 		if (ele.hasAttribute(CLASS_ATTRIBUTE)) {
 			className = ele.getAttribute(CLASS_ATTRIBUTE).trim();
 		}
 		String parent = null;
+		//解析 parent属性
 		if (ele.hasAttribute(PARENT_ATTRIBUTE)) {
 			parent = ele.getAttribute(PARENT_ATTRIBUTE);
 		}
-
+		//终于 bean 标签的所有的属性，不论常用还量不常用的我们都看到了，不过丝毫不影响我们兴奋的心情，接下来，我们继续一些复杂的
+		//标签属性的解析
 		try {
+			// 创建用于承载属性的AbstractBeanDefinition类型的 GenericBeanDefinition
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
+			// 硬编码解析默认的 bean 的各种属性
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
+			// 提取 description
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
-
+			//解析元数据
 			parseMetaElements(ele, bd);
+			//解析 lookup-method 属性
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
+			//解析 replace-method 属性
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
-
+			// 解析构造函数参数
 			parseConstructorArgElements(ele, bd);
+			// 解析 property 子元素
 			parsePropertyElements(ele, bd);
+			// 解析 qualifier 子元素
 			parseQualifierElements(ele, bd);
 
 			bd.setResource(this.readerContext.getResource());
