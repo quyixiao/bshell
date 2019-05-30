@@ -539,37 +539,47 @@ public class BeanDefinitionParserDelegate {
 	 * @param beanName       bean name
 	 * @param containingBean containing bean definition
 	 * @return a bean definition initialized according to the bean element attributes
+	 *
 	 */
 	public AbstractBeanDefinition parseBeanDefinitionAttributes(Element ele, String beanName,
 																@Nullable BeanDefinition containingBean, AbstractBeanDefinition bd) {
-
+		//解析scope 属性
+		//scope 与 singleton 两个属性只能指定其中之一，不可以同时出现，否则 Spring 将抛出异常
 		if (ele.hasAttribute(SINGLETON_ATTRIBUTE)) {
 			error("Old 1.x 'singleton' attribute in use - upgrade to 'scope' declaration", ele);
 		} else if (ele.hasAttribute(SCOPE_ATTRIBUTE)) {
+			// scope 与 singleton 两个属性只能指定其中之一，不可以同时出现，否则 Spring 将抛出异常
 			bd.setScope(ele.getAttribute(SCOPE_ATTRIBUTE));
 		} else if (containingBean != null) {
+			// 在嵌入的 beanDifinition 情况下没有单独指定，scope 属性，则使用父类默认的属性
 			// Take default from containing bean in case of an inner bean definition.
 			bd.setScope(containingBean.getScope());
 		}
 
+		// 解析 abstract 的属性
 		if (ele.hasAttribute(ABSTRACT_ATTRIBUTE)) {
 			bd.setAbstract(TRUE_VALUE.equals(ele.getAttribute(ABSTRACT_ATTRIBUTE)));
 		}
 
+		// 解析 lazy-init 的属性
 		String lazyInit = ele.getAttribute(LAZY_INIT_ATTRIBUTE);
 		if (DEFAULT_VALUE.equals(lazyInit)) {
 			lazyInit = this.defaults.getLazyInit();
 		}
+		//没有设置或设置成其他的字符都会被设置为 false
 		bd.setLazyInit(TRUE_VALUE.equals(lazyInit));
 
+		//解析 autowire 属性
 		String autowire = ele.getAttribute(AUTOWIRE_ATTRIBUTE);
 		bd.setAutowireMode(getAutowireMode(autowire));
 
+		//基板 depends-on 属性
 		if (ele.hasAttribute(DEPENDS_ON_ATTRIBUTE)) {
 			String dependsOn = ele.getAttribute(DEPENDS_ON_ATTRIBUTE);
 			bd.setDependsOn(StringUtils.tokenizeToStringArray(dependsOn, MULTI_VALUE_ATTRIBUTE_DELIMITERS));
 		}
 
+		//解析 autowire-candidate 属性
 		String autowireCandidate = ele.getAttribute(AUTOWIRE_CANDIDATE_ATTRIBUTE);
 		if ("".equals(autowireCandidate) || DEFAULT_VALUE.equals(autowireCandidate)) {
 			String candidatePattern = this.defaults.getAutowireCandidates();
@@ -580,11 +590,12 @@ public class BeanDefinitionParserDelegate {
 		} else {
 			bd.setAutowireCandidate(TRUE_VALUE.equals(autowireCandidate));
 		}
-
+		// 解析 primary 属性
 		if (ele.hasAttribute(PRIMARY_ATTRIBUTE)) {
 			bd.setPrimary(TRUE_VALUE.equals(ele.getAttribute(PRIMARY_ATTRIBUTE)));
 		}
 
+		//解析 init-method 属性
 		if (ele.hasAttribute(INIT_METHOD_ATTRIBUTE)) {
 			String initMethodName = ele.getAttribute(INIT_METHOD_ATTRIBUTE);
 			bd.setInitMethodName(initMethodName);
@@ -593,6 +604,7 @@ public class BeanDefinitionParserDelegate {
 			bd.setEnforceInitMethod(false);
 		}
 
+		//解析 destory-meth 属性
 		if (ele.hasAttribute(DESTROY_METHOD_ATTRIBUTE)) {
 			String destroyMethodName = ele.getAttribute(DESTROY_METHOD_ATTRIBUTE);
 			bd.setDestroyMethodName(destroyMethodName);
@@ -600,10 +612,11 @@ public class BeanDefinitionParserDelegate {
 			bd.setDestroyMethodName(this.defaults.getDestroyMethod());
 			bd.setEnforceDestroyMethod(false);
 		}
-
+		//解析 factory-method 属性
 		if (ele.hasAttribute(FACTORY_METHOD_ATTRIBUTE)) {
 			bd.setFactoryMethodName(ele.getAttribute(FACTORY_METHOD_ATTRIBUTE));
 		}
+		// 解析 factory-bean 属性
 		if (ele.hasAttribute(FACTORY_BEAN_ATTRIBUTE)) {
 			bd.setFactoryBeanName(ele.getAttribute(FACTORY_BEAN_ATTRIBUTE));
 		}
@@ -618,6 +631,12 @@ public class BeanDefinitionParserDelegate {
 	 * @param parentName the name of the bean's parent bean
 	 * @return the newly created bean definition
 	 * @throws ClassNotFoundException if bean class resolution was attempted but failed
+	 *
+	 *
+	 * 由此可知，要解析属性首先要创建用于承载属性的实例，也就是创建 GenericBeanDefinition 类型的实例，
+	 * 而代码 createBeanDefinition(className,parent) 的作用就是实现此功能
+	 *
+	 *
 	 */
 	protected AbstractBeanDefinition createBeanDefinition(@Nullable String className, @Nullable String parentName)
 			throws ClassNotFoundException {
@@ -626,16 +645,34 @@ public class BeanDefinitionParserDelegate {
 				parentName, className, this.readerContext.getBeanClassLoader());
 	}
 
+
+	/****
+	 *  在开始的时候解析数据分析之前，我们先回顾下元数据 meta 属性的使用
+	 *  <bean id="myTestBean" class="bean.MyTestBean">
+	 *  	<meta key= "testStr" value="aaaa">
+	 *  </bean>
+	 *  这段代码并不会体现在 MyTestBean 的属性当中，而是一个额外的声明，当需要使用里面的信息的时候可以通过
+	 *  BeanDefinition 的 getAttribute(key)方法进行获取
+	 *  对 meta 属性的解析代码如下
+	 * @param ele
+	 * @param attributeAccessor
+	 */
 	public void parseMetaElements(Element ele, BeanMetadataAttributeAccessor attributeAccessor) {
+		//获取当前节点下的所有的元素
 		NodeList nl = ele.getChildNodes();
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);
+			// 获取 meta
 			if (isCandidateElement(node) && nodeNameEquals(node, META_ELEMENT)) {
 				Element metaElement = (Element) node;
+				//使用 key,value 构造 BeanMetaDataAttribute
 				String key = metaElement.getAttribute(KEY_ATTRIBUTE);
 				String value = metaElement.getAttribute(VALUE_ATTRIBUTE);
 				BeanMetadataAttribute attribute = new BeanMetadataAttribute(key, value);
 				attribute.setSource(extractSource(metaElement));
+				//记录信息同样，子元素 look-method 似乎并不是很常用，但是在某些时候，它确是非常有用的属性，通常我们称它为获取器注入
+				//它是一个把方法声明为返回某种类型的bean,但是实际要返回的 bean 是在配置文件里面配制的，此方法可以设计有用在设计可插拔的
+				//功能上，解除程序的依赖，我们看看具体的应用
 				attributeAccessor.addMetadataAttribute(attribute);
 			}
 		}
@@ -663,12 +700,14 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse constructor-arg sub-elements of the given bean element.
+	 *
 	 */
 	public void parseConstructorArgElements(Element beanEle, BeanDefinition bd) {
 		NodeList nl = beanEle.getChildNodes();
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, CONSTRUCTOR_ARG_ELEMENT)) {
+				// 解析 constructor-arg
 				parseConstructorArgElement((Element) node, bd);
 			}
 		}
@@ -702,14 +741,18 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse lookup-override sub-elements of the given bean element.
+	 * 至此 我们已经初步也了解了 lookup-method 子元素所提供的大致功能，相信大家再看下面代码更加具有针对性
 	 */
 	public void parseLookupOverrideSubElements(Element beanEle, MethodOverrides overrides) {
 		NodeList nl = beanEle.getChildNodes();
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);
+			// 仅当在 Spring 默认的 bean 元素下且为 <lookup-method 时有效
 			if (isCandidateElement(node) && nodeNameEquals(node, LOOKUP_METHOD_ELEMENT)) {
 				Element ele = (Element) node;
+				//获取修饰的方法
 				String methodName = ele.getAttribute(NAME_ATTRIBUTE);
+				//获取配置返回的 bean
 				String beanRef = ele.getAttribute(BEAN_ELEMENT);
 				LookupOverride override = new LookupOverride(methodName, beanRef);
 				override.setSource(extractSource(ele));
@@ -720,19 +763,27 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse replaced-method sub-elements of the given bean element.
+	 *
 	 */
 	public void parseReplacedMethodSubElements(Element beanEle, MethodOverrides overrides) {
 		NodeList nl = beanEle.getChildNodes();
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);
+			//仅当 Spring 默认的 bean 的子元素下且为 <replace-method 时有效
 			if (isCandidateElement(node) && nodeNameEquals(node, REPLACED_METHOD_ELEMENT)) {
 				Element replacedMethodEle = (Element) node;
+				//提取要替换的旧的方法
 				String name = replacedMethodEle.getAttribute(NAME_ATTRIBUTE);
+				//提取对应的新的替换的方法
 				String callback = replacedMethodEle.getAttribute(REPLACER_ATTRIBUTE);
 				ReplaceOverride replaceOverride = new ReplaceOverride(name, callback);
 				// Look for arg-type match elements.
 				List<Element> argTypeEles = DomUtils.getChildElementsByTagName(replacedMethodEle, ARG_TYPE_ELEMENT);
 				for (Element argTypeEle : argTypeEles) {
+					// 记录参数，我们可以看到无论是 look-up 还是 replace-method 都是构造了一个 MethodOverride，并最终记录在了
+					// AbstractBeanDefinition 中的 methodOverrides 属性中，而这个属性如果使用以完成它所提供的功能我们会在后续的
+					// 章节中进行详细的介绍
+
 					String match = argTypeEle.getAttribute(ARG_TYPE_MATCH_ATTRIBUTE);
 					match = (StringUtils.hasText(match) ? match : DomUtils.getTextValue(argTypeEle));
 					if (StringUtils.hasText(match)) {
@@ -747,10 +798,14 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse a constructor-arg element.
+	 * 解析 construtor-arg
 	 */
 	public void parseConstructorArgElement(Element ele, BeanDefinition bd) {
+		// 提取 index 属性
 		String indexAttr = ele.getAttribute(INDEX_ATTRIBUTE);
+		// 提取 type 属性
 		String typeAttr = ele.getAttribute(TYPE_ATTRIBUTE);
+		// 提取 name 属性
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 		if (StringUtils.hasLength(indexAttr)) {
 			try {
@@ -760,6 +815,7 @@ public class BeanDefinitionParserDelegate {
 				} else {
 					try {
 						this.parseState.push(new ConstructorArgumentEntry(index));
+						// 解析 ele 对应的属性元素
 						Object value = parsePropertyValue(ele, bd, null);
 						ConstructorArgumentValues.ValueHolder valueHolder = new ConstructorArgumentValues.ValueHolder(value);
 						if (StringUtils.hasLength(typeAttr)) {
@@ -769,6 +825,7 @@ public class BeanDefinitionParserDelegate {
 							valueHolder.setName(nameAttr);
 						}
 						valueHolder.setSource(extractSource(ele));
+						// 不允许重复指定相同的参数
 						if (bd.getConstructorArgumentValues().hasIndexedArgumentValue(index)) {
 							error("Ambiguous constructor-arg entries for index " + index, ele);
 						} else {
@@ -782,6 +839,26 @@ public class BeanDefinitionParserDelegate {
 				error("Attribute 'index' of tag 'constructor-arg' must be an integer", ele);
 			}
 		} else {
+			// 没有 index 属性则忽略去属性，自动寻找，
+			// 如果配置中指定了 index属性，那么操作步骤如下
+			// 解析 constructor-arg 的子元素
+			// 使用 ConstructorArgumentValues.ValueHolder 类型来封装解析出来的元素
+			// 将 type ，name 和 index 属性一并封装在ConstructorArgumentValues.ValueHolder 类型中并添加至当前 BeanDefinition的 constructorArgumentValues
+			// 的 indexedArgumentValue 属性中
+
+			// 如果没有指定 index 属性，那么操作步骤如下
+			// 解析 constructor-arg 的子元素
+			// 使用 ConstructorArgumentValues.ValueHolder 类型来封装解析出来的元素
+			// 将 type ,name 和 index 属性一并封装在 ContructorArgumentValues.ValueHolder 类型中并添加至当前BeanDefinition 的 ConstructorArgumentValues
+			// 的 genericArgumentValues 属性当中
+
+
+			// 可以看到，对于是否制定 index 属性来讲，Spring 的处理流程是不同的，关键在于属于信息被保存的位置
+
+			// 那么了解了整个流程后，我们尝试着进一步了解解析构造函数的配置中的子元素的过程，进入了 parsePropertyValue
+
+
+
 			try {
 				this.parseState.push(new ConstructorArgumentEntry());
 				Object value = parsePropertyValue(ele, bd, null);
@@ -868,6 +945,12 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Get the value of a property element. May be a list etc.
 	 * Also used for constructor arguments, "propertyName" being null in this case.
+	 *
+	 *
+	 * 从代码上来看，对构造函数中的属性元素的解析，经历了以下的几个过程
+	 *  1.略过 description 或者 meta 中的属性
+	 *  2.提取 constructor-arg 上的 ref和 value 属性，以便于根据规则验证正确性，其规则为在 constructor-arg 上存在以下情况
+	 *  3
 	 */
 	@Nullable
 	public Object parsePropertyValue(Element ele, BeanDefinition bd, @Nullable String propertyName) {
@@ -876,9 +959,11 @@ public class BeanDefinitionParserDelegate {
 				"<constructor-arg> element";
 
 		// Should only have one child element: ref, value, list, etc.
+		// 一个属性只能对应一个类型，ref,value，list 等
 		NodeList nl = ele.getChildNodes();
 		Element subElement = null;
 		for (int i = 0; i < nl.getLength(); i++) {
+			// 对应的 description 或者 meta 不做处理
 			Node node = nl.item(i);
 			if (node instanceof Element && !nodeNameEquals(node, DESCRIPTION_ELEMENT) &&
 					!nodeNameEquals(node, META_ELEMENT)) {
@@ -890,16 +975,24 @@ public class BeanDefinitionParserDelegate {
 				}
 			}
 		}
-
+		// 解析 constructor-arg 上的 ref属性
 		boolean hasRefAttribute = ele.hasAttribute(REF_ATTRIBUTE);
+		// 解析 constructor-arg 上的 value 属性
 		boolean hasValueAttribute = ele.hasAttribute(VALUE_ATTRIBUTE);
+
 		if ((hasRefAttribute && hasValueAttribute) ||
 				((hasRefAttribute || hasValueAttribute) && subElement != null)) {
+			/****
+			 * 在 constructor-arg 上不存在
+			 *  1 .同是既有 ref 属性又有 value 属性
+			 *  2.存在 ref 属性或者value 属性且又有子元素
+			 */
 			error(elementName +
 					" is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element", ele);
 		}
 
 		if (hasRefAttribute) {
+			// ref 属性的处理，使用 RuntimeBeanReference 封装对应的 ref 名称
 			String refName = ele.getAttribute(REF_ATTRIBUTE);
 			if (!StringUtils.hasText(refName)) {
 				error(elementName + " contains empty 'ref' attribute", ele);
@@ -908,13 +1001,16 @@ public class BeanDefinitionParserDelegate {
 			ref.setSource(extractSource(ele));
 			return ref;
 		} else if (hasValueAttribute) {
+			//value 属性处理，使用 TypeSringValue 封装
 			TypedStringValue valueHolder = new TypedStringValue(ele.getAttribute(VALUE_ATTRIBUTE));
 			valueHolder.setSource(extractSource(ele));
 			return valueHolder;
 		} else if (subElement != null) {
+			//解析子元素
 			return parsePropertySubElement(subElement, bd);
 		} else {
 			// Neither child element nor "ref" or "value" attribute found.
+			// 既没有 ref 也没有 value 也没有子元素，Spring 蒙圈了
 			error(elementName + " must specify a ref or value", ele);
 			return null;
 		}

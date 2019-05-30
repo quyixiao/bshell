@@ -36,7 +36,17 @@ import org.springframework.lang.Nullable;
  * @see ConfigurableListableBeanFactory#getBeanDefinition
  * @see org.springframework.beans.factory.support.RootBeanDefinition
  * @see org.springframework.beans.factory.support.ChildBeanDefinition
- * BeanDefinition 是配置文件<Bean>元素标签在容器中的内部表示形式，Bean 元素标签拥有
+ * BeanDefinition 是配置文件<Bean>元素标签在容器中的内部表示形式，Bean元素标签拥有 class,scope ,lazy-init
+ * 等配置属性，beanDefinition 则提供了相应的 beanClass,scope,lazyInit 属性，BeanDefinition 和 Bean 元素中的属性
+ * 是一一对应的，其中 rootBeanDefinition 是最常用的实现类，它对应的一般性的 bean 元素标签，GenericBeanDefinition 是2.5版本以后的
+ * 新加入的 bean 文件配置属性定义类，是一站式服务类
+ *
+ *
+ * Spring 通过 BeanFefinition 将配置文件中的 Bean 配置信息转换成容器的内部表示，将这些 BeanDefinition 注册到 BeanDefinitionRegistry 中，
+ * Spring 容器的 BeanDefinitionRegistry 就像 Spring 配置信息的内存数据库，主要是以 map 形式保存的，后续操作直接从 BeanDefinitionRegistry 中
+ * 读取配置信息，它们之间的关系是如图3-2所示
+ *
+ *
  */
 public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
