@@ -248,6 +248,19 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Parse an "import" element and load the bean definitions
 	 * from the given resource into the bean factory.
 	 * 解析<Import>导入元素，从给定的导入路径加载Bean定义资源到Spring IoC容器中
+	 *
+	 * 对于 Spring 配置文件的编写，我想，经历过庞大的项目的人，都会有一种恐惧的心理，太多的配置文件了
+	 * ，不过，分模块是大多数的人能想到的，但是，怎么分模块，那仁者见仁，智者见智了，使用 import 是个好办法
+	 * ,例如我们可以 这样的使用 Spring 配置文件
+	 *
+	 * <beans>
+	 *     <import resource="customerContext.xml"></import>
+	 *     <import resource="systemContext.xml"></import>
+	 * </beans>
+	 * ApplicationContext文件中使用 import 的方式来
+	 *
+	 *
+	 *
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
 		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
@@ -320,7 +333,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 *
 	 */
 	protected void processAliasRegistration(Element ele) {
+		// 获取 beanName
 		String name = ele.getAttribute(NAME_ATTRIBUTE);
+		// 获取 alias
 		String alias = ele.getAttribute(ALIAS_ATTRIBUTE);
 		boolean valid = true;
 		if (!StringUtils.hasText(name)) {
@@ -333,11 +348,15 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 		if (valid) {
 			try {
+				//注册 alias
 				getReaderContext().getRegistry().registerAlias(name, alias);
 			} catch (Exception ex) {
 				getReaderContext().error("Failed to register alias '" + alias +
 						"' for bean with name '" + name + "'", ele, ex);
 			}
+			// 别名注册后通知监听器作相应处理，可以发现，跟之前讲过的 bean 中的 alias解析大同小异，都是将别名与
+			// beanName 组成对应注册至 registry 中，这里不再赘述。
+
 			getReaderContext().fireAliasRegistered(name, alias, extractSource(ele));
 		}
 	}

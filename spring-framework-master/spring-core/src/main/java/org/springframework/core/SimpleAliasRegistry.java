@@ -71,8 +71,20 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	 * </bean>
 	 * <alias name="testBean" alias="testBean,testBean2"></alias>
 	 *
+	 * 考虑一个更为具体的例子，组件 A 在 XML 配置文件中定义一个名了 componentA 的 DataSource 类型的 Bean ，但组件B 却想组件 B 在其中 xml 文件中以 componentB 命名来
+	 * 引用此命名来引用此 bean 而且在主程序 MYApp 的 Xml 配置文件中，希望 myApp 的名字来引用此 bean ，最后容器加载 3个 XML 文件来生成最终的 ApplicationContext，在此
+	 * 情形下，可通过配置文件中添加下列 alias 元素来实现
 	 *
-	 */
+	 * 	<alias name="componentA" alias="componentB" />
+	 * 	<alias name="componentB" alias="myApp"/>
+	 *
+	 * 	这样一来，每个组件及组件主程序可以通过唯一名字来引用同一个数据源而互不干扰
+	 * 	在之前的章节中已经讲过对于 bean 中的 name 元素解析，那么我们现在再深入分析对于 alias 标签的解析过程
+	 *
+	 *
+	 *
+	 *
+	 * */
 	@Override
 	public void registerAlias(String name, String alias) {
 		Assert.hasText(name, "'name' must not be empty");
