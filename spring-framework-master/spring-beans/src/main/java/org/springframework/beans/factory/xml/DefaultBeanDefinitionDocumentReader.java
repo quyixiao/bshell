@@ -310,6 +310,14 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 	/**
 	 * Process the given alias element, registering the alias with the registry.
+	 * 通过上面较长的篇幅我们终于分析完成了默认标签中对 bean 标签的处理，那么我们之前提到过，对配置文件的解析包含了 import 标签
+	 * ，alias 标签，bean 标签，beans 标签处理，现在我们已经完成了最重要的也是最核心的功能，其他的解析步骤也都是围绕着第三个解析而进行
+	 * 的，在分析第3个解析步骤后，再回过头来看 aliasr的解析
+	 *
+	 * 在对 bean 进行定义的时，除了使用 id属性业指定名称之外 ，为了提供多个名称，可以使用 alias标签来指定，而所有的这些名称都指向
+	 * 同一个 bean ,在某些情况下提供了别名非常的有用，比如为了让应用每一个组件能更加容易地对公共组件进行引用
+	 *
+	 *
 	 */
 	protected void processAliasRegistration(Element ele) {
 		String name = ele.getAttribute(NAME_ATTRIBUTE);
@@ -367,6 +375,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						bdHolder.getBeanName() + "'", ele, ex);
 			}
 			// Send registration event.
+			// 通知监听器解析及注册完成
+			//通过getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));完成此工作，这里
+			//的实现只为扩展，当程序开发人员需要对注册 BeanDefinition 事件监听时可以通过注册监听器的方式并将处理逻辑写入监听器中
+			// 目前在 Spring 中并没有对此事做出任何逻辑处理
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}
