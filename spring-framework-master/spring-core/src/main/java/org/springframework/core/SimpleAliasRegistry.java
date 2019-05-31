@@ -53,6 +53,25 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	 * 2.alias 覆盖处理，若 alasName 已经使用并已经指向了另一个 beanName 则需要用户的设置进行处理
 	 * 3.alias 循环检查，当 A->B 存在时，若再次出现 A->C->B 时候则抛出异常
 	 * 4.注册 alias
+	 *
+	 *
+	 * 通过代码 getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder))
+	 * 完成此工作，这里的实现只是扩展，当程序开发人员需要对注册 BeanDefinition 事件进行监听时，这里的实现只为
+	 * 扩展，当程序开发人员需要注册 BeanDefinition 事件进行监听时可以能完注册监听器的方式并将处理逻辑监听器中，目前在 Spring 中并没有对此事件
+	 * 做任何逻辑处理
+	 *
+	 * 要给 javaBean 增加别名，以方便不同的对象来调用，我们就可以直接使用 bean 标签中的 name 属性
+	 * <bean id = "testBean" name = "testBean,testBean2" class="com.test">
+	 *
+	 * </bean>
+	 *
+	 * 同样，Spring还有另一种声明的别名的方式
+	 * <bean id="testBean" class="com.test">
+	 *
+	 * </bean>
+	 * <alias name="testBean" alias="testBean,testBean2"></alias>
+	 *
+	 *
 	 */
 	@Override
 	public void registerAlias(String name, String alias) {

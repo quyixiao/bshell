@@ -379,6 +379,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			//通过getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));完成此工作，这里
 			//的实现只为扩展，当程序开发人员需要对注册 BeanDefinition 事件监听时可以通过注册监听器的方式并将处理逻辑写入监听器中
 			// 目前在 Spring 中并没有对此事做出任何逻辑处理
+			//
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}
