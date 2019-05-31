@@ -349,6 +349,15 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			// 当返回的 bdHolder 不为空的情况下，若存在默认标签的子节点下再有自定义属性，还需要再次对自定义标签进行解析。
 			// 解析完成后，需要对解析后的 bdHolder 进行注册，同样，注册操作委托给了 BeanDefinitionReaderUtils 的 registerBeanDefinition 方法
 			// 最后发出响应事件，通知想关的监听器，这个bean 已经加载完成了
+			// 我们重语义上分析，如果需要和话就对 beanDefinition 进行修饰，那这句代码到底是什么功能呢，其实这句代码适用于这样的场景
+			// <bean id="test" class="test.MyClass">
+			// 			<mybean:user username="aa">
+			// </bean>
+			// 当 Spring中的 bean 使用的是默认的标签的配置，但是其中的子元素却使用了自定义的配置时，当这句代码便会起作用了，可能会有人会疑问
+			// 可能有人会有疑问，之前讲过，对 Bean 的解析分为两种类型，一种是默认的解析类型，另一种上是自定义的解析类型，这不正是自定义类型的解析
+			// 吗？为什么会在默认的解析中单独的中添加一个点方法处理呢，确实，这个问题让人迷惑，但是，不知道聪明的读者是否会发现，这个自定义类型并不是
+			// 以 Bean 的形式出现的呢，我们之前讲过的两种类型的不同处理只是针对Bean 的，这个自定义类型其实是属性的，好了，我们继续分析这段代码的逻辑
+			//
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.

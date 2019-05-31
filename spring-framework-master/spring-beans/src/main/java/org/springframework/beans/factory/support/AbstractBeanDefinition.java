@@ -53,6 +53,11 @@ import org.springframework.util.StringUtils;
  * @see GenericBeanDefinition
  * @see RootBeanDefinition
  * @see ChildBeanDefinition
+ * 以止我们完成了 XML 文档到 GenericBeanDefinition 的转换，也就是说到这里，XML 所有的配置都可以在 GenericBeanDefinition 的实例中
+ * 类中找到了对应的配置
+ * GenericBeanDefinition 只是子类的实现，而大部的能用的属性都保存了 AbStractBeanDefinition 中，那么我再次通过 AbstractBeanDefinition的
+ * 属性来回顾一下我们解析了哪些对应的配置
+ *
  */
 @SuppressWarnings("serial")
 public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccessor
@@ -140,65 +145,153 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private volatile Object beanClass;
 
+	/***
+	 * bean 的作用范围，对应bean 属性的 scope
+	 */
 	@Nullable
 	private String scope = SCOPE_DEFAULT;
 
+	/**
+	 * 是否是抽象，对应bean 属性的 abstract
+	 */
 	private boolean abstractFlag = false;
 
+	/****
+	 * 是否是延迟加载，对应的 bean 属性 lazy-init
+	 */
 	private boolean lazyInit = false;
 
+	/***
+	 * 自动注入模式，对应的 bean 属性 autowire
+	 */
 	private int autowireMode = AUTOWIRE_NO;
 
+	/***
+	 * 依赖检查，Spring3.0后弃用这个属性
+	 */
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
 
+	/***
+	 * 用来表示一个bean 的实例化依靠另一个bean 实例化，对应的 bean 属性 depend-on
+	 */
 	@Nullable
 	private String[] dependsOn;
 
+	/***
+	 * autowire-candidate 属性设置为 false，这样容器在查找自动装配对象时，将不考虑该 bean,即它不会被考虑作为其他的 bean 自动装配的候选者，
+	 * 但是该 bean 本身还是可以使用自动装配来注入其他的 bean 的
+	 * 对应的 bean 属性，autowire-candidate
+	 */
 	private boolean autowireCandidate = true;
 
+	/***
+	 * 自动装配时当出现多个 bean 候选者时，将作为首选者时，对应 bean 属性的 primary
+	 *
+	 */
 	private boolean primary = false;
 
+	/***
+	 * 记录 Qualifier，对应的子元素 qualifier
+	 */
 	private final Map<String, AutowireCandidateQualifier> qualifiers = new LinkedHashMap<>(0);
 
 	@Nullable
 	private Supplier<?> instanceSupplier;
 
+	/***
+	 * 允许访问非公开的构造器和方法，程序设置
+	 *
+	 */
 	private boolean nonPublicAccessAllowed = true;
 
+	/****
+	 * 是否以一种宽松的模式解析构造函数，默认为 true
+	 * 如果为 false，则在如下情况
+	 * interface ITest{}
+	 * Class ITestImpl implements ITest{};
+	 * Class Main{
+	 *     Main(ITest){}
+	 *     Main(ITestImpl i){}
+	 * }
+	 * 抛出异常，因为 Spring 无法确定哪个构造函数
+	 * 程序设置
+	 */
 	private boolean lenientConstructorResolution = true;
 
+	/****
+	 * 对应 bean 属性 factory-bean 用法
+	 * <bean id="instanceFactoryBean" class="example.chapter3.InstanceFactoryBean"></bean>
+	 * <bean id="currentTime" factory-bean="instanceFactoryBean" factory-method="createTime"></bean>
+	 *
+	 */
 	@Nullable
 	private String factoryBeanName;
 
+	/***
+	 * 对应的 bean 属性的 factory-method
+	 */
 	@Nullable
 	private String factoryMethodName;
 
+	/***
+	 * 记录构造函数注入的属性，对应的 bean 属性 constructor-arg
+	 */
 	private ConstructorArgumentValues constructorArgumentValues;
 
+	/***
+	 * 普通属性的集合
+	 */
 	private MutablePropertyValues propertyValues;
 
+	/***
+	 * 方法重写持有者，记录 lookup-method,replace-method 元素
+	 */
 	private MethodOverrides methodOverrides = new MethodOverrides();
 
+	/***
+	 * 初始化方法，对应bean 属性 init-method
+	 */
 	@Nullable
 	private String initMethodName;
 
+
+	/***
+	 *  销毁方法，对应bean 属性的 init-method
+	 */
 	@Nullable
 	private String destroyMethodName;
 
+	/***
+	 * 是否执行 init-method，程序设置
+	 */
 	private boolean enforceInitMethod = true;
 
+	/***
+	 * 是否执行 destory-method 程序设置
+	 */
 	private boolean enforceDestroyMethod = true;
 
+	/***
+	 * 是否是用户定义的，而不是程序本身定义的，创建 aop 的时候为 true,程序设置
+	 */
 	private boolean synthetic = false;
-
+	/***
+	 * 定义这个 bean 的应用，APPLICATION用户，InFRAsTruCTURE，完全内部使用，与用户无关，SUPPOPT 某些复杂的配置的一部分
+	 * 程序设置
+	 */
 	private int role = BeanDefinition.ROLE_APPLICATION;
 
+	/***
+	 * Bean 描述信息
+	 */
 	@Nullable
 	private String description;
 
+	/***
+	 * 这个 bean 定义的资源
+	 */
 	@Nullable
 	private Resource resource;
-
 
 	/**
 	 * Create a new AbstractBeanDefinition with default settings.

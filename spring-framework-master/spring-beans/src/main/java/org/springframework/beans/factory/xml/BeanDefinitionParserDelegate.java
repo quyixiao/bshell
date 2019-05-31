@@ -1478,10 +1478,30 @@ public class BeanDefinitionParserDelegate {
 		return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
 	}
 
+
+	/****
+	 * 这里将函数的第三个参数设置为空，那么第三个参数在做什么用的呢，什么情况下不为空呢，其实这第三个参数是父类的bean，当对某个嵌入的配置进行
+	 * 分析时，这里需要传递父类BeanDefintion，分析源码得知这里传递的参数其实是为了使用父类的 scope 属性，以备子类的若没有设置scope 时，默认
+	 * 使用父类的属性，这里分析的顶层配置，所以传递 null，将第三个参数设置为空后进一步跟踪函数
+	 *
+	 * @param ele
+	 * @param definitionHolder
+	 * @return
+	 */
 	public BeanDefinitionHolder decorateBeanDefinitionIfRequired(Element ele, BeanDefinitionHolder definitionHolder) {
 		return decorateBeanDefinitionIfRequired(ele, definitionHolder, null);
 	}
 
+	/****
+	 *  我们总结一下decorateBeanDefinitionIfRequired的方法的作用，在decorateBeanDefinitionIfRequired中，我们可以看到，对于程序
+	 *  默认的标签的处理其实是直接略过的，因为默认的标签到这里已经被处理完成了，这里只对自定义的标签或者说对 bean 的自定义属性感兴趣
+	 *  ，在方法中实现了寻找自定义标签根据自定义标签的寻找命名空间处理器，并进一步的解析
+	 *
+	 * @param ele
+	 * @param definitionHolder
+	 * @param containingBd
+	 * @return
+	 */
 	public BeanDefinitionHolder decorateBeanDefinitionIfRequired(
 			Element ele, BeanDefinitionHolder definitionHolder, @Nullable BeanDefinition containingBd) {
 
@@ -1489,6 +1509,7 @@ public class BeanDefinitionParserDelegate {
 
 		// Decorate based on custom attributes first.
 		NamedNodeMap attributes = ele.getAttributes();
+		//遍历所有的属性，看看是否适用于修饰的属性
 		for (int i = 0; i < attributes.getLength(); i++) {
 			Node node = attributes.item(i);
 			finalDefinition = decorateIfRequired(node, finalDefinition, containingBd);
@@ -1496,6 +1517,7 @@ public class BeanDefinitionParserDelegate {
 
 		// Decorate based on custom nested elements.
 		NodeList children = ele.getChildNodes();
+		//遍历所有的子节点，看看是否有适用的修饰的子元素
 		for (int i = 0; i < children.getLength(); i++) {
 			Node node = children.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -1505,13 +1527,30 @@ public class BeanDefinitionParserDelegate {
 		return finalDefinition;
 	}
 
+	/****
+	 * 程序走到这里，条理其实已经非常的清楚了，首先获取属性或者元素命名空间，以此来判断该元素或者属性是否适用于自定义标签的解析条，找出
+	 * 自定义类型所对应的 NamespaceHandler 并进一步解析，在自定义标签解析的章节中我们会重点讲解，这里暂时先略过
+	 *
+	 * 我们总结下 decorateBeanDefinitionIfRequired 方法的作用，在decorateBeanDefinitionIfRequired其实是直接略过的，因为默认的
+	 * 标签在这里已经被处理完了，这里只对自定义标签或者对 bean 的自定义属性感兴趣，在方法中实现了寻找自定义标签并根据的定义标签寻找
+	 * 命名空间处理器，并进一步解析
+	 *
+	 *
+	 * @param node
+	 * @param originalDef
+	 * @param containingBd
+	 * @return
+	 */
 	public BeanDefinitionHolder decorateIfRequired(
 			Node node, BeanDefinitionHolder originalDef, @Nullable BeanDefinition containingBd) {
-
+		//获取自己寒底的标签的命名空间
 		String namespaceUri = getNamespaceURI(node);
+		//对于非默认的标签进行修饰
 		if (namespaceUri != null && !isDefaultNamespace(namespaceUri)) {
+			//根据命名空间找到对应的处理器
 			NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 			if (handler != null) {
+				//进行修饰
 				BeanDefinitionHolder decorated =
 						handler.decorate(node, originalDef, new ParserContext(this.readerContext, this, containingBd));
 				if (decorated != null) {

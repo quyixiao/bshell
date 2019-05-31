@@ -142,16 +142,22 @@ public class BeanDefinitionReaderUtils {
 	 * @param definitionHolder the bean definition including name and aliases
 	 * @param registry the bean factory to register with
 	 * @throws BeanDefinitionStoreException if registration failed
+	 * 从上面的代码可以看出，解析的 beanDefitiontion 都会被注册到 BeanDefitionRegistry类型
 	 */
 	public static void registerBeanDefinition(
 			BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)
 			throws BeanDefinitionStoreException {
 
 		// Register bean definition under primary name.
+		// 使用 beanName 做唯一的注册
 		String beanName = definitionHolder.getBeanName();
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
 		// Register aliases for bean name, if any.
+		// 注册所有的别名
+		// 从上面的代码中可以看出，解析 beanDefition 都会被注册到 BeanDefinitinoRegistry 类型的实例registry 中，而对于beanFefinition 的注册分成两部分，通过
+		// beanName 的注册以及通过别名注册
+
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {
