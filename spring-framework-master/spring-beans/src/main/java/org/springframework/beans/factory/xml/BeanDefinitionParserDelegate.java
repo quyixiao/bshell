@@ -728,6 +728,35 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse qualifier sub-elements of the given bean element.
+	 *
+	 *
+	 * @Qualifier注解了，qualifier的意思是合格者，通过这个标示，表明了哪个实现类才是我们所需要的，我们修改调用代码，添加@Qualifier注解，需要注意的是@Qualifier的参数名称必须为我们之前定义@Service注解的名称之一！ 例子：
+
+	 @Service("a") public class EmployeeServiceImpl implements EmployeeService {
+	 	public EmployeeDto getEmployeeById(Long id) {
+	 		return new EmployeeDto();
+	 	}
+	 }
+
+	 @Service("b") public class EmployeeServiceImpl1 implements EmployeeService {
+	 	public EmployeeDto getEmployeeById(Long id) {
+	 		return new EmployeeDto();
+	 	}
+	 }
+
+
+	 @Controller
+	 @RequestMapping("/emplayee.do") public class EmployeeInfoControl {
+
+	 	@Autowired
+		 @Qualifier("b") EmployeeService employeeService;
+
+	 	@RequestMapping(params = "method=showEmplayeeInfo")
+		 public void showEmplayeeInfo(HttpServletRequest request, HttpServletResponse response, EmployeeDto dto) {
+	 	#略
+	 	}
+	 }
+
 	 */
 	public void parseQualifierElements(Element beanEle, AbstractBeanDefinition bd) {
 		NodeList nl = beanEle.getChildNodes();
@@ -881,6 +910,7 @@ public class BeanDefinitionParserDelegate {
 	 * Parse a property element.
 	 */
 	public void parsePropertyElement(Element ele, BeanDefinition bd) {
+		//获取配制元素中的 name 属性的值
 		String propertyName = ele.getAttribute(NAME_ATTRIBUTE);
 		if (!StringUtils.hasLength(propertyName)) {
 			error("Tag 'property' must have a 'name' attribute", ele);
@@ -888,6 +918,9 @@ public class BeanDefinitionParserDelegate {
 		}
 		this.parseState.push(new PropertyEntry(propertyName));
 		try {
+			//不允许多次对同一属性进行配制，可以看到的是，函数与构造函数注入的方式不同的是将返回使用的 propertyValue 进行封装，
+			//并记录在了 BeanDefinition 中的 propertyValues 属性中
+
 			if (bd.getPropertyValues().contains(propertyName)) {
 				error("Multiple 'property' definitions for property '" + propertyName + "'", ele);
 				return;
@@ -904,6 +937,11 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse a qualifier element.
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	public void parseQualifierElement(Element ele, AbstractBeanDefinition bd) {
 		String typeName = ele.getAttribute(TYPE_ATTRIBUTE);
@@ -950,7 +988,33 @@ public class BeanDefinitionParserDelegate {
 	 * 从代码上来看，对构造函数中的属性元素的解析，经历了以下的几个过程
 	 *  1.略过 description 或者 meta 中的属性
 	 *  2.提取 constructor-arg 上的 ref和 value 属性，以便于根据规则验证正确性，其规则为在 constructor-arg 上存在以下情况
-	 *  3
+	 *  3.将 type，name，和 index 属性一并封装在 ConstructorArgumentValues 的 indexedArgumentValues 属性中
+	 *
+	 *  如果没有指定 index 属性，那么操作步骤如下
+	 *
+	 *  解析 constructor-arg 的子元素
+	 *  使用 ConstructorArgumentValues.ValueHolder 类型来封装解析出来的元素
+	 *  将 type,name,和 index 属性一并封装在 constructorArgumentValues.ValueHolder 类型中，并添加至当前 BeanDefinition 的 ConstructorArgumentValues 的
+	 *  GenericArgumentValues 属性中，
+	 *
+	 *  可以看到，对于是否制定了 index 属性来讲，Spring 的处理流程是不现的，关键在于属性信息被保存的位置
+	 *
+	 *  从代码上来看，对构造函数中的属性解析，经历了以下的几个过程
+	 *
+	 *  略过 description 或者 meta
+	 *  提取 constructor-arg 上的 ref 和 value 属性，以便于根据规则难正确性，其规则为在 constructor-arg 上不存在以下的情况
+	 *  同时既有 ref 属性，又有 value 属性
+	 *  存在 ref 属性或者 value 属性且有子元素
+	 *
+	 *  value 属性的处理，使用 typeStringValue 封装，例如
+	 *  constructor-arg value="a"
+	 *
+	 *  子元素的处理 例如
+	 *  <constructor-arg value="a">
+	 * 		<map>
+	 * 		 	<entry key="key" value="value"/>
+	 * 		</map>
+	 * </constructor-arg>
 	 */
 	@Nullable
 	public Object parsePropertyValue(Element ele, BeanDefinition bd, @Nullable String propertyName) {
@@ -1016,6 +1080,13 @@ public class BeanDefinitionParserDelegate {
 		}
 	}
 
+	/****
+	 * 而对于子元素的处理，例如这里提到的构造函数中又嵌入了子元素 map 是怎样来实现的呢，parsePropertySubElment 中实现对各种
+	 * 子元素的分类处理
+	 * @param ele
+	 * @param bd
+	 * @return
+	 */
 	@Nullable
 	public Object parsePropertySubElement(Element ele, @Nullable BeanDefinition bd) {
 		return parsePropertySubElement(ele, bd, null);
@@ -1044,6 +1115,7 @@ public class BeanDefinitionParserDelegate {
 			String refName = ele.getAttribute(BEAN_REF_ATTRIBUTE);
 			boolean toParent = false;
 			if (!StringUtils.hasLength(refName)) {
+				//解析 parent
 				// A reference to the id of another bean in a parent context.
 				refName = ele.getAttribute(PARENT_REF_ATTRIBUTE);
 				toParent = true;
@@ -1059,25 +1131,25 @@ public class BeanDefinitionParserDelegate {
 			RuntimeBeanReference ref = new RuntimeBeanReference(refName, toParent);
 			ref.setSource(extractSource(ele));
 			return ref;
-		} else if (nodeNameEquals(ele, IDREF_ELEMENT)) {
+		} else if (nodeNameEquals(ele, IDREF_ELEMENT)) { //对 idref 元素进行解析
 			return parseIdRefElement(ele);
-		} else if (nodeNameEquals(ele, VALUE_ELEMENT)) {
+		} else if (nodeNameEquals(ele, VALUE_ELEMENT)) {	//对 value 子元素进行解析
 			return parseValueElement(ele, defaultValueType);
-		} else if (nodeNameEquals(ele, NULL_ELEMENT)) {
+		} else if (nodeNameEquals(ele, NULL_ELEMENT)) {			//对 null 子元素进行解析
 			// It's a distinguished null value. Let's wrap it in a TypedStringValue
 			// object in order to preserve the source location.
 			TypedStringValue nullHolder = new TypedStringValue(null);
 			nullHolder.setSource(extractSource(ele));
 			return nullHolder;
-		} else if (nodeNameEquals(ele, ARRAY_ELEMENT)) {
+		} else if (nodeNameEquals(ele, ARRAY_ELEMENT)) {			//对 array 子元素进行解析
 			return parseArrayElement(ele, bd);
-		} else if (nodeNameEquals(ele, LIST_ELEMENT)) {
+		} else if (nodeNameEquals(ele, LIST_ELEMENT)) {				//对 list 子元素进行解析
 			return parseListElement(ele, bd);
-		} else if (nodeNameEquals(ele, SET_ELEMENT)) {
+		} else if (nodeNameEquals(ele, SET_ELEMENT)) {				//对 set 子元素进行解析
 			return parseSetElement(ele, bd);
-		} else if (nodeNameEquals(ele, MAP_ELEMENT)) {
+		} else if (nodeNameEquals(ele, MAP_ELEMENT)) {				//解析 map 子元素
 			return parseMapElement(ele, bd);
-		} else if (nodeNameEquals(ele, PROPS_ELEMENT)) {
+		} else if (nodeNameEquals(ele, PROPS_ELEMENT)) {			// 解析 props 子元素
 			return parsePropsElement(ele);
 		} else {
 			error("Unknown property sub-element: [" + ele.getNodeName() + "]", ele);
