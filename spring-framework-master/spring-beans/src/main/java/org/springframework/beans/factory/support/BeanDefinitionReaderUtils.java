@@ -157,6 +157,9 @@ public class BeanDefinitionReaderUtils {
 		// 注册所有的别名
 		// 从上面的代码中可以看出，解析 beanDefition 都会被注册到 BeanDefinitinoRegistry 类型的实例registry 中，而对于beanFefinition 的注册分成两部分，通过
 		// beanName 的注册以及通过别名注册
+		// 通过 beanName 注册beanDefinition
+		// 对于 beanDefinition 的注册，或许很多的方式就是将 beanDefinition 直接放入 map 中就好了，使用 beanName 作为 key确实，Spring只不过除了
+		// 此之外，Spring 不是做了许多其他的事情
 
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
