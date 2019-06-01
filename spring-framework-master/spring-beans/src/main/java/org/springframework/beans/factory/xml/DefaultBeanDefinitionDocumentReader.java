@@ -198,6 +198,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		//解析，而判断是否默认命名空间还是自定义命名空间的墨汁其实是使用 node.getNamespaceUri()获取命名空间，并与 Spring
 		//中的固定的命名空间 http://www.Springframework.org/schemea/beans进行对比，如果一致则认为是默认的，否则就认为是
 		//自定义的，而对于默认的标签解析与自定义标签解析我们将会在下一章进行讨论
+		// 在前面的章节中，我们提到了 Spring 中存在默认的标签与自定义的标签两种，而上一章节中，我们分析了 Spring 中对默认的
+		// 标签的解析过程，相信大家一定已经有所感悟，那么现在将开始新的里程，分析 Spring 中自定义的标签的加载过程，同样，我们
+		//还是先回顾一下，当完成从配置文件到 Document 的转换并提取对应的 root后，将开始所有的元素解析，而这一过程中便开始了
+		// 默认的标签与自定义标签两中格式的区分，函数如下
 		if (delegate.isDefaultNamespace(root)) {
 			//获取Bean定义的Document对象根元素的所有子节点
 			NodeList nl = root.getChildNodes();
@@ -259,22 +263,31 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * </beans>
 	 * ApplicationContext文件中使用 import 的方式来
 	 *
+	 * 下面的代码不难理解，相信配合注释会很好的理解，我们总结一下大致的流程便于读者更好的梳理，在解析<import 标签时，Spring 进行解析的步骤大致如下
 	 *
-	 *
+	 * 获取 resource 属性所表示的路径
+	 * 解析路径中的系统属性，格式如 "${user.dir}"
+	 * 判定 location 是绝对路径还是相对路径。
+	 * 如果是绝对路径则递归调用 bean 的解析过程，进另一次的解析
+	 * 如果是相对路径，则计算出绝对路径，并进行解析。
+	 * 通知监听器，解析完成
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
+		//获取 resource 属性
 		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
 		if (!StringUtils.hasText(location)) {
+			//如果不存在 resource 属性则不做任何处理
 			getReaderContext().error("Resource location must not be empty", ele);
 			return;
 		}
-
+		//解析系统属性，格式如 ： ${user.dir}
 		// Resolve system properties: e.g. "${user.dir}"
 		location = getReaderContext().getEnvironment().resolveRequiredPlaceholders(location);
 
 		Set<Resource> actualResources = new LinkedHashSet<>(4);
 
 		// Discover whether the location is an absolute or relative URI
+		// 判定 location 是决定 URI 还是相对 URI
 		boolean absoluteLocation = false;
 		try {
 			absoluteLocation = ResourcePatternUtils.isUrl(location) || ResourceUtils.toURI(location).isAbsolute();
@@ -284,6 +297,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 
 		// Absolute or relative?
+		//如果是绝对 URI,则直接根据地址加载对应的配置文件
 		if (absoluteLocation) {
 			try {
 				int importCount = getReaderContext().getReader().loadBeanDefinitions(location, actualResources);
@@ -296,13 +310,17 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		} else {
 			// No URL -> considering resource location as relative to the current file.
+			//如果是绝对地址，则根据相对地址计算出绝对地址
 			try {
 				int importCount;
+				// Resource 存在多个实现类，如果 VFsResource，FileSystemResource等
+				// 而每个 resource 的 createRelative 方式实现都不一样，所以，这里先使用子类的方法尝试解析
 				Resource relativeResource = getReaderContext().getResource().createRelative(location);
 				if (relativeResource.exists()) {
 					importCount = getReaderContext().getReader().loadBeanDefinitions(relativeResource);
 					actualResources.add(relativeResource);
 				} else {
+					//如果解析不成功，则使用默认的解析器 ResourcePatternResolver 进行解析
 					String baseLocation = getReaderContext().getResource().getURL().toString();
 					importCount = getReaderContext().getReader().loadBeanDefinitions(
 							StringUtils.applyRelativePath(baseLocation, location), actualResources);
@@ -317,6 +335,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						ele, ex);
 			}
 		}
+		//解析后进行监听器的激活处理
 		Resource[] actResArray = actualResources.toArray(new Resource[actualResources.size()]);
 		getReaderContext().fireImportProcessed(location, actResArray, extractSource(ele));
 	}
