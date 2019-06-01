@@ -1459,22 +1459,49 @@ public class BeanDefinitionParserDelegate {
 		return TRUE_VALUE.equals(value);
 	}
 
+	/***
+	 * 在了解自定义标签的使用以后，我们带着强烈的好奇心来探究一下自定义标签的解析过程
+	 *
+	 * @param ele
+	 * @return
+	 */
 	@Nullable
 	public BeanDefinition parseCustomElement(Element ele) {
 		return parseCustomElement(ele, null);
 	}
 
+
+	/****
+	 * containingBd 为父类 Bean ，对顶层元素解析应设置为 null
+	 * 相信了解了自定义标签的使用方法后，或多或少的会对自定义标签的实现过程有了一个自己的想法，其实思路非常的简单，
+	 * 无非地根据对应的 bean 获取对应的命名空间，根据命名空间解析对应的处理器，然后根据用户自定义的处理器进行解析，
+	 * 可是有些事情说起来简单做起来难，我们先看看如何的获取命名空间吧
+	 *
+	 *
+	 *
+	 *
+	 * @return
+	 */
 	@Nullable
 	public BeanDefinition parseCustomElement(Element ele, @Nullable BeanDefinition containingBd) {
+		//获取对应的命名空间，
+		//标签的解析是从命名空间中提起开始的，无论是区分 Spring 中默认的标签还是自定义的标签还是区分自定义标签中
+		//不同标签的处理器都是以标签所提供的命名空间为基础的，而至于如何提取对应的元素的命名空间其实并不需要我们亲自去
+		//实现，在 org.w3c.dom.Node 中已经提供了方法供我们直接调用
+
 		String namespaceUri = getNamespaceURI(ele);
 		if (namespaceUri == null) {
 			return null;
 		}
+		//根据命名空间找到对应的 NamespaceHandler
 		NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 		if (handler == null) {
 			error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
 			return null;
 		}
+		//调用自定义 namespaceHandler 进行解析
+		// 得到了解析器以及要解析的元素后，Spring 就可以将解析工作委托给自定义解析器去解析了，在 Spring 中的代码为
+		//return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
 		return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
 	}
 

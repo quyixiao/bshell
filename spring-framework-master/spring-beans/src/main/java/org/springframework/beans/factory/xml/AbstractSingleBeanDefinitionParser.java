@@ -44,6 +44,18 @@ import org.springframework.lang.Nullable;
  * @see #getBeanClass
  * @see #getBeanClassName
  * @see #doParse
+ * 回顾一下全部的自定义标签的处理过程，虽然在实例中我们定义了 UserBeanDefinitionParser，但是在其中我们只是做了自己
+ * 业务逻辑相关的部分，不过我们没有做，并不是代表没有，在这个处理的过程中，同样，也是是按照 Spring 中默认的处理方式进行
+ * 包括创建 BeanDefinition 以及进行相应默认属性的设置，对于这些工作 Spring都默默的帮我们实现了，只是暴露出一些接口来供
+ * 用户实现个性化的型业务，通过我们本章的了解，相信读者都对 Spring 中自定义的标签的使用以及在解析自定义的标签的过程中的 Spring
+ * 为我们做了哪些工作会有一个全面的了解，到此为止，我们已经完成了 Spring 的全部的解析工作，也就是说我们现在为止我们已经理解了
+ * Spring 将 bean 从配置文件加载到内存中的全部过程，而接下来的任务便是如何使用这些 bean ,下一章介绍 bean 的加载
+ *
+ *
+ *
+ *
+ *
+ *
  */
 public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
@@ -65,26 +77,32 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 		if (parentName != null) {
 			builder.getRawBeanDefinition().setParentName(parentName);
 		}
+		//获取自定义标签中的 class,此时会调用自定义的解析器如 UserBeanDefinitionParser 中的 getBeanClass 方法。
+
 		Class<?> beanClass = getBeanClass(element);
 		if (beanClass != null) {
 			builder.getRawBeanDefinition().setBeanClass(beanClass);
 		}
+		// 若子类没有重写 getBeanClass()方法尝试检查子类是否重写 getBeanClass 方法
 		else {
 			String beanClassName = getBeanClassName(element);
 			if (beanClassName != null) {
 				builder.getRawBeanDefinition().setBeanClassName(beanClassName);
 			}
 		}
+
 		builder.getRawBeanDefinition().setSource(parserContext.extractSource(element));
 		BeanDefinition containingBd = parserContext.getContainingBeanDefinition();
 		if (containingBd != null) {
 			// Inner bean definition must receive same scope as containing bean.
 			builder.setScope(containingBd.getScope());
 		}
+		//配置延迟加载
 		if (parserContext.isDefaultLazyInit()) {
 			// Default-lazy-init applies to custom bean definitions as well.
 			builder.setLazyInit(true);
 		}
+		//调用子类重写 doParse 方法进行解析
 		doParse(element, parserContext, builder);
 		return builder.getBeanDefinition();
 	}

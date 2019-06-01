@@ -217,6 +217,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 					} else {
 						//没有使用Spring默认的XML命名空间，则使用用户自定义的解//析规则解析元素节点
 						//对 Bean 的处理
+						// 所有的功能都是围绕着一句代码 delegate.parseCustomElement（root）展开的，从
+						//上面的函数中我们可以看出，当 Spring 拿到一个元素时，首先要做是根据命名空间进行解析，
+						//如果是默认的命名空间，则使用 parseDefualtElement 方法进行解析，否则使用 parseCustomElement 方法进行解析
+						//在分析自定义标签的过程前面，我们先也了解一下自定义标签的使用过程
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -224,6 +228,17 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		} else {
 			//Document的根节点没有使用Spring默认的命名空间，则使用用户自定义的
 			//解析规则解析Document根节点
+			//自定义标签的使用
+			// 在很多情况下，我们需要为系统提供可配置的支持，简单的做法可以直接基于 Spring 准 bean 来配置，但是较为复杂的或者需要更多的
+			// 丰富的控制的时候，会显得 非常的笨拙，一般的做法会原生态的方式去解析定义好的 XML 文件，然后转化为配置对象，这种方式当然可以解决所
+			// 有的问题，但实现起来比较繁琐，特别是配制非常复杂的的时候，解析工作是一个不得不考虑的负担，Spring 提供了 Scheme 的支持，这是一个
+			// 不错的折中方案，扩展 Spring 自定义的标签配置大致需要以下的几个步骤，前提是要 Spring 的 core 包加入到项目中
+			// 1.创建一个需要扩展的组件
+			// 2.定义一个 XSD 文件描述组件内容
+			// 3.创建一个文件，实现 BeanDefinitionParser接口，用来解析 XSD 文件中的定义的组件定义
+			// 4.创建一个 Handler文件，扩展自 NamespaceHandlerSupport，目的是将组件注册到 Spring 容器。
+			// 5.编写 Spring.handlers 和 Spring.schemas 文件的
+
 			delegate.parseCustomElement(root);
 		}
 	}
