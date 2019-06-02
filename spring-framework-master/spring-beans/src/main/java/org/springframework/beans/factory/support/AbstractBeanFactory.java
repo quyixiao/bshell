@@ -1720,6 +1720,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// 现在我们有了个 bean 的实例，这个实例可能会正常的 bean 或者是 factoryBean
 		// 如果是 FactoryBean 我们使用它来创建实例，但是如果是用户直接想获取工厂实例而不是工厂的 getObject 方法对应的实例那么传入的 name
 		// 应该加入前缀 &
+
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			return beanInstance;
 		}
