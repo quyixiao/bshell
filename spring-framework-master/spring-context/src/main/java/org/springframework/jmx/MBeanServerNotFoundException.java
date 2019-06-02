@@ -22,7 +22,7 @@ package org.springframework.jmx;
  *
  * @author Rob Harrop
  * @author Juergen Hoeller
- * @since 1.2
+ * @since
  * @see org.springframework.jmx.support.JmxUtils#locateMBeanServer
  */
 @SuppressWarnings("serial")

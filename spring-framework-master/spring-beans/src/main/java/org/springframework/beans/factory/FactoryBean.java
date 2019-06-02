@@ -54,6 +54,64 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.aop.framework.ProxyFactoryBean
  * @see org.springframework.jndi.JndiObjectFactoryBean
+ * 一般情况下，Spring 通过反射机制利用 bean 的 Class 属性指定实现类的实例化 bean，在某些情况下
+ * 实例化 bean 的过程比较复杂，如果按照传统的方式，则需要在 bean 中提供大量的配置信息，西里方式的粘液性是受限的，
+ * 这时采用编码的方式可能会得到一个简单的方案， Spring 为此提供了一个 org.Springframework.bean.factory.FactoryBean 工厂类接口，
+ * 用户可以实现该接口实例化 bean 的逻辑
+ * FactoryBean 接口对于 Spring 框架来说 占有重要的地位，Spring 自身就提供了70多个 FactoryBean 的实现，它们隐藏了实例化一些复杂的 bean
+ * 的细节，给上层应用带来了便利，从 Spring3.0开始，FactoryBean 开始支持泛型，即接口声明改成 FactoryBean<T>的形式
+ *
+ *
+ * 当配置文件中<bean>的 class 属性配置的实现类是 FactoryBean 时，通过 getBean()方法返回不是 FactoryBean本身，而是 FactoryBean#getObject()
+ * 方法返回的对象，相当于 FactoryBean#getObject()代理了 getBean()方法，例如：如果使用传统的方式配置下面的 Car的<bean>时，Car 的的每个属性分别对应的
+ * 一个<property>元素标签
+ * public class Car{
+ *     private int maxSpeed;
+ *     private String brand;
+ *     private double price;
+ *     // get set 方法
+ * }
+ *
+ * 如果用 FactoryBean 的方式实现就会以灵活一些，下例通过逗号分割符方式一次性的为 Car 的所有属性指定配置
+ * public class CarFactoryBean implements FactoryBean<Car>{
+ *     private String carInfo;
+ *     public Car getObject(){
+ *         Car car = new Car();
+ *         String infos[] = carInfo.split(",");
+ *         car.setBrand(infos[0]);
+ *         car.setMaxSpeed(Interger.valueOf(infos[1]));
+ *         car.setPrice(Double.valueof(infos[2]));
+ *         return car;
+ *     }
+ *
+ *     public class<Car> getObjectType(){
+ *     		return Car.class;
+ *     }
+ *
+ *     public boolean isSingleton(){
+ *     		return false;
+ *     }
+ *
+ *     public String getCarInfo(){
+ *     		return this.carInfo;
+ *     	}
+ *
+ *     //接受逗号分割符设置的属性信息
+ *     public void setCarInfo(){
+ *     		this.carInfo = carInfo;
+ *     }
+ *
+ * }
+ *
+ * 有了这个 CarFactoryBean后，我们就可以在配置文件中使用下面的这种自定义配置方式配置 CarBean 了
+ * <bean id="car" class="com.test.factorybean.CarFactoryBean" carInfo="超级跑车,400,200000">
+ * 当调用 getBean("car")时，Spring 通过反射机制发现了 CarFactoryBean 实现了 FactoryBean 的接口，这时 Spring 容器就调用接口方法 CarFactoryBean#getObject()方法
+ *返回了，如果希望获取CarFactoryBean 的实例，则需要使用 getBean(beanName)方法时 beanName 前面显示的加上&前缀，例如 getBean("&car")
+ *
+ *
+ *
+ *
+ *
  */
 public interface FactoryBean<T> {
 
@@ -73,6 +131,7 @@ public interface FactoryBean<T> {
 	 * @return an instance of the bean (can be {@code null})
 	 * @throws Exception in case of creation errors
 	 * @see FactoryBeanNotInitializedException
+	 * T getObject(); 返回由 FactoryBean 创建的 bean实例，如果是 isSingleton()返回 true,则该实例会放到 Spring 容器中单个实例缓存池中
 	 */
 	@Nullable
 	T getObject() throws Exception;
@@ -95,6 +154,7 @@ public interface FactoryBean<T> {
 	 * @return the type of object that this FactoryBean creates,
 	 * or {@code null} if not known at the time of the call
 	 * @see ListableBeanFactory#getBeansOfType
+	 * Class<T> getObjectType(); 返回 factoryBean 创建的 bean 的类型
 	 */
 	@Nullable
 	Class<?> getObjectType();
@@ -123,6 +183,7 @@ public interface FactoryBean<T> {
 	 * @return whether the exposed object is a singleton
 	 * @see #getObject()
 	 * @see SmartFactoryBean#isPrototype()
+	 * boolean isSingleton(); 返回由 FactoryBean 创建的 bean 实例的作用域是 singleton 还是 prototype
 	 */
 	default boolean isSingleton() {
 		return true;
