@@ -723,6 +723,42 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * 8.完成创建并返回
 	 * 	可以看到，下面的步骤非常的繁琐，每步都使用大量的代码来完成其功能，最复杂的也就是最难以理解的当属循环依赖的处理，在真正进入 doCreateBean
 	 * 	前面我们有必要先了解下循环依赖
+	 *
+	 *
+	 *
+	 * 	这段代码不是很复杂，但是很多人是不太理解这段代码的作用，而且，这段代码仅仅从函数中去理解很难弄懂其中的含义，我们需要从全局的角度上
+	 * 	去考虑 Spring 依赖解决方法
+	 *
+	 *
+	 * earlySingletonExposure ：从字面上的意思是理解就是提早暴光的单例，我们暂时不定义他的学名叫什么，我们感兴趣的有哪些条件影响这个值
+	 * mbd.isSingleton()：没有太多可以解释的，此 rootBeanDefinition 代表的是否是单例
+	 * this.allowCircularReferences:是否允许循环依赖，很抱歉，并没有找到配置在文件中如何配置，但是在 AbstractRefreshableApplicationContext 中
+	 * 提供了设置函数，可以通过硬编码的方式进行设置或者可以通过自定义的命名空间来进行配置，其中硬编码的方式代码如下
+	 * ClassPathXmlApplicationContext bf = new ClassPathXmlApplicationContext("aspectText.xml");
+	 * bf.setAllowBeanDefinitionOverriding(false);
+	 * isSingletonCurrentlyInCreation(beanName):该 bean 是否在创建中，在 Spring 中，会有个专门属性默认为 DefaultSingletonBeanRegistry
+	 * 的 singletonsCurrentlyInCreation 来记录 bean 的加载状态，在 bean 开始创建前会将 beanName 记录在属性中，在 bean 的创建结束
+	 * 后从属性中移除，那么我们跟随代码一路起来可是对这个属性的记录并没有多少印象，这个状态是哪里记录的呢，不同的 scope 的记录位置并不是一
+	 * 样的，我们以 singleton 为例，在 singleton 下记录属性的函数在 DefaultSingletonBeanRegistry 类的 public Object getSingleton
+	 * (String beanName,ObjectFactory singletonFactory) 函数的 beforeSingletonCreation(beanName)和 afterSingletonCreation(BeanName)
+	 * 中，在这两段函数中分别 this.singletonsCurrentlyInCreation.add(beanName)与 this.singletonsCurrentInCreation.remove(beanName)
+	 * 来进行状态的记录与移除的
+	 *  经过以上的分析，我们了解变量 earlySingletonExposure 是否是单例，是否允许循环依赖，是否对应 bean 正在创建 bean 条件综合
+	 *  ，当3个条件都满足时会执行，addSingletonFactory操作，那么加入 SingletonFactory 的作用是什么呢，又是什么时候调用呢
+	 *  我们还是以最简单的 AB 循环依赖为例，类 A 中含有属性类 B，而类 B中又含有属性类 A,那么初始化 BeanA的过程如图 5-3所示
+	 *
+	 *  图5-3展示了创建 beanA 的流程，图中我们看到，在创建 A 的时候首先会记录类 A 所对应的 beanName，并将 beanA创建的工厂加入到缓存中
+	 *  ，而在对 A 属性进行填充的也就是调用 populate 方法的时候又会再一次对 B 进行递归创建，同样的，因为在 B 中同样存在 A 属性，因此在实例化
+	 *  B 的 populate 方法中又会再次的初始化 B，也就是图形的最后，调用 getBean(A),关键是在这里，有心的同学可以去找找相关的代码实现方式，
+	 *  我们之前已经讲过，在这个函数中，并不是直接去实例化 A，而是先去检测缓存中是否存在已经创建好的对应的 bean,或者是否已经创建好的 ObjectFactory
+	 *  ,而此时对于 A 的 ObjectFactory 我们早已创建，所以便不会再去向后执行，而是直接调用ObjectFactory去创建，A，这里最关键的是 ObjectFactory 的实现
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)
 			throws BeanCreationException {
