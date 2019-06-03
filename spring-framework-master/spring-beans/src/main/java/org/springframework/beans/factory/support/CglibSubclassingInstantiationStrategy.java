@@ -112,6 +112,8 @@ public class CglibSubclassingInstantiationStrategy extends SimpleInstantiationSt
 		 * @param args arguments to use for the constructor.
 		 * Ignored if the {@code ctor} parameter is {@code null}.
 		 * @return new instance of the dynamically generated subclass
+		 *
+		 *
 		 */
 		public Object instantiate(@Nullable Constructor<?> ctor, @Nullable Object... args) {
 			Class<?> subclass = createEnhancedSubclass(this.beanDefinition);

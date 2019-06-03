@@ -1471,6 +1471,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param beanName the name of the bean
 	 * @param mbd      the bean definition for the bean
 	 * @return a BeanWrapper for the new instance
+	 *  经历了带有参数的构造函数实例构造，相信你会非常轻松的愉快的地理解不带参数的构造函数的实例化过程
+	 *  你会发现，些方法并没有什么实质性的逻辑，带有参数的实例构造中，Spring 把精力都放在了构造函数以及参数的匹配上，所以
+	 *  如果没有参数的话，那将是一个非常简单的事情，直接调用实例化进行实例化就可以了。
+	 *
+	 *
 	 */
 	protected BeanWrapper instantiateBean(final String beanName, final RootBeanDefinition mbd) {
 		try {

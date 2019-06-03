@@ -57,9 +57,27 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	}
 
 
+	/****
+	 * 实例化策略
+	 * 实例化过程中反复提到的实例化策略，那这又是做什么的呢，其实经过前面的分析，我们已经得到了足以实例化所有的相关的信息，
+	 * 完全可以使用最简单的反射方法直接反射来构造实例化对象，但是 Spring 却并没有这么做
+	 *
+	 *
+	 *
+	 *
+	 * 看了上面的两个函数后似乎我们已经感受到了 Spring 的良苦用心以及为了能更加方便的使用 Spring 而做了大量的工作，程序中
+	 * ，首先判断如果 beanDefinition.getMethodOverrides()为空，也就是用户没有使用 replace 或者 lookup 的配置方法，那么就
+	 * 直接使用反射方法，简单的快捷，但是如果使用了这两个属性特性，在直接使用反射的方式创建实例就不妥了，因为需要将这两个配置的
+	 * 提供的功能切进去，所以就必须要使用动态代理的方式将包含两个特性所对应的逻辑的拦截增强器设置进去，这样才可以保证在调用的
+	 * 方法的时候会被相应的拦截增强，返回值为包含拦截器的代理实例
+	 * 对于拦截器的处理方法非常简单，不再详细介绍，如果读者有兴趣的话，可以仔细研究第7章的关于 aop 介绍，对动态代理方面的知识会
+	 * 更加详细的介绍
+	 */
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner) {
 		// Don't override the class with CGLIB if no overrides.
+		// 如果需要覆盖或者动态替换的方法则当然需要使用 cglib 进行动态代理，因为可以创建代理的同时将动态的方法织入类中
+		// 但是如果没有需要动态改变的方法，为了方便的直接反射就可以了
 		if (bd.getMethodOverrides().isEmpty()) {
 			Constructor<?> constructorToUse;
 			synchronized (bd.constructorArgumentLock) {
