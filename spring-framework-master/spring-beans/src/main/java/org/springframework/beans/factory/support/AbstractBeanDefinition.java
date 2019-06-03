@@ -1130,6 +1130,17 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * marking it as not overloaded if none found.
 	 * @param mo the MethodOverride object to validate
 	 * @throws BeanDefinitionValidationException in case of validation failure
+	 * 获取对应的类中的对应方法的名的个数
+	 * 通过以上的两个函数代码你能体会到所有的实现的功能吗？之前反复提到过的，Spring 配置存在 lookup-method 和
+	 * replace-method 两个配置功能，而这两个配置的加载其实就是将配置统一存放在 BeanDefinition中的 methodOverrides 属性
+	 * 里，这两个功能实现原理其实是在 bean 实例化的时候如果检测存在 methodOverrides 属性里，这两个功能实现原理其实是在 bean的
+	 * 实例化的时候如果检测到存在 methodOverrides属性，会动态的当前bean 生成代理并使用对应的 拦截器为 bean 做增加处理，相关的逻辑实现
+	 * 在 bean实例化部分详细介绍
+	 * 	但是，这里要提到的是，对于方法的匹配来讲，如果一个类中存在若干个个重载方法，那么函数调用及增强的时候还需要根据参数类型进行匹配
+	 * 	，来最终确认当前调用的到底是哪个函数，但是，Spring 将一部分匹配工作在这里完成了，如果当前类中方法中只有一个，那么就设置重载该方法没有被重载
+	 * 	,这样在后续调用的时候便可以直接使用找到的方法，而不需要进行方法的参数匹配验证了，而且还可以提前对方法存在性进行验证，
+	 * 	正可谓一箭双雕
+	 *
 	 */
 	protected void prepareMethodOverride(MethodOverride mo) throws BeanDefinitionValidationException {
 		int count = ClassUtils.getMethodCountForName(getBeanClass(), mo.getMethodName());
@@ -1140,6 +1151,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 		}
 		else if (count == 1) {
 			// Mark override as not overloaded, to avoid the overhead of arg type checking.
+			// 标记 MethodOverride 暂示被覆盖，避免参数类型检查开销
+
 			mo.setOverloaded(false);
 		}
 	}

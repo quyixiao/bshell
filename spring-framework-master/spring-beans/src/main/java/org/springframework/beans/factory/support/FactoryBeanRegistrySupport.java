@@ -97,6 +97,10 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @return the object obtained from the FactoryBean
 	 * @throws BeanCreationException if FactoryBean object creation failed
 	 * @see org.springframework.beans.factory.FactoryBean#getObject()
+	 * 下面我们已经讲述了 FactoryBean 的调用方法，如果 bean 声明为了 FactoryBean 类型，则当提取 bean 时提取的并不是 FactoryBean，
+	 * 而 FactoryBean 中对应的 getObject 方法返回的 bean，而 doGetObjectFactoryBean 正是实现这个功能，但是我们看到上面的方法中
+	 * 除了调用 object=factory.getObject()得到我们想要的结果后并没有直接返回，而是接下来我们又做了些后处理操作，这个又是做什么用的呢，
+	 * 于是我们进入的跟踪进入 AbstractAutowireCapableBeanFactory 类的 postProcessObjectFromFactoryBean 方法
 	 */
 	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
 		if (factory.isSingleton() && containsSingleton(beanName)) {
@@ -112,6 +116,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 					} else {
 						if (shouldPostProcess) {
 							try {
+								///调用 OjbectFactory 的后处理器
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							} catch (Throwable ex) {
 								throw new BeanCreationException(beanName,
@@ -144,12 +149,15 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @return the object obtained from the FactoryBean
 	 * @throws BeanCreationException if FactoryBean object creation failed
 	 * @see org.springframework.beans.factory.FactoryBean#getObject
+	 * 在 doGetObjectFromFactoryBean 方法中我们终于看到了我们想看到的方法，也就是说，object=factory.getObject，是的
+	 * 就是这句代码，我们的历程犹如剥洋葱一样，一层层的直到了最内部的代码实现，虽然很简单
 	 */
 	private Object doGetObjectFromFactoryBean(final FactoryBean<?> factory, final String beanName)
 			throws BeanCreationException {
 
 		Object object;
 		try {
+			// 需要权限验证
 			if (System.getSecurityManager() != null) {
 				AccessControlContext acc = getAccessControlContext();
 				try {
@@ -159,6 +167,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 					throw pae.getException();
 				}
 			} else {
+				// 直接调用 getObject的方法
 				object = factory.getObject();
 			}
 		} catch (FactoryBeanNotInitializedException ex) {

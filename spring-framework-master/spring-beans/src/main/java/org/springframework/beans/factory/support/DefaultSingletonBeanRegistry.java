@@ -260,11 +260,24 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param singletonFactory the ObjectFactory to lazily create the singleton
 	 *                         with, if necessary
 	 * @return the registered singleton object
+	 *
+	 *
+	 * 这个代码中其实是使用了回调的方法，使得程序可以在单例创建的前后做一些准备以及处理操作，而真正的获取单例
+	 * bean 的方法其实并不是在此方法中实现的，其实逻辑是在 ObjectFactory 类型的实例 singletonFactory 中实现的，而这些准备及处理
+	 * 操作如下的内容
+	 * 检查缓存是否已经加载过
+	 * 若没有加载，则记录 beanName 的正在加载状态
+	 * 加载单例前记录加载状态
+	 *
+	 *
 	 */
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
+		// 全局变量需要同步
 		synchronized (this.singletonObjects) {
+			//首先检查对应的 bean 是否加载过，因为 singleton 模式就是利用创建的 bean 所以这一步是必需的
 			Object singletonObject = this.singletonObjects.get(beanName);
+			// 如果为空才可以进行 singleto 的 bean 初始化
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
 					throw new BeanCreationNotAllowedException(beanName,
@@ -274,6 +287,18 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				// 可能你会觉得beforeSingletonCreation方法是个空实现，里面没有任何逻辑，但其实不是，这个函数中做一个很重要的操作
+				// ，记录加载状态，也就是通过 this.singletonsCurrentlyInCreation.add(beanName) 将当前正要创建的 bean 记录在
+				// 缓存中，这样便可以对循环依赖进行检测
+				// 4.通过调用参数传入 ObjectFactory 的个体 Object 方法实例化 bean
+				// 5.加载单例后的处理方法调用
+				// 同步骤3的记录加载状态相似，当 bean 加载结束后需要移除缓存中对该 bean 的加载加载状态记录
+				// 将结果记录至缓存并删除加载 bean 的过程中所记录的各种辅助状态
+				// 7.返回处理结果
+				// 虽然我们已经从外部了解了加载的逻辑架构，但现在我们还没有开始对 bean 加载功能探索，之前反映到过，bean 的加载逻辑其实是
+				// 在传入的 ObjectFactory 类型参数 singletonFactory 中定义的，我们反推参数的获取，得到如下的代码
+				// ObjectFactory 的核心部分其实只调用了 CreateBean 的方法，所以我们还需要到 createBean 方法中追寻真理
+
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -281,6 +306,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					//初始化 bean
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				} catch (IllegalStateException ex) {
@@ -301,9 +327,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					// 同步骤3的记录加载状态相似，当 bean 加载结束后需要移除缓存中对该 bean 的加载加载状态记录
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
+					//加入缓存
 					addSingleton(beanName, singletonObject);
 				}
 			}
