@@ -49,17 +49,7 @@ import org.springframework.beans.PropertyAccessorUtils;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.TypeConverter;
-import org.springframework.beans.factory.Aware;
-import org.springframework.beans.factory.BeanClassLoaderAware;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanCurrentlyInCreationException;
-import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.UnsatisfiedDependencyException;
+import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -754,6 +744,16 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 *  ,而此时对于 A 的 ObjectFactory 我们早已创建，所以便不会再去向后执行，而是直接调用ObjectFactory去创建，A，这里最关键的是 ObjectFactory 的实现
 	 *
 	 *
+	 *  在 getEarlyBeanReference 函数中并没有太多的逻辑处理，或者说除了后处理的调用外没有别的处理工作，根据以上的分析，基本可以理清
+	 *  Spring 处理循环依赖的解决办法，在 B 创建依赖 A 时通过 ObjectkFactory提供的实例化方法来中断 A 中的属性填充，使得 B 中的持有的 A
+	 *  仅仅是风初始化并没有填充任何属性 A，而这正初始化 A 的步骤还是在最开始的创建 A 的时候进行的,但是因为 A 与 B 中的 A 所表示的属性地址是
+	 *  一样的，所以在 A 中创建的 好的属性填充自然可以通过 A 获取，这样就解决了循环依赖的问题了
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 *
 	 *
 	 *
@@ -803,7 +803,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						"' to allow for resolving potential circular references");
 			}
 			//为了避免后期的循环依赖，可以在 bean 初始化完成前将创建的实例的 ObjectFactory 加入工厂
-			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+			addSingletonFactory(beanName, new ObjectFactory<Object>() {
+				@Override
+				public Object getObject() throws BeansException {
+					// 对 bean 的再一次依赖引用，主要是应用 SmartInstantiationAware BeanPostProcessor
+					//其中我们熟知的 Aop 就是在这里将 Advice 动态的织入到 bean 中，若没有则直接返回 bean，不做任何处理
+					return AbstractAutowireCapableBeanFactory.this.getEarlyBeanReference(beanName, mbd, bean);
+				}
+			});
 		}
 
 		// Initialize the bean instance.
