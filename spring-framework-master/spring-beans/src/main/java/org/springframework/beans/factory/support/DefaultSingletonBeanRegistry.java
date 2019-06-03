@@ -174,7 +174,23 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 *
 	 * @param beanName         the name of the bean
 	 * @param singletonFactory the factory for the singleton object
+	 * 2.setter 循环依赖
+	 *   表示通过 setter 注册的方式构成循环依赖，对于 setter 注入造成的依赖是通过 Spring 容器提前
+	 *  暴露刚完成的构造器注入但未完成其他的步骤，加入 setter 注入，的 bean 来完成，而只能解决单例作用域的bean 循环依赖
+	 *  ，通过提前暴露一个单例工厂方法，从而使其他的 bean 能引用到该 bean，如下代码所示
 	 */
+	// 具体步骤如下
+	//1.Spring 容器创建单例 "testA" bean，首先根据无参的构造器创建 bean，并暴露一个 ObjectFactory 用于返回一个提前的
+	//暴露的一个创建中的 bean，并将"testA" 标识符放到当前创建bean 池中，然后进行 settter 注入"testB"
+	//2.Spring 容器创建单例"testB" bean,首先根据无参构造器创建 bean,并暴露一个 ObjectFactory 用于返回一个提前暴露的创建中的
+	// bean ，并将 "testB" 标识符放到"当前创建的bean 池中"，然后进行 setter 注入 "circle"
+	// 3.Spring 容器创建单例，"testC" bean,首先根据无参的构造器创建 bean, 并暴露一个 ObjectFactory，用于返回一个提前暴露的
+	// 一个创建中的 bean,并将"testC" 标识符放到"当前创建的 bean 池"，然后进行 setter 注入"testA".进行注入"testA" 时由于提前
+	// 暴露了 ObjectFactory 工厂，从而使用它返回提前暴露的一个创建中的 bean
+	// 4. 最后在依赖注入"testB" 和"testA"，完成 setter 注入
+
+	//对于 singleton 作用域 bean,可以通过 setAllowCircularReferences(false)，来禁用循环依赖引用
+	//
 	protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(singletonFactory, "Singleton factory must not be null");
 		synchronized (this.singletonObjects) {

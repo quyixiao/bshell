@@ -667,22 +667,36 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * </bean>
 	 *
 	 * 创建测试用例
+	 * @Test(expected = BeanCurrentlyInCreationException.class)
+	 * public void testCircleByConstructor() throws Throwable{
+	 *     try{
+	 *         new ClassPathXmlApplicationContext("text.xml");
+	 *     }catch(Exception e){
+	 *         //因为要在创建 testC 时抛出
+	 *         throwable e1 = e.getCause().getCause().getCause();
+	 *         throw e1;
+	 *     }
+	 * }
+	 *
+	 *
+	 *
+	 * 针对以上代码分析如下
+	 * 	Spring 容器创建 testA bean 首先去当前创建 bean 的池，查找是否当前bean正在创建，如果没有发现，则继续准备
+	 * 	其需要的构造器参数 "testB" ,并将"testA" 标识符放到 "当前创建的 bean 的池中"
+	 * 	 Spring 容器创建"testB" bean 首先去 当前创建 bean 池，查找是否当前 bean 正在创建，如果没有发现，则继续准备
+	 * 	 其需要的构造器参数 "testC" ，并将"testB"标识符放到当前 创建的 bean 池中
+	 * 	 Spring 容器创建 "testC" bean，首先去"当前创建的 bean 池中"查找是否当前 bean正在创建，如果没有发现，则继续准备其需要的构造器参数
+	 * 	 "testA" ,并将"testC" 标识符放到"当前创建的 bean 池中"
+	 * 到此为止 Spring 容器要创建的"testA" bean 发现该 bean 标识符在当前创建 bean 池中，因为表示循环依赖，
+	 * 抛出 BeanCurrentlyInCreationException
 	 *
 	 *
 	 *
 	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
+	 *	介绍了循环依赖以及 Spring 中的循环依赖的处理方式后，我们继续4.5小结中的内容，当经过 resolveBeforeInstantiation 方法后
+	 *程序有两个选择，如果创建了代理或者说重写了 InstantiationAwareBeanPostProcessor 的 postProcessBeforeInstantiation 方法并
+	 *并在方法 postProcessBeforeInstantiation 中改变了 bean，则直接返回就可以了，否则需要进行常规需要bean 的创建而常规的 bean
+	 * 的创建就是 beandoCreateBean 中完成
 	 *
 	 *
 	 *
@@ -696,6 +710,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		if (instanceWrapper == null) {
+			//根据指定的 bean 使用对应的使用对应的策略创建新的实例，如工厂方法，构造函数自动注入，简单的初始化
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
 		final Object bean = instanceWrapper.getWrappedInstance();
@@ -708,6 +723,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		synchronized (mbd.postProcessingLock) {
 			if (!mbd.postProcessed) {
 				try {
+					//应用的 MergedBeanDefitionPostProcessor
 					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
 				} catch (Throwable ex) {
 					throw new BeanCreationException(mbd.getResourceDescription(), beanName,
@@ -719,6 +735,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Eagerly cache singletons to be able to resolve circular references
 		// even when triggered by lifecycle interfaces like BeanFactoryAware.
+		// 是否需要提早暴光，单例&允许循环依赖&当前的 bean正在创建中，检测循环依赖
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
 		if (earlySingletonExposure) {
@@ -726,10 +743,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				logger.debug("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
+			//为了避免后期的循环依赖，可以在 bean 初始化完成前将创建的实例的 ObjectFactory 加入工厂
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 
 		// Initialize the bean instance.
+		// 对 bean 再一次依赖引用，主要应用 SmartInstantiationAware BeanPostProcessor
+		// 其中我们熟知的 AOP 就是这里将 advice 动态织入到 bean 中，若没有则直接返回 bean,不做任何处理
 		Object exposedObject = bean;
 		try {
 			populateBean(beanName, mbd, instanceWrapper);
