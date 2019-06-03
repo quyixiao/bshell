@@ -700,6 +700,29 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 *
 	 *
 	 *
+	 * 尽管日志和异常的内容非常的重要，但是阅读源码的时候似乎大部分人都会被直接掉，在此不深入探讨日志及异常的设计，我们看看整个函数的概要
+	 * 思路
+	 * 1.如果是单例则需要首先清除缓存
+	 * 2.实例化 bean，将 beanDefinition 转换为 BeanWrapper
+	 * 转换是一个复杂的过程，但是我们可以尝试要概括大致的功能，如下所示
+	 * 		如果存在工厂方法则使用工厂方法进行初始化
+	 * 		一个类有多个构造函数，每个构造函数都是不同的参数，所以需要根据参数锁定构造函数并进行初始化。
+	 *		如果既不存在工厂方法也不存在带有参数的构造函数，则使用默认的构造函数进行 bean 的初始化。
+	 * 3. MergedBeanDefinitionPostProcessor 的应用
+	 * 	bean 合并后的处理，autowired 注解正是通过此方法实现诸如类型的预解析
+	 * 4.依赖处理
+	 * 	在 Spring 中会有循环依赖的情况，例如当，A中含有B中的属性，而 B中又含有 A的属性，时就会构成一个循环依赖，此时如果 A B 都是单例
+	 * 	,那么在 Spring 中的处理方就是当创建 B 的时候，涉及自动注入A 的步骤，并不是直接去再次创建 A,而是通过放入缓存中的 ObjectFactory
+	 * 	来创建实例，这样就解决了循环依赖的问题
+	 * 5.属性的填充，将所有的属性填充到 bean 的实例中
+	 * 6.循环依赖检查
+	 * 	之前有提到过，在 Spring 中解决循环依赖只对单例有效，而对于 prototype 的 bean，Spring 没有好的解决办法，唯一要做的就是抛异常
+	 * 	在这个步骤里面会检测已经加载的 bean 是否已经出现了循环依赖，并判断是否需要抛出异常
+	 * 7.注册 DisposableBean
+	 * 	如果配置了 destroy-method，这里需要注册以便于在销毁的时候调用
+	 * 8.完成创建并返回
+	 * 	可以看到，下面的步骤非常的繁琐，每步都使用大量的代码来完成其功能，最复杂的也就是最难以理解的当属循环依赖的处理，在真正进入 doCreateBean
+	 * 	前面我们有必要先了解下循环依赖
 	 */
 	protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)
 			throws BeanCreationException {
@@ -752,7 +775,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 其中我们熟知的 AOP 就是这里将 advice 动态织入到 bean 中，若没有则直接返回 bean,不做任何处理
 		Object exposedObject = bean;
 		try {
+			// 对 bean 进行填充，将各个属性的值注入，其中，可以存在依赖于其他的 bean 的属性，则会递归初始化依赖 bean
 			populateBean(beanName, mbd, instanceWrapper);
+			//调用初始化方法如，init-method
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		} catch (Throwable ex) {
 			if (ex instanceof BeanCreationException && beanName.equals(((BeanCreationException) ex).getBeanName())) {
@@ -764,18 +789,26 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		if (earlySingletonExposure) {
+			//
 			Object earlySingletonReference = getSingleton(beanName, false);
+			// earlySingletonReference 只有在检测到有循环依赖的情况下才会不为空
 			if (earlySingletonReference != null) {
+				//如果 exposeObject 没有初始化方法中被改变，也就是没有被增强
 				if (exposedObject == bean) {
 					exposedObject = earlySingletonReference;
 				} else if (!this.allowRawInjectionDespiteWrapping && hasDependentBean(beanName)) {
 					String[] dependentBeans = getDependentBeans(beanName);
 					Set<String> actualDependentBeans = new LinkedHashSet<>(dependentBeans.length);
 					for (String dependentBean : dependentBeans) {
+						//检测依赖，
 						if (!removeSingletonIfCreatedForTypeCheckOnly(dependentBean)) {
 							actualDependentBeans.add(dependentBean);
 						}
 					}
+					/****
+					 * 因为 bean 创建后其所有的依赖的 bean 一定是已经创建的，actualDependentBeans 不为空则表示当前 bean 创建后其
+					 * 依赖的 bean 却没有全部创建完毕，也就是说存在循环依赖
+					 */
 					if (!actualDependentBeans.isEmpty()) {
 						throw new BeanCurrentlyInCreationException(beanName,
 								"Bean with name '" + beanName + "' has been injected into other beans [" +
@@ -791,6 +824,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Register bean as disposable.
 		try {
+			//根据 scopse 注册 bean
 			registerDisposableBeanIfNecessary(beanName, bean, mbd);
 		} catch (BeanDefinitionValidationException ex) {
 			throw new BeanCreationException(
@@ -1284,9 +1318,23 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #instantiateUsingFactoryMethod
 	 * @see #autowireConstructor
 	 * @see #instantiateBean
+	 * 当我们了解了循环依赖以后就可以深入分析创建 bean 的每个步骤了，首先我们从 createBeanInstance 方法开始
+	 *
+	 *
+	 * 虽然对于代码中的实例化细节非常的得要，但是在 createBeanInstance 方法中我们还是可以清晰的看到实例化的逻辑
+	 * 1.如果 RootBeanDefinition 中存在 factoryMethodName 属性，或者说在配置文件中配置了 factory-method,
+	 * 那么 Spring 会尝试使用 instantiateUsingFactoryMethod（beanName,mbd,args） 方法根据 RootBeanDefinition 中配置生成的
+	 * bean 实例
+	 * 2.解析构造函数并进行构造函数的实例化，因为一个 bean 对应的类中可能会有多个构造函数，而每个构造函数的参数不同，Spring 在根据
+	 * 参数及类型去判断最终会使用哪个构造函数进行实例化，但是判断的过程是比较消耗性能的步骤，所以彩缓存机制，如果已经解析过了，则不需要
+	 * 重复解析而是直接从 RootBeanDefinition 中的属性 resolvedConstructorOrFactoryMethod 缓存中的值去取，否则需要再次解析，
+	 * 并将解析的结果添加至 RootBeanDefinition 中的属性 resolvedConstructorOrFactoryMethod 中
+	 *
+	 *
 	 */
 	protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
 		// Make sure bean class is actually resolved at this point.
+		//解析 class
 		Class<?> beanClass = resolveBeanClass(mbd, beanName);
 
 		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
@@ -1294,6 +1342,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());
 		}
 
+		//如果工厂方法不为空则使用工厂方法初始化策略
 		Supplier<?> instanceSupplier = mbd.getInstanceSupplier();
 		if (instanceSupplier != null) {
 			return obtainFromSupplier(instanceSupplier, beanName);
@@ -1307,6 +1356,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		boolean resolved = false;
 		boolean autowireNecessary = false;
 		if (args == null) {
+			//一个类有多个构造函数，每个构造函数都有不同的参数，所以调用前需要先根据参数锁定的构造函数对应的工厂方法
 			synchronized (mbd.constructorArgumentLock) {
 				if (mbd.resolvedConstructorOrFactoryMethod != null) {
 					resolved = true;
@@ -1314,23 +1364,29 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				}
 			}
 		}
+		//如果已经解析过则使用解析好的构造函数方法不需要再次锁定
 		if (resolved) {
 			if (autowireNecessary) {
+				// 构造函数自动注入
 				return autowireConstructor(beanName, mbd, null, null);
 			} else {
+				//使用默念的构造函数构造
 				return instantiateBean(beanName, mbd);
 			}
 		}
 
 		// Need to determine the constructor...
+		// 需要根据参数解析构造函数
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null ||
 				mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
+			//构造函数自动的注入
 			return autowireConstructor(beanName, mbd, ctors, args);
 		}
 
 		// No special handling: simply use no-arg constructor.
+		//使用默认的构造函数构造
 		return instantiateBean(beanName, mbd);
 	}
 

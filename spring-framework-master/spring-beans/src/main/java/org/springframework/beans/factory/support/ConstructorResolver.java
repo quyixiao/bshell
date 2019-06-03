@@ -101,6 +101,11 @@ class ConstructorResolver {
 	 * @param explicitArgs argument values passed in programmatically via the getBean method,
 	 * or {@code null} if none (-> use constructor argument values from bean definition)
 	 * @return a BeanWrapper for the new instance
+	 * autowireConstructor
+	 * 对应实例创建Spring 中分成两种情况，一种是能用的实例化，另一种是带有参数的实例化，带有能数的实例化过程相当的复杂，因为存在着不
+	 * 确定性，所以在判断对应参数上做了大量工作
+	 *
+	 *
 	 */
 	public BeanWrapper autowireConstructor(final String beanName, final RootBeanDefinition mbd,
 			@Nullable Constructor<?>[] chosenCtors, @Nullable final Object[] explicitArgs) {
