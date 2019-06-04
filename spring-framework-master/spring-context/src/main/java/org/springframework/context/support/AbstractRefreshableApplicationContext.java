@@ -120,6 +120,18 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 * bean factory, shutting down the previous bean factory (if any) and
 	 * initializing a fresh bean factory for the next phase of the context's lifecycle.
 	 * 方法中将核心实现委托给了 refreshBeanFactory
+	 *
+	 * 我们详细分析上面的每个步骤
+	 * 1.创建 DefaultListableBeanFactory
+	 * 在介绍 BeanFactory 的时候，不知道读者是否还有印象，声明方式为 BeanFactory bf = new XmlBeanFactory("beanFactoryTest.xml");
+	 * 其中的 XmlBeanFactory 继承自 DefaultListableBeanFactory，并提供了 XmlBeanDefinitionReader 类型的 reader 属性，也就是说
+	 * DefaultListableBeanFactory 是容器的基础的，必须首先要实例化，那么在这里就是实例化 DefaultListableBeanFactory 的步骤
+	 * 2.指定序列化 ID
+	 * 3.定制 BeanFactory
+	 * 4.加载 BeanDefinition
+	 * 5.使用全局的变量记录 BeanFactory类的实例
+	 * 因为 DefaultListableBeanFactory 类型是变量 beanFactory 的函数内部的局部变量，所以要使用全局的记录解析结果
+	 *
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
@@ -129,11 +141,16 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 			closeBeanFactory();
 		}
 		try {
-			//创建IoC容器
+			//创建IoC容器，创建 DefaultListableBeanFactory
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
+			// 为了序列化指定 id ,如果需要的话，让这个 BeanFactory 从 id 反序列化到 BeanFactory 对象中
 			beanFactory.setSerializationId(getId());
 			//对IoC容器进行定制化，如设置启动参数，开启注解的自动装配等
+			//定制 beanFactory 设置相关的属性，包括是否允许覆盖同名称，不同定义的对象的循环依赖及设置@autowired
+			//和 @Qualifier 注解解析器 QualifierAnnotationAutowireCandidateResolver
+
 			customizeBeanFactory(beanFactory);
+			//初始化 DodumentReader，并进行 XML 文件的读取及解析
 			//调用载入Bean定义的方法，主要这里又使用了一个委派模式，在当前类中只定义了抽象的loadBeanDefinitions方法，具体的实现调用子类容器
 			loadBeanDefinitions(beanFactory);
 			synchronized (this.beanFactoryMonitor) {
@@ -224,11 +241,35 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 * @see DefaultListableBeanFactory#setAllowCircularReferences
 	 * @see DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
 	 * @see DefaultListableBeanFactory#setAllowEagerClassLoading
+	 *
+	 * 这里已经开始对 BeanFactory 的扩展，在基本容器的基础上，增加了是否允许覆盖否允许扩展的设置提供了注解
+	 * @Qualifier和@autowired 的支持
+	 *
+	 * 对于允许覆盖和允许依赖的设置里这里只是判断了是否为空，如果不为空要进行设置，但是并没有看到哪里进行设置。
+	 * 究竟这个设置是在哪里进行设置的呢，还是那句话，使用子类覆盖方法，例如
+	 *
+	 *   protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory){
+	 *		super.setAllowBeanDefinitionOverriding(false);
+	 *		super.setAllowCircularReferences(false);
+	 *		super.customizeBeanFactory(beanFactory);
+	 *	}
+	 *  设置完成后相信大家已经对这两个属性的使用有所了解，或者可以回到前面的章节进行再一次查看，对于定制 BeanFactory，Spring 还提供了另一个
+	 *  重要的扩展，就是设置 AutowireCandidateResolver，在 bean 加载部分中讲解到创建 bean时，如果采用了 autowireByType 方式注入，那么
+	 *  默认的会使用 Spring 提供的 SimpleAutowireCandidateResolver，而对于默认的的实现并没有过多的逻辑处理，在这里，Spring 使用了
+	 *  QualifierAnnotationAutowireCandidateResolver，设置了这个解析后Spring 就可以支持注解方式的注入了
+	 *
+	 *
+	 *
+	 *
 	 */
 	protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
+		//如果属性 allowBeanDefinitionOverrideing 不为空，设置给 BeanFactory 对象相应的属性
+		//此属性的含义，是否允许覆盖同名的称的不同的定义的对象
 		if (this.allowBeanDefinitionOverriding != null) {
 			beanFactory.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
 		}
+		//如果属性 allowCircularReferences 不为空，设置给 beanFactory 对象的相应属性
+		//此属性的含义，是不允许 bean 之间存在循环依赖的
 		if (this.allowCircularReferences != null) {
 			beanFactory.setAllowCircularReferences(this.allowCircularReferences);
 		}
