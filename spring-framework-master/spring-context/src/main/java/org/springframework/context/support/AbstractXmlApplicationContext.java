@@ -78,10 +78,15 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	 * @see #loadBeanDefinitions
 	 */
 	//实现父类抽象的载入Bean定义方法
+	//进一步
+	// 在第一步早提到了将 ClassPathXmlApplicationContext 与 XMLBeanFactory 创建创建对比，在实现配置文件的加载功能中除了我们在第一步
+	//中已经初始化的 DefaultListableBeanFactory 外，还需要 XMLBeanDefinitionReader 来读取 XML，那么在这个步骤中首先要做的是初始化
+	// XMLBeanDefinitionReader
 	@Override
 	protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
 		// Create a new XmlBeanDefinitionReader for the given BeanFactory.
 		//创建XmlBeanDefinitionReader，即创建Bean读取器，并通过回调设置到容器中去，容  器使用该读取器读取Bean定义资源
+		// 为指定的 BeanFactory 创建 XMLBeanDefinitionReader
 		XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Configure the bean definition reader with this context's
@@ -96,6 +101,7 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 		// Allow a subclass to provide custom initialization of the reader,
 		// then proceed with actually loading the bean definitions.
 		//当Bean读取器读取Bean定义的Xml资源文件时，启用Xml的校验机制
+		// 对 BeanDefintionReader 进行设置，可以覆盖
 		initBeanDefinitionReader(beanDefinitionReader);
 		//Bean读取器真正实现加载的方法
 		loadBeanDefinitions(beanDefinitionReader);
@@ -124,7 +130,15 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	 * @see #getConfigLocations
 	 * @see #getResources
 	 * @see #getResourcePatternResolver
+	 *
+	 *
 	 * Xml Bean读取器加载Bean定义资源
+	 * 在初始化 DefaultListableBeanFactory 和 XMLBeanDefinitionReader 后就可以进行配置文件中读取了
+	 * 使用 XMLBeanDefinitionReader 和 loadBeanDefinitions方法进行配置文件中加载机制注册相信大家已经不陌生，
+	 * 这完全就是开始 BeanFactory 的套路，因为在 XMLBeanDefinitionReader 中已经将之前的初始化的 DefaultListableBeanFactory
+	 * 注册进去了，所以 XmlBeanDefnitionReader 所以读取 BeanDefinitionHolder 都会注册到 DefaultListableBeanFactory 中，
+	 * 也就是经过此步骤，类型 DefaultListableBeanFactory 的变量 beanFactory 已经包含了所有的解析好了配置
+	 *
 	 */
 	protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
 		//获取Bean定义资源的定位
