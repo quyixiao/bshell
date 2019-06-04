@@ -197,7 +197,19 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	/**
 	 * Actually register the default editors for this registry instance.
 	 * 其中我们看到一个方法是我们熟悉的，就是 abstractBeanFactory 类中的 initBeanWrapper 方法，这是在
-	 * bean 初始化时候使用的一个方法，之前已经使用过大量的篇幅进行讲解，主要是将 BeanDefinition 转换成
+	 * bean 初始化时候使用的一个方法，之前已经使用过大量的篇幅进行讲解，主要是将 BeanDefinition 转换成BeanWrapper 后用于
+	 * 对属性的填充，至此，逻辑已经明了，在 bean 初始化后调用 resourceEditorRegistar 的 registerCustomEditors 方法进行批量
+	 * 通用的属性编辑器注册，注册后，在属性填充的环节便可以直接让 Spring 使用这些编辑器进行属性的解析了
+	 *
+	 * 		既然提到了 BeanWrapper,这里也胡必要强调下，Spring 中用于封装的 bean 的是 BeanWrapper 类型，而它又间接的
+	 * 	继承了 PropertyEditorRegistry类型，也就是我们之前反复看到的方法参数propertyEditorRegistry registry ，其实
+	 * 	大部分的情况下都是 BeanWrapper，对于 BeanWrapper 在 Spring中默认的实现是 BeanWrapperImpl，而 BeanWrapperImpl
+	 * 	除了实现BeanWrapper 接口外还继承了 propertyEditorRegistrySupport，在 PropertyEditorRegistrySupport 中有这样的
+	 * 	一个方法：
+	 *
+	 * 	 具体的调用方法我们就不去深究了，但是至少通过这个方法我们已经知道了 Spring 定义了上面的一系列的常用的属性编辑器使
+	 * 	 我们可以方便的进行配置，如果我们定义的 bean 中的某个属性的类型不在上面常用的配置中的话，才需要我们进行个性化的
+	 * 	 编辑器的注册
 	 */
 	private void createDefaultEditors() {
 		this.defaultEditors = new HashMap<>(64);
