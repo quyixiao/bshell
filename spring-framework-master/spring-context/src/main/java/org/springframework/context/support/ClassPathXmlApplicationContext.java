@@ -188,6 +188,20 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	 * @see org.springframework.core.io.ClassPathResource#ClassPathResource(String, Class)
 	 * @see org.springframework.context.support.GenericApplicationContext
 	 * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
+	 * 经过前面几章的解析，相信大家已经对 Spring 中的容器功能有了简单的了解了，在前面的章节中我们一直以 BeanFactory 接口以及
+	 * 它的默认的实现类 XmlBeanFactory 为例进行分析，但是 Spring 中还提供了另一个接口，ApplicationContext，用于扩展 BeanFactory 中现有的
+	 * 功能，
+	 * 		ApplicationContext 和 beanFactory 两者都是用于加载 bean 的，但是相比之下，ApplicationContext 提供了更多的扩展功能
+	 * 简单的来说，ApplicationContext 包含 BeanFactory 的所有的功能，通常建义比 BeanFactory优先，除非在一些限制的场合，比如字节
+	 * 长度对内存有很大的影响的时候（Applet）,绝大大数的典型的企业应用系统，ApplicationContext 就是你需要使用的。
+	 * 	那么究竟 ApplicationContext比 BeanFactory 多出了哪些功能呢，还需要我们进一步的探索，首先我们来看看使用两个不同的类去加载配置
+	 * 	文件的写法上的不同
+	 * 		使用 BeanFactory 方式加载 XML
+	 * 	BeanFactory bf = new  XmlBeanFactory(new ClassPathResource("beanFactoryTest.xml"));
+	 * 	使用 ApplicationContext 方式加载 XML
+	 * 		ApplicationContext bf = new ClassPathXmlApplicationContext("beanFactoryTest.xml");
+	 * 	同样，我们还是以 ClassPathApplicationContext作为切入点，开始对整体的功能进行分析
+	 *
 	 */
 	public ClassPathXmlApplicationContext(String[] paths, Class<?> clazz, @Nullable ApplicationContext parent)
 			throws BeansException {
@@ -195,6 +209,8 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 		super(parent);
 		Assert.notNull(paths, "Path array must not be null");
 		Assert.notNull(clazz, "Class argument must not be null");
+		//设置路径是必不可少的步骤，ClassPathXmlApplicationContext 中可以将配置文件路径以数组的方式传入，ClassPathXmlApplicationContext
+		//可以对数组进行解析并进行加载，而对于解析功能实现都在 refresh()中实现的
 		this.configResources = new Resource[paths.length];
 		for (int i = 0; i < paths.length; i++) {
 			this.configResources[i] = new ClassPathResource(paths[i], clazz);

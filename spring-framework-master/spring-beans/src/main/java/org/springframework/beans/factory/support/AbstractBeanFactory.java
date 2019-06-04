@@ -1787,6 +1787,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @see #registerDisposableBean
 	 * @see #registerDependentBean
 	 */
+	// 注册 DisposbleBean
+	// Spring 中不但有提供了初始化的扩展入口，同样也提供了销毁方法的扩展入口，对于销毁方法的扩展，除了我们熟知的配置属性
+	// destroy-method 方法外，用户还可以注册处理器 DestructionAwareBeanPostProcessor 来统一处理 bean 的销毁方法，代码如下
 	protected void registerDisposableBeanIfNecessary(String beanName, Object bean, RootBeanDefinition mbd) {
 		AccessControlContext acc = (System.getSecurityManager() != null ? getAccessControlContext() : null);
 		if (!mbd.isPrototype() && requiresDestruction(bean, mbd)) {
@@ -1794,11 +1797,18 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// Register a DisposableBean implementation that performs all destruction
 				// work for the given bean: DestructionAwareBeanPostProcessors,
 				// DisposableBean interface, custom destroy method.
+				// 单例模式下注册需要的销毁的 bean,此方法中会处理实现 DisposableBean 的 bean,
+				// 并且对所有的 bean 的使用，DestructionAwareBeanPostProcessors 处理 DisposableBean
+				// DestructionAwareBeanPostProcessors,
+
 				registerDisposableBean(beanName,
 						new DisposableBeanAdapter(bean, beanName, mbd, getBeanPostProcessors(), acc));
 			}
 			else {
 				// A bean with a custom scope...
+				/***
+				 * 自定义 scope 的处理
+				 */
 				Scope scope = this.scopes.get(mbd.getScope());
 				if (scope == null) {
 					throw new IllegalStateException("No Scope registered for scope name '" + mbd.getScope() + "'");
