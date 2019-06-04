@@ -196,6 +196,8 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 
 	/**
 	 * Actually register the default editors for this registry instance.
+	 * 其中我们看到一个方法是我们熟悉的，就是 abstractBeanFactory 类中的 initBeanWrapper 方法，这是在
+	 * bean 初始化时候使用的一个方法，之前已经使用过大量的篇幅进行讲解，主要是将 BeanDefinition 转换成
 	 */
 	private void createDefaultEditors() {
 		this.defaultEditors = new HashMap<>(64);

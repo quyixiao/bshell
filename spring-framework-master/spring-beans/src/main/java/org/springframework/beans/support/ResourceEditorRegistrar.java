@@ -97,9 +97,49 @@ public class ResourceEditorRegistrar implements PropertyEditorRegistrar {
 	 * @see org.springframework.beans.propertyeditors.ClassArrayEditor
 	 * @see org.springframework.core.io.support.ResourceArrayPropertyEditor
 	 */
+	/***
+	 *
+	 *
+	 1.定义属性编辑器
+	 public class DatePropertyEditorRegistrar implements PropertyEditorRegistrar {
+		@Override
+		public void registerCustomEditors(PropertyEditorRegistry registry) {
+			registry.registerCustomEditor(Date.class,new CustomDateEditor(new SimpleDateFormat("yyyy-MM-dd"),true));
+		}
+	}
+
+	 2.注册到 Spring中
+	 <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+	 	<property name="propertyEditorRegistrars">
+	 		<list>
+	 			<bean class="com.bjsxt.spring.DatePropertyEditorRegistrar"></bean>
+	 		</list>
+	 	</property>
+	 </bean>
+	 通过在配置文件中将自定义的 DatePropertyEditorRegistrar 注册进入 org.Springframework.beans.factory.config.CustomEditorConfigurer
+	 的 propertyEditorRegistrars 属性中，可以具有与方法同样的效果
+	 我们了解了自定义属性的编辑器的使用，但是，似乎这与本节中围绕的核心代码 beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this,getEnvironment()))
+	 并无联系，因为在注册自定义属性编辑器的时候使用的是 propertyEditorRegistry 的 registerCustomEditor 方法，而这里使用的是 ConfigurableListableBeanFactory 的
+	 addPropertyEditorRegistrar 方法，我们不妨深入探索下 resourceEditoryRegistart 的内部实现，在 resourceEditorRegistar中，我们最
+	 关心的方法是 registerCustomEditors
+
+
+	 */
 	@Override
 	public void registerCustomEditors(PropertyEditorRegistry registry) {
 		ResourceEditor baseEditor = new ResourceEditor(this.resourceLoader, this.propertyResolver);
+		// 在 doregisterEditor 函数中，可以看到在之前反映到的自定义属性中使用的关键代码，registry.registerCustomEditor(requiredType,editor)
+		//回过头来看看，ResourceEditorRegistrar 类的 registerCustomEditors 方法的核心功能，其实无非是注册了一系列常用的类型
+		//属性编辑器，例如doRegisterEditor(registry, Class.class, new ClassEditor(classLoader));实现的功能就是注册
+		// Class 类对应的属性编辑器，那么，注册后，一旦某个实体 bean 中存在一些 Class 类型的属性，那么 Spring 会调用
+		// ClassEditor 将配置中定义的 String 类型回换成 class 类型并进行赋值，分析到这里，我们不禁有个疑问，虽说
+		// ResourceEditorRegistrar 类的 registerCustomEditors 方法实现了指注册的功能，但是 beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this,getEnvironment()))
+		// 仅仅是注册了 ResourceEditoRegistrar 实例，却并没有调用 ResourceEditorRegistrar 的 registerCustomEditors
+		// 方法进行注册，那么到底是在什么时候进行注册的呢，进一步查看 resourceEditoRegistrar 的 registerCustomEditors 方法的
+		// 调用层次结构 ，如图6-1所示
+		//发现 abstractbeanFactory 中的 registerCustomEditors 方法中被调用过，继续查看 AbstractBeanFactory 中的
+		// registerCustomEditors 方法中调用的层次结构，如图 6-2 所示
+
 		doRegisterEditor(registry, Resource.class, baseEditor);
 		doRegisterEditor(registry, ContextResource.class, baseEditor);
 		doRegisterEditor(registry, InputStream.class, new InputStreamEditor(baseEditor));
