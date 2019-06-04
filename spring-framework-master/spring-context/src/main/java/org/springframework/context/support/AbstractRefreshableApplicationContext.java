@@ -258,6 +258,11 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 *  默认的会使用 Spring 提供的 SimpleAutowireCandidateResolver，而对于默认的的实现并没有过多的逻辑处理，在这里，Spring 使用了
 	 *  QualifierAnnotationAutowireCandidateResolver，设置了这个解析后Spring 就可以支持注解方式的注入了
 	 *
+	 *  在讲解根据类型自定义注入的时候，我们说过解析 autowire 类型时首先会调用这个方法
+	 *  Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
+	 *  因此我们知道，在 QualifierAnnotationAutowireCandidateResolver 中一定会提供了解析 Qualifier 与 Autowire 注解的方法
+	 *
+	 *
 	 *
 	 *
 	 *

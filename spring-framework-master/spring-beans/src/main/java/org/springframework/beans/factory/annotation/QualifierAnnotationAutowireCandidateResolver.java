@@ -328,6 +328,8 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	/**
 	 * Determine whether the given dependency declares a value annotation.
 	 * @see Value
+	 *
+	 * 因此我们知道，在 QualifierAnnotationAutowireCandidateResolver 中一定会提供了解析 Qualifier 与 Autowire 注解的方法
 	 */
 	@Override
 	@Nullable
