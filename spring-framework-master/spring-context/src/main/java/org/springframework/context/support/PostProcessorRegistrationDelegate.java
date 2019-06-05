@@ -262,6 +262,7 @@ class PostProcessorRegistrationDelegate {
 	// 会在获取每个 bean 打印出"========" ,而这个特性就是在 registerBeanPostProcessors 方法中完成
 	// 我们继续探索 registerBeanPostProcessors 的方法实现
 	//
+	//
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
 
@@ -272,15 +273,34 @@ class PostProcessorRegistrationDelegate {
 		// a bean is not eligible for getting processed by all BeanPostProcessors.
 		// BeanPostProcessorChecker 是这个普通的信息打印，可能会有些情况，当 Spring 的配置中的后处理器还是没有被注册
 		// 就可以开始了 bean 初始化时，便会打印出 BeanPostProcessorChecker 中设定的信息
+		//
+		//
+		//
+		// 配合源码以及注释，在 registerBeanPostProcessors 方法中所做的逻辑相信大家已经很清楚了，我们再做一下总结
+		// 首先我们会发现，对于 BeanPostProcessor 的处理 BeanFactoryPostProcessor 的处理极为相信，但是似乎又有些不一样的
+		// 地方，经过反复的对比发现，对于 BeanFactoryPostProcessor 的处理要区分两种情况，一种方式是通过硬编码的方式的处理
+		// ,另一种是通过配置文件的方式的处理，那么为什么在 BeanPostProcessor 的处理只考虑了配置文件的方式而不考虑硬编码的方式呢
+		// 提出了这个问题，还是因为读者没有完全理解两者实现的功能，对于 BeanPostProcessor 并不需要马上调用，再说，当然不需要
+		// 硬编码的方式了，这里的功能只需要将配置文件 BeanPostProcessor 提取出来并注册进行 beanFactory 就可以了。
+		// 对于 beanFactory 的注册，也不是直接注册就可以了，在 Spring 中支持对于 BeanPostProcessor 的排序，比如根据 PriorityOrdered
+		// 进行排序，根据 Ordered 进行排序或者无序，而 Spring 在 BeanPostProcessor 的激活顺序的时候也会考虑对于顺序的问题而先进行
+		// 排序
+		// 这里可能有个地方读者不是很理解，对于 internalPostProcessors 中存储的后处理器也就是 mergedBeanDefinitionPostProcessor 类型
+		// 处理器，在代码中似乎是被重复调用了，如
+
 		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
 
 		beanFactory.addBeanPostProcessor(new BeanPostProcessorChecker(beanFactory, beanProcessorTargetCount));
 
 		// Separate between BeanPostProcessors that implement PriorityOrdered,
 		// Ordered, and the rest.
+		//  使用 ProorityOrdered 保证顺序
 		List<BeanPostProcessor> priorityOrderedPostProcessors = new ArrayList<>();
+		// MergedBeanDifinitionPostProcessor
 		List<BeanPostProcessor> internalPostProcessors = new ArrayList<>();
+		//使用 Ordered 保证顺序
 		List<String> orderedPostProcessorNames = new ArrayList<>();
+		// 无序 BeanPostProcessor
 		List<String> nonOrderedPostProcessorNames = new ArrayList<>();
 		for (String ppName : postProcessorNames) {
 			if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
@@ -299,10 +319,13 @@ class PostProcessorRegistrationDelegate {
 		}
 
 		// First, register the BeanPostProcessors that implement PriorityOrdered.
+		// 第一步，注册所有实现 ProorityOrdered的 BeanPostProcessor
+		//
 		sortPostProcessors(priorityOrderedPostProcessors, beanFactory);
 		registerBeanPostProcessors(beanFactory, priorityOrderedPostProcessors);
 
 		// Next, register the BeanPostProcessors that implement Ordered.
+		// 第二步 ，注册所有的实现 Ordered 的 BeanPostProcessor
 		List<BeanPostProcessor> orderedPostProcessors = new ArrayList<>();
 		for (String ppName : orderedPostProcessorNames) {
 			BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
@@ -315,6 +338,7 @@ class PostProcessorRegistrationDelegate {
 		registerBeanPostProcessors(beanFactory, orderedPostProcessors);
 
 		// Now, register all regular BeanPostProcessors.
+		// 第三步，注册所有的无序的 BeanPostProcessor
 		List<BeanPostProcessor> nonOrderedPostProcessors = new ArrayList<>();
 		for (String ppName : nonOrderedPostProcessorNames) {
 			BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
@@ -326,11 +350,14 @@ class PostProcessorRegistrationDelegate {
 		registerBeanPostProcessors(beanFactory, nonOrderedPostProcessors);
 
 		// Finally, re-register all internal BeanPostProcessors.
+		// 第四步，注册所有的MergedBeanDifinitionPostProcessor 类型的 BeanPostProcessor，并非重复注册
+		// 在 beanFactory.addBeanPostProcessor 中会先移除已经存在的 BeanPostProcessor
 		sortPostProcessors(internalPostProcessors, beanFactory);
 		registerBeanPostProcessors(beanFactory, internalPostProcessors);
 
 		// Re-register post-processor for detecting inner beans as ApplicationListeners,
 		// moving it to the end of the processor chain (for picking up proxies etc).
+		// 添加 ApplicationListener 探测器
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(applicationContext));
 	}
 
