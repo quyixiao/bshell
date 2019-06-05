@@ -840,6 +840,27 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Initialize the MessageSource.
 	 * Use parent's if none defined in this context.
+	 * 在进行这段函数解析之前 ，我们同样先来回顾 Spring国际化的使用方法
+	 * 假设我们正在开发一个支持多国语言的 web应用程序，要求系统能够给被客户端系统语言类型返回对应的界面，英文操作
+	 * 系统返回英文界面，中文操作系统返回中文界面，这便是典型的 il8n 国际化问题，对于有国际化要求的应用系统，我们不能
+	 * 简单地采用硬编码的方式编写用户界面信息，报错信息，等内容，而必须为这些需要国际化的信息进行特殊处理，简单的来说，
+	 * 就是为每种语言提供了一套相应的资源文件，并以规范化命名的方式保存在特定的目录中，由系统自动根据客户端语言选择适合
+	 * 资源文件
+	 * 国际化信息也称为本地化信息，一般需要两个条件才可以确定一个特定的类型的本地化信息，它们分别是语言类型，和国家地区
+	 * 类型，如果中文本地化信息既有中国大陆的地区的中文，又有中国台湾地区的，中国香港地区的中文，还有新加坡地区的中文
+	 * java 通过 java.util.Locale 类表示一个本地化对象，它允许通过语言参数和国家参数创建一个确定的本地化的对象，
+	 * java.util.Locale 是表示语言和国家/地区信息的本地化类，它是创建国际化的基础，下面给出几个创建本地化的对象的示例
+	 *
+	 * //1.带有语言和国家/地区的信息的本地化对象
+	 * Locale locale1 = new Locale("zh","CN");
+	 * //2.只有语言信息的本地化对象
+	 * Locale locale2 = Locale.CHINA;
+	 * //3.等同于 Locale("zh","CN");
+	 * Locale locale3 = Locale.CHINESE;
+	 * //5 获取本地系统默认的本地化对象
+	 * Locale locale5 = LOcale.getDefalult();
+	 *
+	 *
 	 */
 	protected void initMessageSource() {
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();

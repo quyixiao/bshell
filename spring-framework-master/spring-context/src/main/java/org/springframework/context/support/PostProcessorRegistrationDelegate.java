@@ -287,6 +287,8 @@ class PostProcessorRegistrationDelegate {
 		// 排序
 		// 这里可能有个地方读者不是很理解，对于 internalPostProcessors 中存储的后处理器也就是 mergedBeanDefinitionPostProcessor 类型
 		// 处理器，在代码中似乎是被重复调用了，如
+		// 可以看到，在 registerBeanPostProcessors 方法的实现中其实已经确保了，beanPostProcessor 的唯一性，个人猜想，
+		// 之所以选择在 registerBeanPostProcessors 中没有进行重复移除操作或许是为了的品质分类的效果，更逻辑理为清晰吧
 
 		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
 
