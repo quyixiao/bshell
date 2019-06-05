@@ -87,7 +87,13 @@ import org.springframework.beans.BeansException;
  *
  * 		正是通过实现 BeanFactoryPostProcessor接口，BeanFactory 会得到实例化的你任何 bean 前获得配置信息，从而能够正确的解析
  * 	bean 的描述文件中的变量引用
- * 	git comm
+ *
+ *
+ *
+ *
+ * 		通过 ObscenityRemovingBeanFactoryPostProcessorSpring 很好的实现了屏蔽掉 obscenties 定义的不应该展示的属性
+ *
+ *
  *
  *
  */
