@@ -860,11 +860,83 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * //5 获取本地系统默认的本地化对象
 	 * Locale locale5 = LOcale.getDefalult();
 	 *
+	 * JDK 的 java.util包中提供了几个支持本了化的格式化操作工具类,NumberFormat ，DateFormat ，MessageFormat，而在 Spring 中
+	 * 的国际化资源操作无非是对于这些类的封装操作，我们仅仅介绍 MessageFormat 的用法帮助大家回顾：
+	 * 信息格式化串
+	 * String pattern1 = "{0}"，你好 你于{1} 在工商银行存入{2}元;
+	 * 2 用于动态替换占位符的参数
+	 *  Object[] params = {"John",new Gregorian}
+	 * 3.使用默认本地化对象的格式信息
+	 * String msg1 = MessageFormat.format(pattern1,params);
+	 * 4.使用指定的本地化对象格式化信息
+	 * MessageFormat mf = new MessageFormat(pattern2,Locale.US);
+	 * String msg2 = mf.format(parmas);
+	 * System.out.println(msg1);
+	 * System.out.println(msg2);
+	 *
+	 * Spring 定义了访问国际化信息的 MessageSource 接口，并提供了易用的实现类 MessageSource 分别被 HierarchicalMessageSource
+	 * 和 ApplicationContext 接口扩展，这里我们主要看一下 HierarchicalMessageSource 接口的几个实现类，如图 6-3 所示
+	 *
+	 * Ojbect [] params = {"John",params}
+	 * // 使用指定的本地化对象格式
+	 *
+	 *
+	 * HierarchicaMessageSource 接口最重要的两个实现类，ResourceBundleMessageSource 和 ReloadableResourceBundleMessageSource
+	 * ，它们基于 Java 的 ResourceBundle 基础类实现，允许仅通过资源名加载国际化资源，ReloadableResourceBundleMessageSource
+	 * 提供了定时刷新功能，允许在不重启系统的情况下，更新资源信息，StaticMessageSource 主要用于生成程序测试，它允许通过编程的方式
+	 * 提供国际化信息，而 DelegatingMessageSource 是为了方便操作父 MessageSource 而提供了代理类，仅仅举例
+	 * ResourceBundleMessageSource 的实现方式,
+	 * 定义资源文件
+	 * message.properties （默认：英文） ，内容仅一句，如下
+	 * test = test
+	 * messages_zh_CN.properties(简体中文)
+	 * test=测试
+	 *
+	 * 定义配置文件
+	 * <bean id="messageSource" class="org.Springframework.support.ResourceBundleMessageSource">
+	 *     <property name="beannames">
+	 *         <list>
+	 *             <value>/test/messages</value>
+	 *         </list>
+	 *     </property>
+	 * </bean>
+	 *  其中，这个 bean 的 Id 必须命名为 messageSource ，否则会抛出 NosuchMessageException 异常
+	 *  使用，通过 ApplicationContext 访问国际化信息
+	 *  String[] configs = {"applicationContext.xml"};
+	 *  Application ctx = new ClassPathXmlApplicationContext(configs);
+	 *  //直接通过容器访问国际化信息
+	 *  Object[] params ={"John",new GregorianGalenDar().getTime()};
+	 *  String str1 = ctx.getMessage("test",params,Locale.US);
+	 *  String str2 = ctx.getMessage("test",params,Locale.ChINA);
+	 *  System.out.printle(str1);
+	 *  System.out.println(str2);
+	 *
+	 *  了解了 Spring国际化的使用后，便可以进行源码分析了，
+	 *  在 initMessageSource 中的方法主要功能是提取配置中定义的 messageSource，并将记录在 Spring 容器中，也就是
+	 *  AbstractApplicationContext 中，当然，如果用户未设置资源文件的话，Spring 中也提供了默认的配置 DelegatingMessageSource
+	 *  在 initMessageSource中获取自定义的资源文件的方式为 beanFactory.getBean(messageSource_BEAN_NAME,messageSource.class)
+	 *  在 Spring 的使用硬编码的方式规定了子定义的资源文件必须为 message，否则便会获取不到自定义的资源配置，这也是为什么之前反映到 Bean
+	 *  的 Id如果部位 message 会抛出异常
+	 *
+	 *  读取并将自定义的资源文件配置记录在容器中，那么就可以在获取资源文件的时候直接使用了，例如 ：在 abstractApplicationContext
+	 *  中获取资源文件属性的方法
+	 *  public String getMessage(String code,Object args[],Locale locale) throws NoSuchMessageException{
+	 *      return getMessageSource().getMessage(code,args,Locale);
+	 *  }
+	 *  其中 getMessageSource()方法正是获取了之前的定义的自定义的资源配置
+	 *
+	 *	当程序运行运行时，Spring 会将发出的 TestEvent 事件转给我们自定义的 TestListener 进行一步处理
+	 *	或许很多人一下子会反映出设计模式中的观察模式，这确定是个典型应用，可以在此关心的事件结束后及处理，那么我们来看看 ApplicationEventMulticaster 是
+	 * 如何被初始化的，以确保功能的正确运行
+	 *
+	 *
 	 *
 	 */
 	protected void initMessageSource() {
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
 		if (beanFactory.containsLocalBean(MESSAGE_SOURCE_BEAN_NAME)) {
+			//如果在配置中已经配置了 messageSource ，那么将 messageSource 提取并记录在 this.messageSource 中
+			//
 			this.messageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME, MessageSource.class);
 			// Make MessageSource aware of parent MessageSource.
 			if (this.parent != null && this.messageSource instanceof HierarchicalMessageSource) {
@@ -880,6 +952,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			}
 		}
 		else {
+			//如果用户并没有定义配置文件，那么使用临时的 DelegatingMessageSource 以便于作为调用 getMessage 方法返回
 			// Use empty MessageSource to be able to accept getMessage calls.
 			DelegatingMessageSource dms = new DelegatingMessageSource();
 			dms.setParentMessageSource(getInternalParentMessageSource());
@@ -896,6 +969,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * Initialize the ApplicationEventMulticaster.
 	 * Uses SimpleApplicationEventMulticaster if none defined in the context.
 	 * @see org.springframework.context.event.SimpleApplicationEventMulticaster
+	 * 	 * 	如果用户自定义了事件，那么使用用户自定义的事件广播器
+	 * 	如果用户没有自定义事件广播器，那么使用默认的 ApplicationEventMulticaster
+	 * 	按照之前介绍的顺序及逻辑，我们推断，作为广播器，一定是用于存入监听器并合适的时候调用监听器
+	 * 	,那么我们不妨进入默认的广播器的实现，SimpleApplicationEventMulticaster 来控究竟
+	 * 	其中这一段代码是我们感兴趣的
+	 *
+	 * 	可以推断，当产生 Spring 事件的时候会默认使用 SimpleApplicationEventMulitcaster 的 multicastEvent
+	 * 	来广播事件 ，遍历所有的监听器，并使用监听器中的 onApplicationEvent 方法进行监听器处理，而
+	 *
 	 */
 	protected void initApplicationEventMulticaster() {
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
