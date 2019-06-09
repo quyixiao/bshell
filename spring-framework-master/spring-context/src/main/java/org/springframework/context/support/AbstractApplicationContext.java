@@ -372,6 +372,23 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * or a payload object to be turned into a {@link PayloadApplicationEvent})
 	 * @param eventType the resolved event type, if known
 	 * @since 4.2
+	 * 当完成了 ApplicationContext初始化的时候，要通过 Spring 中的事件发布机制来发出 ContextRefreshedEvent 事件，以保证对应的监听
+	 * 器可以做进一步的逻辑处理
+	 *
+	 * 我们知道，使用面向对象编程 oop 有一些弊端，当需要为多个不且有继承关系的对象引入 同一个公共的行为时，例如日志，安全检测等，我们只有
+	 * 在每个对象里引用公共的行为，这样程序中就产生了大量的重复代码，程序就不便于维护了，所以就有一个对面禹对象的编程补充，即面向方面编程
+	 * AOP ,AOP所关注的方向是横向的，不同于 OOP 的纵向
+	 * Spring 中提供了 AOP 的实现，但是低版本的 Spring 中定义一个切面是比较麻烦的，需要实现特定的接口，并进行一些较为复杂的配置，低版本的
+	 * Spring中定义的 Spring AOP 的配置是被批评的最多的地方，Spring 听取了这一方面的批评声音，并下决心改变这一现状，在 Spring 2.0中
+	 * Spring AOP已经焕然一新了，你可以使用@AspectJ 注解非常容易的定义一个切面，不需要实现任何的接口
+	 * Spring 2.0采用了@AspectJ 注解对 POJO 进行标注，从而定义一个包含切点信息和增强横切切点表达式语法进行切点定义，可以通过切点函数
+	 * ，运算符，通配符等高级功能进行切点定义，拥有强大的加拉点描述能力，我们先来直观的浏览一下 Spring 中的 AOP 实现
+	 *
+	 * 创建一个用于拦截的 bean
+	 * 在实际工作中，此 bean 可能是满足业务需要的核心逻辑，例如 test 方法可能会封装着某个核心的业务，但是，如果我们想在 test 前后加入日志
+	 * 来跟踪调试，如果直接修改源码并不符合面向对象的设计方法，而且随意改动原有的代码也会造成一定的风险，还好接下来 Spring 帮我们做到了
+	 * 这一点，
+	 *
 	 */
 	protected void publishEvent(Object event, @Nullable ResolvableType eventType) {
 		Assert.notNull(event, "Event must not be null");
@@ -1003,6 +1020,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * Initialize the LifecycleProcessor.
 	 * Uses DefaultLifecycleProcessor if none defined in the context.
 	 * @see org.springframework.context.support.DefaultLifecycleProcessor
+	 * 当 ApplicationContext 启动或停止时，它会通过 LifecycleProcessor 来与所有的声明的 bean 的周期做状态更新，
+	 * 而在 LifecycleProcessor 的使用前首先需要初始化
+	 *
 	 */
 	protected void initLifecycleProcessor() {
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
@@ -1043,18 +1063,21 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void registerListeners() {
 		// Register statically specified listeners first.
+		// 硬编码方式注册的监听器处理
 		for (ApplicationListener<?> listener : getApplicationListeners()) {
 			getApplicationEventMulticaster().addApplicationListener(listener);
 		}
 
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let post-processors apply to them!
+		// 配置文件注册的监听器处理
 		String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
 		for (String listenerBeanName : listenerBeanNames) {
 			getApplicationEventMulticaster().addApplicationListenerBean(listenerBeanName);
 		}
 
 		// Publish early application events now that we finally have a multicaster...
+		//
 		Set<ApplicationEvent> earlyEventsToProcess = this.earlyApplicationEvents;
 		this.earlyApplicationEvents = null;
 		if (earlyEventsToProcess != null) {
@@ -1067,6 +1090,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Finish the initialization of this context's bean factory,
 	 * initializing all remaining singleton beans.
+	 * 完成 BeanFactory 的初始化工作，其中包括 ConversionService配置，配置冻结以及非延迟加载的 bean 的初始化工作
+	 *
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
 		// Initialize conversion service for this context.
@@ -1090,12 +1115,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Stop using the temporary ClassLoader for type matching.
+		//
 		beanFactory.setTempClassLoader(null);
 
 		// Allow for caching all bean definition metadata, not expecting further changes.
+		// 冻结所有的 bean 定义，说明注册的 bean 定义将不被修改任何进一步的处理
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		// 初始化剩下的单实例（非惰性的）
 		beanFactory.preInstantiateSingletons();
 	}
 
@@ -1103,6 +1131,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * Finish the refresh of this context, invoking the LifecycleProcessor's
 	 * onRefresh() method and publishing the
 	 * {@link org.springframework.context.event.ContextRefreshedEvent}.
+	 * Spring 中还提供了 LIfecycle接口，lifecycle 中包含 start ,stop 方法，实现此接口后，Spring 会保证在启动的时候调用其
+	 * start 方法开始循环依赖周期，并在 Spring 关闭的时候调用 stop 方法来结束生命周期，通常用来配置后台程序，在启动后一直运行，
+	 * 如对 MQ 进行轮询等，而 Application 的初始化最后正保证了这一切功能的实现
+	 *
 	 */
 	protected void finishRefresh() {
 		// Clear context-level resource caches (such as ASM metadata from scanning).

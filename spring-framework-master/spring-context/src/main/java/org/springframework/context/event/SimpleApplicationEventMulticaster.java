@@ -127,6 +127,26 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 		multicastEvent(event, resolveDefaultEventType(event));
 	}
 
+
+	/***
+	 * 按照之前介绍的顺序及逻辑，我们推断，作为广播器，一定是用于存储监听器并合适的时候调用监听器，那么我们不妨进入默认的
+	 * 广播实现 SimpleApplicationEventMulticaster 探究竟
+	 * 其中是一段代码是我们感兴趣的
+	 *
+	 * 可以推断，当产生 Spring 事件的时候会默认的使用 SimpleApplicationEventMulticaster 的 multicastEvent 来广播事件
+	 * 遍历所有的监听器，并使用监听器中的onApplicationEvent方法来进行监听器处理，而对于每个监听器来说其实都可以获取到产生
+	 * 的事件，但是否处理则由事件监听器来决定
+	 *
+	 * 注册监听器
+	 * 之前在介绍 Spring 广播时反复提到了事件监听器，那么在 Spring 注册监听器的时候又做了哪些逻辑操作呢？
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 */
 	@Override
 	public void multicastEvent(final ApplicationEvent event, @Nullable ResolvableType eventType) {
 		ResolvableType type = (eventType != null ? eventType : resolveDefaultEventType(event));

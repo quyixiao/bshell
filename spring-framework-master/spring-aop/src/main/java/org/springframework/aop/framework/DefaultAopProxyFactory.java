@@ -46,6 +46,35 @@ import org.springframework.aop.SpringProxy;
 @SuppressWarnings("serial")
 public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
+
+	/***
+	 * 至此已经完成了代理的创建，不管我们之前是否有过阅读 Spring 源代码的，但是都是或多或少的听过 Spring 代理中的 JDKproxy 的实现和
+	 * CglibProxy 的实现，Spring 是如何选取的呢，网上介绍到处都是，现在我们就是从源代码的角度分析，看看到底 Spring 是如何选择代理方式的
+	 * 从 if 中判断条件可以看到3个方面的影响着 Spring 的判断
+	 * optimize:用来控制通过 CGLiB 的创建代理是否使用激进的优化策略，除非完全了解AOP 代理是如何处理优化，否则不推荐用户使用这个设置
+	 * ，目前这个属性仅用于 CGLIB 代理，对于 JDK动态代理，缺省的代理  无效
+	 * proxyTargetClass：这个属性为 true时，目标类本身被代理而不是目标类的接口，如果这个属性值被设为 true,CGLIB 代理将被创建，设置
+	 * 方式，<aop:aspectj-autoproxy-proxy-target-class="true"></aop>
+	 * hasNoUserSuppliedProxyInterfaces:是否存在代理接口
+	 *
+	 * 下面是 JDK 代理和 Cglib 代理方式的总结
+	 * 如果目标对象实现了接口，默认的情况下会采用 JDK 动态代理去实现
+	 * 如果目标对象实现了接口，可以强制使用 CGLIB 实现 AOP
+	 * 如果目标对象没有实现了接口，必须采用 CGLIB库，Spring 会自动的在 JDK 动态代理和 CGLIB 之间转换
+	 * 如何强制使用 CGLIB 实现 AOP?
+	 * 1.添加 CBLIB库，Spring_HOME/cglib/*.jar
+	 * 2.在 Spring 配置文件中加入<aop:aspectj-autoproxy proxy-target-class="true"></aop>
+	 * JDK 动态代理和 CGLIB 字节码生成的区别
+	 * JDK 动态代理只能对接口实现了接口的类生成代理，而不能针对类
+	 * CGLIB是针对类实现代理，主要是对指定生成的一个子类，覆盖其中的方法，因为这是继承，所以该类或方法最好不要声明成 final
+	 *
+	 * 2.获取代理
+	 *  确定了使用哪种代理方式后，便可以进行代理的创建了，但是创建之前有必要回顾一下两种方式的使用方法
+	 *  JDK 代理使用示例
+	 *
+	 *
+	 *
+	 */
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
 		if (config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config)) {

@@ -29,6 +29,10 @@ import org.springframework.aop.AfterAdvice;
  *
  * @author Rod Johnson
  * @since 2.0
+ * 后置增强与前置增强有稍许不一致的地方，回顾之前讲过的前置增强，大致的结构是在拦截器链中放置 MethodBeforeAdviceInterceptor，而在
+ * MethodBeforeAdviceInterceptor 中又放置了 AspectJMethodBeforeAdvice，并在调用 invoke 时首先串联调用，但是在后置增强的时候却
+ * 不一样，没有提供中间的类，而是直接在拦截器链中使用了中间的 AspectJAfterAdvice
+ *
  */
 @SuppressWarnings("serial")
 public class AspectJAfterAdvice extends AbstractAspectJAdvice
@@ -47,6 +51,7 @@ public class AspectJAfterAdvice extends AbstractAspectJAdvice
 			return mi.proceed();
 		}
 		finally {
+			//激活增强方法
 			invokeAdviceMethod(getJoinPointMatch(), null, null);
 		}
 	}

@@ -68,6 +68,11 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	}
 
 
+	/****
+	 *
+	 * 虽然看似简单，但是每个步骤都经历了大量复杂的逻辑，首先来看看获取增强的方法的实现逻辑
+	 *
+	 */
 	@Override
 	@Nullable
 	protected Object[] getAdvicesAndAdvisorsForBean(Class<?> beanClass, String beanName, @Nullable TargetSource targetSource) {
@@ -87,6 +92,9 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * @see #findCandidateAdvisors
 	 * @see #sortAdvisors
 	 * @see #extendAdvisors
+	 * 对于指定 bean 的增强方法获取一定是包含两个步骤的，获取所有增强以及寻找所有的增强中适用于 bean 增强的并应用，那么 findCandidateAdvisors 与
+	 * findAdvisorsThatCanAppliy 便是做了这两件事情，当然，如果无法找到对应的增强器便返回 DO_NOT_PROXY，其中 DO_NOT_PROXY=null
+	 *
 	 */
 	protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
 		List<Advisor> candidateAdvisors = findCandidateAdvisors();
@@ -101,6 +109,13 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	/**
 	 * Find all candidate Advisors to use in auto-proxying.
 	 * @return the List of candidate Advisors
+	 * 获取增强器
+	 * 由于我们分析的是使用注解进行的 AOP ，所以对于 findCandidateAdvisor 的实现其实是由于 AnnotationAwareAspectJAutoProxyCreator
+	 * 类完成的，我们继续跟踪 AnnotationAwareAspectJAutoProxyCreator 的 findCandidateAdvisors 方法
+	 *
+	 *
+	 *
+	 *
 	 */
 	protected List<Advisor> findCandidateAdvisors() {
 		Assert.state(this.advisorRetrievalHelper != null, "No BeanFactoryAdvisorRetrievalHelper available");
@@ -115,12 +130,17 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * @param beanName the target's bean name
 	 * @return the List of applicable Advisors
 	 * @see ProxyCreationContext#getCurrentProxiedBeanName()
+	 * 前面的函数中已经完成了所有的增强器的解析，但是对于所有的增强器来讲，并不一定适用于当前的 bean ，还要挑取适合的增强器，也就是满足
+	 * 我们配置的通配符增强器，也就是满足我们配置的通配符的增强器，具体实现 findAdvisorsThatCanApply 中
+	 *
+	 *
 	 */
 	protected List<Advisor> findAdvisorsThatCanApply(
 			List<Advisor> candidateAdvisors, Class<?> beanClass, String beanName) {
 
 		ProxyCreationContext.setCurrentProxiedBeanName(beanName);
 		try {
+			// 过虑已经得到的 advisors
 			return AopUtils.findAdvisorsThatCanApply(candidateAdvisors, beanClass);
 		}
 		finally {

@@ -111,14 +111,36 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 	}
 
 
+	/****
+	 *
+	 * @param aspectInstanceFactory the aspect instance factory
+	 * (not the aspect instance itself in order to avoid eager instantiation)
+	 * @return
+	 *
+	 * 至此，我们已经完成了 Advisor 的提取，在上面的步骤中最为重要的，也是最为繁杂的就是增强器的获取，而这一功能委托给了 getAdvisors
+	 * 方法去实现（this.advisorFactory.getAdvisor(factory)）
+	 *
+	 *
+	 *  函数中首先完成了对增强器的获取，包括获取注解以及根据注解生成增强的步骤，然后考虑到位置中可能会将增强配置成延迟初始化，
+	 *  那么需要在首位加入同步实例化增强器以保证增强使用之前的实例化，最后是对 declareParent注解获取，下面是将详细介绍一下每个
+	 *  步骤
+	 *
+	 *  普通增强器的获取，
+	 *  普通增强器的获取逻辑通过 advisor 方法实现，实现步骤包括对切点的注解的获取以及根据注解信息生成增强
+	 *
+	 */
 	@Override
 	public List<Advisor> getAdvisors(MetadataAwareAspectInstanceFactory aspectInstanceFactory) {
+		// 获取标记为 AspectJ 的类
 		Class<?> aspectClass = aspectInstanceFactory.getAspectMetadata().getAspectClass();
+		// 获取标记为 AspectJ 的 name
 		String aspectName = aspectInstanceFactory.getAspectMetadata().getAspectName();
+		// 验证
 		validate(aspectClass);
 
 		// We need to wrap the MetadataAwareAspectInstanceFactory with a decorator
 		// so that it will only instantiate once.
+		//
 		MetadataAwareAspectInstanceFactory lazySingletonAspectInstanceFactory =
 				new LazySingletonAspectInstanceFactoryDecorator(aspectInstanceFactory);
 
@@ -132,11 +154,13 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 
 		// If it's a per target aspect, emit the dummy instantiating aspect.
 		if (!advisors.isEmpty() && lazySingletonAspectInstanceFactory.getAspectMetadata().isLazilyInstantiated()) {
+			// 如果寻找了增强器不为空而且又配置了增强延迟初始化那需要在首位加入同步实例化增强器
 			Advisor instantiationAdvisor = new SyntheticInstantiationAdvisor(lazySingletonAspectInstanceFactory);
 			advisors.add(0, instantiationAdvisor);
 		}
 
 		// Find introduction fields.
+		// 获取 declareParent 注解
 		for (Field field : aspectClass.getDeclaredFields()) {
 			Advisor advisor = getDeclareParentsAdvisor(field);
 			if (advisor != null) {
@@ -165,6 +189,17 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 	 * <p>Resulting Advisors will need to be evaluated for targets.
 	 * @param introductionField the field to introspect
 	 * @return {@code null} if not an Advisor
+	 *
+	 *
+	 * 获取 declareParents 注解
+	 * DeclareParents 主要用于引入介增强的注解形式实现，而其实现方式与普通增强很类似，只不过使用 DeclareParentsAdvisor 对功能进行
+	 * 封装
+	 *
+	 * 寻找匹配的增强器
+	 *
+	 * 前面的函数中已经完成了所有的增强器的解析，但是对于所有的增强器来讲，并不一定适用于当前的 bean ，还要挑取适合的增强器，也就是满足
+	 * 我们配置的通配符增强器，也就是满足我们配置的通配符的增强器，具体实现 findAdvisorsThatCanApply 中
+	 *
 	 */
 	@Nullable
 	private Advisor getDeclareParentsAdvisor(Field introductionField) {
@@ -183,33 +218,50 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 	}
 
 
+	/****
+	 *
+	 * 至此，我们已经完成了 Advisor 提取，在上面的步骤中最为重要的也是最为繁杂的就是增强器获取，而这一功能委托给了 getAdvisors()方法
+	 * 实现(this.advisorFactory.getAdvisors(factory))
+	 *
+	 */
 	@Override
 	@Nullable
 	public Advisor getAdvisor(Method candidateAdviceMethod, MetadataAwareAspectInstanceFactory aspectInstanceFactory,
 			int declarationOrderInAspect, String aspectName) {
 
+		//如果寻找了增强器不为空而且又配置了增强延迟初始化那需要在首位加入同步实例化增强器
 		validate(aspectInstanceFactory.getAspectMetadata().getAspectClass());
 
+		// 切点信息的获取
 		AspectJExpressionPointcut expressionPointcut = getPointcut(
 				candidateAdviceMethod, aspectInstanceFactory.getAspectMetadata().getAspectClass());
 		if (expressionPointcut == null) {
 			return null;
 		}
 
+		// 根据切点信息生成增强器
 		return new InstantiationModelAwarePointcutAdvisorImpl(expressionPointcut, candidateAdviceMethod,
 				this, aspectInstanceFactory, declarationOrderInAspect, aspectName);
 	}
 
+
+	/****
+	 * 切点信息的获取，所谓获取切点信息就是指定注解的表达式信息的获取，如@Before("test()")
+	 */
 	@Nullable
 	private AspectJExpressionPointcut getPointcut(Method candidateAdviceMethod, Class<?> candidateAspectClass) {
+		// 获取方法上的注解
 		AspectJAnnotation<?> aspectJAnnotation =
 				AbstractAspectJAdvisorFactory.findAspectJAnnotationOnMethod(candidateAdviceMethod);
+		// 声明为 Pointcut 的方法不处理
 		if (aspectJAnnotation == null) {
 			return null;
 		}
-
+		// 使用 AspectJExpressionPointcut 实例封装获取的信息
 		AspectJExpressionPointcut ajexp =
 				new AspectJExpressionPointcut(candidateAspectClass, new String[0], new Class<?>[0]);
+		// 提取得到的注解中的表达式如：
+		// @Pointcut("execution(* *.*test(..))")中的 execution(* *.*test(..))
 		ajexp.setExpression(aspectJAnnotation.getPointcutExpression());
 		if (this.beanFactory != null) {
 			ajexp.setBeanFactory(this.beanFactory);
@@ -218,6 +270,11 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 	}
 
 
+	/***
+	 *
+	 * 从函数中可以看到，Spring 根据不同的注解生成不同的增强器，例如，AtBefore 会对应 AspectJMethodBeforeAdvice，而 AspectMethodBeforeAdvice
+	 * 中完成了增强方法的逻辑，我们尝试分析下几个常用的增强器的实现
+	 */
 	@Override
 	@Nullable
 	public Advice getAdvice(Method candidateAdviceMethod, AspectJExpressionPointcut expressionPointcut,
@@ -245,7 +302,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 		}
 
 		AbstractAspectJAdvice springAdvice;
-
+		// 根据不同的注解类型封装不同的增强器
 		switch (aspectJAnnotation.getAnnotationType()) {
 			case AtBefore:
 				springAdvice = new AspectJMethodBeforeAdvice(
@@ -301,15 +358,20 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 	 * Synthetic advisor that instantiates the aspect.
 	 * Triggered by per-clause pointcut on non-singleton aspect.
 	 * The advice has no effect.
+	 * 增加同步实例化增强器
+	 * 如果寻找的增强不为空而且又配置了增强延迟初始化，那么就需要首位加入同步实例化增强器，同步实例化增强器 SyntheticInstantiationAdvisor 如下
+	 *
 	 */
 	@SuppressWarnings("serial")
 	protected static class SyntheticInstantiationAdvisor extends DefaultPointcutAdvisor {
 
 		public SyntheticInstantiationAdvisor(final MetadataAwareAspectInstanceFactory aif) {
 			super(aif.getAspectMetadata().getPerClausePointcut(), new MethodBeforeAdvice() {
+				// 目标方法调用，类似@before
 				@Override
 				public void before(Method method, Object[] args, @Nullable Object target) {
 					// Simply instantiate the aspect
+					// 简单化初始化 aspect
 					aif.getAspectInstance();
 				}
 			});

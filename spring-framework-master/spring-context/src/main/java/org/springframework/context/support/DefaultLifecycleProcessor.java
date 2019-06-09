@@ -111,6 +111,7 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 	 * SmartLifecycle will be stopped in the default phase 0. A bean
 	 * declared as dependent on another bean will be stopped before
 	 * the dependency bean regardless of the declared phase.
+	 * 启动所有的实现 Lifecycle接口的 bean
 	 */
 	@Override
 	public void stop() {

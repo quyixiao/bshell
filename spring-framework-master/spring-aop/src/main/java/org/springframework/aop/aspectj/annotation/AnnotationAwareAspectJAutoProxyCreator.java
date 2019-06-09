@@ -86,12 +86,39 @@ public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorA
 	}
 
 
+	/***
+	 *
+	 * 获取增强器
+	 * 由于我们分析的使用的是注解进行的 aop ,所在对于 findCandidateAdvisors 的实现其实是由于 AnnotaionAwareAspaceJAutoProxyCreator
+	 * 类来完成的，我们继续跟踪 AnnotationAwareAspectJAutoProxyCreator 的 findCandidateAdvisors 方法
+	 *
+	 *
+	 * AnnotationAwareAspectJAutoProxyCreator 间接继承了 AbstractAdvisorAutoProxyCreator
+	 * 在实现获得取增加的方法中除了保留父类获取配置文件中定义的增强外，同时添加了获取 bean 的注解增强的功能，那么其实现在正是由
+	 * this.aspectJAdvisorsBuilder.buildAspectJAdvisors() 来实现
+	 *
+	 * 真正研究代码之前读者可以尝试着想象一下解析思路，看看自己的实现与 Spring 中是否有差别呢，或者我们一改以前的方式，先来了解
+	 * 函数提供的大概功能框架，读者可以在头脑中尝试实现这些功能点，看看是否有思路
+	 *
+	 * 1.获取所有的 beanName，这一步骤中所有的beanFactory 中注册的 bean 都会提取出来
+	 * 2.遍历所有的 beanName,并找出声明 AspectJ 注解的类，进行进一步的处理
+	 * 3.对标记为 AspectJ 注解的类进行增强器提取
+	 * 4.将提取结果加入到缓存中
+	 *
+	 * 现在我们看看函数的实现，对 Spring中所有的类进行分析，提取 Advisor
+	 *
+	 *
+	 */
 	@Override
 	protected List<Advisor> findCandidateAdvisors() {
 		// Add all the Spring advisors found according to superclass rules.
+		// 当使用注解方式配置 AOP的时候，并不是丢弃了 XML的配置的支持
+		// 在这里调用父类方法加载配置文件中的 aop 声明
 		List<Advisor> advisors = super.findCandidateAdvisors();
 		// Build Advisors for all AspectJ aspects in the bean factory.
+		//
 		if (this.aspectJAdvisorsBuilder != null) {
+			//
 			advisors.addAll(this.aspectJAdvisorsBuilder.buildAspectJAdvisors());
 		}
 		return advisors;

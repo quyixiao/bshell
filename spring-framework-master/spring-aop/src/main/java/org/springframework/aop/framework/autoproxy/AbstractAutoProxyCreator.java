@@ -295,12 +295,21 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * Create a proxy with the configured interceptors if the bean is
 	 * identified as one to proxy by the subclass.
 	 * @see #getAdvicesAndAdvisorsForBean
+	 *
+	 *
+	 // 上文中讲解了通过自定义配置完成了对 AnnotationAwareAspectJAutoProxyCreator 类型的自动注册，对了么这个类到底做了什么工作来完成
+	// AOP 操作呢，首先我们看看 AnnotationAwareAspectJAutoProxyCreator 类的层次结构，如图7-1所示
+	// 在类的层级中，我们看到了 AnnotationAwareAspectJAutoProxyCreator 实现了 BeanPostProcessor接口，而实现了 BeanPostProcessor 后
+	//,当 Spring 加载这个 bean 的时候会实例化前调用 PostProcessoAfterInitialization方法，而我们对于 AOP 逻辑的分析也由此开始
+	//
 	 */
 	@Override
 	public Object postProcessAfterInitialization(@Nullable Object bean, String beanName) throws BeansException {
 		if (bean != null) {
+			// 根据给定的 bean 的 class 和 name 构建出个 key ，格式 ：beanClassName_beanName
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			if (!this.earlyProxyReferences.contains(cacheKey)) {
+				// 如果它适合被代理，则需要封装成指定的 bean
 				return wrapIfNecessary(bean, beanName, cacheKey);
 			}
 		}
@@ -335,23 +344,47 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @param beanName the name of the bean
 	 * @param cacheKey the cache key for metadata access
 	 * @return a proxy wrapping the bean, or the raw bean instance as-is
+	 * 函数中我们已经看到了代理的创建雏形，当然，真正开始之前还需要经过一些判断，如是否已经处理过需要跳过的 bean ，而真正的代理代码是从
+	 * getAdvicesAndAdvisorForBean 开始的
+	 * 创建代理主要包含了两个步骤，
+	 * 1.获取增强的方法或者增强器
+	 * 2.根据获取增强进行代理
+	 * 核心逻辑的时序图 7-2所示
+	 * proeprty-<java class >abstractAutoProxyCreator</java>
+	 * 1.postProcessAfterInittialization
+	 * 2.getCacheKey
+	 * 3.wrapIfNecessary
+	 * 4.getAdvicesAndAdvisorsForBean
+	 * 5.getAdvicesAndAdvisorsForBean
+	 * 6.createProxy
+	 * 7.createParxy
+	 * 8.wrapIfNecessary
+	 *
+	 * 虽然，看似简单的，但是每个步骤中都经历了大量复杂的逻辑，首先来看看获取增强的方法的实现逻辑
+	 *
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
+		//如果已经被加载过，处理过
 		if (StringUtils.hasLength(beanName) && this.targetSourcedBeans.contains(beanName)) {
 			return bean;
 		}
+		// 无需增强
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
 			return bean;
 		}
+		//给定 bean 类是否代表一个基础设施类，基础设施类不应该代理，或者配置了指定 bean，不需要自动代理
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);
 			return bean;
 		}
 
 		// Create proxy if we have advice.
+		// 如果存在增强方法则创建代理
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+		// 如果获得到了增强，则需要针对创建代理
 		if (specificInterceptors != DO_NOT_PROXY) {
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+			// 创建代理
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			this.proxyTypes.put(cacheKey, proxy.getClass());
@@ -440,6 +473,19 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * already pre-configured to access the bean
 	 * @return the AOP proxy for the bean
 	 * @see #buildAdvisors
+	 * 创建代理
+	 * 获取了所有对应的 bean 增强器后，便可以进行代理的创建了
+	 * 对于代理的创建及处理，Spring 委托给了 ProxyFactory 去处理，而在些函数中主要是对 ProxyFactory 的初始化操作，进而对真正的创建代理做准备
+	 * 这些初始化操作包括如下内容
+	 * 1.获取当前类中的属性
+	 * 2.添加代理接口
+	 * 3.封装 advisor 并加入到 proxyFactory 中
+	 * 4.设置要代理的类
+	 * 5.当然在 Spring 中还为子类提供了定制函数 customizeProxyFactory，子类可以在此函数中进行对 ProxyFactory 的进一步封装
+	 * 6.进行获取代理操作
+	 * 其中，封装 advisor 并加入到 ProxyFactory 中以及创建代理是两个相对的繁琐的过程，可以通过 ProxyFactory 提供的 addAdvisor
+	 * 方法直接将增强器置入代理创建工厂中，但是将拦截器封装为增强器还是需要一定的逻辑的
+	 *
 	 */
 	protected Object createProxy(Class<?> beanClass, @Nullable String beanName,
 			@Nullable Object[] specificInterceptors, TargetSource targetSource) {
@@ -449,22 +495,31 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		ProxyFactory proxyFactory = new ProxyFactory();
+		//获取当前类中的相关属性
 		proxyFactory.copyFrom(this);
 
+		//
 		if (!proxyFactory.isProxyTargetClass()) {
+			// 决定对于给定的 bean 是否应该使用 targetClass 而不是他的接口代理
+			// 检查 proxyTartClass 设置以及 preserveRargetClass 属性
 			if (shouldProxyTargetClass(beanClass, beanName)) {
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
+				//添加代理接口
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
 
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
+		// 加入增强器
 		proxyFactory.addAdvisors(advisors);
+		// 设置要代理的类
 		proxyFactory.setTargetSource(targetSource);
+		// 定制代理
 		customizeProxyFactory(proxyFactory);
-
+		// 用来控制代理工厂被配置之后，是否还允许修改通知
+		// 缺省值为 false（即在代理被配置之后，不允许修改代理的配置）
 		proxyFactory.setFrozen(this.freezeProxy);
 		if (advisorsPreFiltered()) {
 			proxyFactory.setPreFiltered(true);
@@ -511,10 +566,12 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 */
 	protected Advisor[] buildAdvisors(@Nullable String beanName, @Nullable Object[] specificInterceptors) {
 		// Handle prototypes correctly...
+		// 解析注册所有的 interceptorName
 		Advisor[] commonInterceptors = resolveInterceptorNames();
 
 		List<Object> allInterceptors = new ArrayList<>();
 		if (specificInterceptors != null) {
+			// 加入拦截器
 			allInterceptors.addAll(Arrays.asList(specificInterceptors));
 			if (commonInterceptors.length > 0) {
 				if (this.applyCommonInterceptorsFirst) {
@@ -534,6 +591,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 		Advisor[] advisors = new Advisor[allInterceptors.size()];
 		for (int i = 0; i < allInterceptors.size(); i++) {
+			// 拦截器进行封装转化为 advisor
 			advisors[i] = this.advisorAdapterRegistry.wrap(allInterceptors.get(i));
 		}
 		return advisors;

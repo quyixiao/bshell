@@ -201,6 +201,11 @@ public class AspectJProxyFactory extends ProxyCreatorSupport {
 	 * <p>Uses the given class loader (if necessary for proxy creation).
 	 * @param classLoader the class loader to create the proxy with
 	 * @return the new proxy
+	 *
+	 *
+	 * 由于 Spring 中涉及过多的拦截器，增强器，增强方法等方式来对逻辑进行增强，所以非常有必要统一封装成 Advisor 来进行代理的创建，完成
+	 * 了增强的封装过程，那么解析最重要的一步就是代理创建与获取了
+	 *
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getProxy(ClassLoader classLoader) {

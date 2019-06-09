@@ -79,6 +79,20 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 	 * <p>Creates a Spring Advisor for each AspectJ advice method.
 	 * @return the list of {@link org.springframework.aop.Advisor} beans
 	 * @see #isEligibleBean
+	 *
+	 * 真正研究代码之前读者可以尝试着想象一下解析思路，看看自己的实现与 Spring 中是否有差别呢，或者我们一改以前的方式，先来了解
+	 * 函数提供的大概功能框架，读者可以在头脑中尝试实现这些功能点，看看是否有思路
+	 *
+	 * 1.获取所有的 beanName，这一步骤中所有的beanFactory 中注册的 bean 都会提取出来
+	 * 2.遍历所有的 beanName,并找出声明 AspectJ 注解的类，进行进一步的处理
+	 * 3.对标记为 AspectJ 注解的类进行增强器提取
+	 * 4.将提取结果加入到缓存中
+	 *
+	 * 现在我们看看函数的实现，对 Spring中所有的类进行分析，提取 Advisor
+	 *
+	 *
+	 *
+	 *
 	 */
 	public List<Advisor> buildAspectJAdvisors() {
 		List<String> aspectNames = this.aspectBeanNames;
@@ -89,18 +103,23 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 				if (aspectNames == null) {
 					List<Advisor> advisors = new LinkedList<>();
 					aspectNames = new LinkedList<>();
+					//获取所有的beanName
 					String[] beanNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 							this.beanFactory, Object.class, true, false);
+					//循环所有的 beanName 找出对应的增强方法
 					for (String beanName : beanNames) {
+						// 不合法的 bean则略过，由子类定义规则，默认返回 true
 						if (!isEligibleBean(beanName)) {
 							continue;
 						}
 						// We must be careful not to instantiate beans eagerly as in this case they
 						// would be cached by the Spring container but would not have been weaved.
 						Class<?> beanType = this.beanFactory.getType(beanName);
+						// 获取对应的 bean 的类型
 						if (beanType == null) {
 							continue;
 						}
+						// 如果存在 Aspect 注解增强方法
 						if (this.advisorFactory.isAspect(beanType)) {
 							aspectNames.add(beanName);
 							AspectMetadata amd = new AspectMetadata(beanType, beanName);
@@ -138,6 +157,7 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 		if (aspectNames.isEmpty()) {
 			return Collections.emptyList();
 		}
+		// 记录在缓存中
 		List<Advisor> advisors = new LinkedList<>();
 		for (String aspectName : aspectNames) {
 			List<Advisor> cachedAdvisors = this.advisorsCache.get(aspectName);

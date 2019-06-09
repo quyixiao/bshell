@@ -58,6 +58,16 @@ public class AopNamespaceHandler extends NamespaceHandlerSupport {
 	 * Register the {@link BeanDefinitionParser BeanDefinitionParsers} for the
 	 * '{@code config}', '{@code spring-configured}', '{@code aspectj-autoproxy}'
 	 * and '{@code scoped-proxy}' tags.
+	 * 动态 AOP 自定义标签
+	 *
+	 *  之前讲过 Spring 中的自定义注解，如果声明了自定义的注解，那么就不一定会在程序中某个地方注册对应的解析器，我们搜索整个代码，尝试
+	 *  找到注册的地方，全局搜索后，我们发现了 AopNamespaceHandler 中对应的这样一函数
+	 *
+	 *  此处不再对 Spring中的自定义注解方式进行讨论，有兴趣的读者可以回顾之前的内容
+	 *  我们可以得知，解析配置文件的时候，一旦遇到，aspectj-autoproxy 注解时就会使用解析器 AspectJAutoProxyBeanDefinitionParser
+	 *  进行解析，那么我们看一看 AspectJAutoProxyBeanDenitionParser 的内部实现
+	 *
+	 *
 	 */
 	@Override
 	public void init() {

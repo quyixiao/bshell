@@ -707,6 +707,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		clearByTypeCache();
 	}
 
+
+	/***
+	 * 冻结所有的 bean 定义，说明注册 bean 定义将不被修改或进行任何进一步的处理
+	 */
 	@Override
 	public void freezeConfiguration() {
 		this.configurationFrozen = true;
@@ -718,7 +722,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return this.configurationFrozen;
 	}
 
-	/**
+	/**Ins
 	 * Considers all beans as eligible for metadata caching
 	 * if the factory's configuration has been marked as frozen.
 	 *
@@ -729,6 +733,15 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return (this.configurationFrozen || super.isBeanEligibleForMetadataCaching(beanName));
 	}
 
+
+	/****
+	 *
+	 * 初始化非延迟加载
+	 * ApplicatoinContext 实现默认行为就是在启动的时候将所有单例 bean 提前进行实例化，更前实例化的意味着作为初始化过程的一部分
+	 * ,ApplicationContext 实例创建并配置所有的单例 bean,通常情况下这是一件好事，因为这样的配置在的任何错误即刻被发现，否则的话
+	 * 可能要花第几个小时甚至是几天，而这个实例的过程就是在 finishBeanFactoryInitialization 中完成
+	 *
+	 */
 	@Override
 	public void preInstantiateSingletons() throws BeansException {
 		if (this.logger.isDebugEnabled()) {
