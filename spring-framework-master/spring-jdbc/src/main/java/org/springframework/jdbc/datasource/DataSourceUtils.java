@@ -96,6 +96,9 @@ public abstract class DataSourceUtils {
 	 * @return a JDBC Connection from the given DataSource
 	 * @throws SQLException if thrown by JDBC methods
 	 * @see #doReleaseConnection
+	 *
+	 *  在数据库方面，Spring 主要考虑到了关于事物方面的处理，基于事务处理的特殊性，Spring 需要保证线程中的数据库操作都是使用同一个
+	 *  事务连接
 	 */
 	public static Connection doGetConnection(DataSource dataSource) throws SQLException {
 		Assert.notNull(dataSource, "No DataSource specified");
@@ -114,10 +117,12 @@ public abstract class DataSourceUtils {
 		logger.debug("Fetching JDBC Connection from DataSource");
 		Connection con = fetchConnection(dataSource);
 
+		//当线程支持同步
 		if (TransactionSynchronizationManager.isSynchronizationActive()) {
 			logger.debug("Registering transaction synchronization for JDBC Connection");
 			// Use same Connection for further JDBC actions within the transaction.
 			// Thread-bound object will get removed by synchronization at transaction completion.
+			// 在事务中使用同一数据库连接
 			ConnectionHolder holderToUse = conHolder;
 			if (holderToUse == null) {
 				holderToUse = new ConnectionHolder(con);
@@ -125,6 +130,7 @@ public abstract class DataSourceUtils {
 			else {
 				holderToUse.setConnection(con);
 			}
+			// 记录数据库连接
 			holderToUse.requested();
 			TransactionSynchronizationManager.registerSynchronization(
 					new ConnectionSynchronization(holderToUse, dataSource));
@@ -330,6 +336,8 @@ public abstract class DataSourceUtils {
 			return;
 		}
 		if (dataSource != null) {
+			// 当前线程存在事务的情况下说明存在共用的数据库连接的直接使用，ConnectionHolder 中的 released 方法进行连接数减一而不是
+			// 真正的直接释放连接
 			ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
 			if (conHolder != null && connectionEquals(conHolder, con)) {
 				// It's the transactional Connection: Don't close it.

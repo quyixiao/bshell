@@ -118,9 +118,20 @@ import org.springframework.util.StringUtils;
  *   Statement statementMysql = connectionMYSQL.createstatement();
  * 5.调用 Statement 对象相关的方法执行相应的 SQL语句，通过 execuUpdate()方法来对数据更新，包括插入和删除等操作，例如向 staff 表中
  * 插入一条数据的代码
+ * 	 statement.excuteUpdate("insert into staff (name,age,sex,address,depart,worklen,age) VAlue ('TOM1',232,'M','china'
+ * 	 ,'personl','3','300')" );
+ * 	 通过调用 Statement 对象的 executeQuery()方法进行数据的查询，而查询的结果会得到 ResultSet 对象,ResultSet 表示执行查询数据库
+ * 	 后返回的数据集合，
+ * 6.关闭数据库连接，使用完数据库者不需要访问数据库时，通过 Connection 的 close() 方法及时关闭数据连接
  *
  *
  *
+ *
+ * 参考 tiny_Spring
+ *
+ *
+ * 我们以上面的例子为基础开始分析 Spring 中对 JDBC 的支持，首先寻找整个功能的切入点，在示例中我们可以看到所有的数据库操作都封装在
+ * UserServiceImpl 中，而 UserServiceImpl
  *
  *
  *
@@ -612,6 +623,18 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	// Methods dealing with prepared statements
 	//-------------------------------------------------------------------------
 
+	/****
+	 * 基础方法 execute
+	 * execute 作为数据库的核心入口，将大多数的数据库操作相同的步骤统一封装，而这个性化的操作使用参数 PreparedStatementCallback 进行操作
+	 *
+	 *
+	 * 下面的方法是对操作作了封装
+	 *
+	 *
+	 *
+	 * 调用回调函数
+	 * 	处理一些通过调用方法外的修改化处理，也就是说 PreparedStatementCallback 类型的参数 doInPrepareStatement 方法的调用
+	 */
 	@Override
 	@Nullable
 	public <T> T execute(PreparedStatementCreator psc, PreparedStatementCallback<T> action)
@@ -623,25 +646,41 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			String sql = getSql(psc);
 			logger.debug("Executing prepared SQL statement" + (sql != null ? " [" + sql + "]" : ""));
 		}
-		//获取数据库连接
+		//获取数据库连接，获取数据库连接也并非直接使用 dataSource.getConnection()方法那么简单，同样的考虑了诸多的情况
 		Connection con = DataSourceUtils.getConnection(obtainDataSource());
 		PreparedStatement ps = null;
 		try {
 			ps = psc.createPreparedStatement(con);
+			// 应用用户设定的输入参数
 			applyStatementSettings(ps);
 			T result = action.doInPreparedStatement(ps);
+
+			/**
+			 * 这里用到了一个类 SQLWarning ，SQLWarning 提供关于数据库访问警告信息异常，这些警告直接链接导致报告警告的方法所在的对象，警告
+			 * 可以从 Connection,Statement,和 ResultSet 对象中获得，试图在已经关闭的连接上获取警告将导致抛出异常，类似的，试图在已经关闭的语句
+			 * 上或已经关闭的结果集上获取警告也将导致抛出异常，注意，关闭语句时还会关闭它可能生成的结果集
+			 *
+			 * 很多人不是很理解什么情况下会产生警告而不是异常，这里给读者提示个最常见的警告 DataTruncation: DataTruncation 直接继承 SQLWarning
+			 * ，由于某种原因意外的截断数据值时会以 DataTruncation 警告形式报告异常
+			 *
+			 * 对于警告的处理方式并不是直接抛出异常，出现警告很可能会出现数据错误，但是，并不一定会影响程序执行，所以用户可以自己设置处理警告的方式
+			 * ，如默认的是忽略警告，当出现警告时只打印警告日志，而另一种方式只直接抛出异常
+			 */
 			handleWarnings(ps);
 			return result;
 		}
 		catch (SQLException ex) {
 			// Release Connection early, to avoid potential connection pool deadlock
 			// in the case when the exception translator hasn't been initialized yet.
+			// 释放数据库连接避免当异常转换没有被初始化的时候出现潜在的连接池死锁
 			if (psc instanceof ParameterDisposer) {
 				((ParameterDisposer) psc).cleanupParameters();
 			}
 			String sql = getSql(psc);
 			JdbcUtils.closeStatement(ps);
 			ps = null;
+
+
 			DataSourceUtils.releaseConnection(con, getDataSource());
 			con = null;
 			throw translateException("PreparedStatementCallback", sql, ex);
@@ -651,6 +690,12 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 				((ParameterDisposer) psc).cleanupParameters();
 			}
 			JdbcUtils.closeStatement(ps);
+
+
+			// 资源释放
+			// 数据库中的连接释放并不是直接调用了 ConnectionAPI 中的 close方法，考虑到存在事务的情况，如果当前程序存在事务，那么说明
+			// 当前线程中存在共用的数据库连接，这种情况下直接使用 ConnectionHolder 中的 released 方法进行连接数减一，而不是真正的释放
+			// 连接
 			DataSourceUtils.releaseConnection(con, getDataSource());
 		}
 	}
@@ -869,6 +914,14 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		return result(query(sql, args, new SqlRowSetResultSetExtractor()));
 	}
 
+
+	/***
+	 *
+	 * 如果读者了解过其他的操作方法，可以知道 execute 方法是最基础的操作，而其他操作比如 update ,query ，等方法则是传入不同的
+	 * PrepareStatementCallback 参数来执行不同的逻辑
+	 *
+	 *
+	 */
 	protected int update(final PreparedStatementCreator psc, @Nullable final PreparedStatementSetter pss)
 			throws DataAccessException {
 
@@ -877,6 +930,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		return updateCount(execute(psc, ps -> {
 			try {
 				if (pss != null) {
+					// 设置 PrepareStatement 所需要的全部参数
 					pss.setValues(ps);
 				}
 				int rows = ps.executeUpdate();
@@ -932,6 +986,15 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		return update(new SimplePreparedStatementCreator(sql), pss);
 	}
 
+
+	/***
+	 *  对于保存一个实体类来讲，在操作中我们只需要提供 SQL 语句以及语句中对应的参数和参数类型，其他的操作便可以由 Spring 来完成了。
+	 *  这些工作到底包括什么呢，进入 jdbcTemplate 方法中的 update 方法
+	 *
+	 *  进入 update 方法后，Spring 并不是急于进入核心处理操作，而是先做中准备工作，使用 ArgTypePrepareStatementSetter 对参数
+	 *  类型进行封装，同时又使用 SimplePreparedStatementCreator 对 SQL 语句进行封装，至于为什么这么封装呢，暂且留下悬念
+	 *
+	 */
 	@Override
 	public int update(String sql, Object[] args, int[] argTypes) throws DataAccessException {
 		return update(sql, newArgTypePreparedStatementSetter(args, argTypes));
@@ -1345,14 +1408,21 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	 * @see #setMaxRows
 	 * @see #setQueryTimeout
 	 * @see org.springframework.jdbc.datasource.DataSourceUtils#applyTransactionTimeout
+	 * 应用用户设定的输入参数
+	 *
 	 */
 	protected void applyStatementSettings(Statement stmt) throws SQLException {
 		int fetchSize = getFetchSize();
 		if (fetchSize != -1) {
+			// setFetchSize 最主要是为了减少网络交互的次数设计的，访问 ResultSet时，如果它每次只从服务器上读取一行数据，则会产生大量
+			// 的开销，setFetchSize 的意思是当 调用 rs.next时，ResultSet 会一次性从服务器上取得多少数据回来， 这样在下次 rs.next时
+			// 它可以直接从内存中获取数据而不需要网络交互，提高效率，这个设置可能会被某些 JDBC 驱动忽略，而且设置过大也会造成内存上升
+
 			stmt.setFetchSize(fetchSize);
 		}
 		int maxRows = getMaxRows();
 		if (maxRows != -1) {
+			// setMaxRows 将此 Statement 对象生成的所有的 ResultSet 对象可以包含最大行数的限制设置为给定数
 			stmt.setMaxRows(maxRows);
 		}
 		DataSourceUtils.applyTimeout(stmt, getDataSource(), getQueryTimeout());
@@ -1387,10 +1457,25 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	 * @param stmt the current JDBC statement
 	 * @throws SQLWarningException if not ignoring warnings
 	 * @see org.springframework.jdbc.SQLWarningException
+	 *
+	 * 这里用到了一个类 SQLWarning ，SQLWarning 提供关于数据库访问警告信息异常，这些警告直接链接导致报告警告的方法所在的对象，警告
+	 * 可以从 Connection,Statement,和 ResultSet 对象中获得，试图在已经关闭的连接上获取警告将导致抛出异常，类似的，试图在已经关闭的语句
+	 * 上或已经关闭的结果集上获取警告也将导致抛出异常，注意，关闭语句时还会关闭它可能生成的结果集
+	 *
+	 * 很多人不是很理解什么情况下会产生警告而不是异常，这里给读者提示个最常见的警告 DataTruncation: DataTruncation 直接继承 SQLWarning
+	 * ，由于某种原因意外的截断数据值时会以 DataTruncation 警告形式报告异常
+	 *
+	 * 对于警告的处理方式并不是直接抛出异常，出现警告很可能会出现数据错误，但是，并不一定会影响程序执行，所以用户可以自己设置处理警告的方式
+	 * ，如默认的是忽略警告，当出现警告时只打印警告日志，而另一种方式只直接抛出异常
+	 *
+	 *
+	 *
 	 */
 	protected void handleWarnings(Statement stmt) throws SQLException {
+		// 当设置为忽略警告时只尝试打印日志
 		if (isIgnoreWarnings()) {
 			if (logger.isDebugEnabled()) {
+				// 如果日志开户的情况下打印日志
 				SQLWarning warningToLog = stmt.getWarnings();
 				while (warningToLog != null) {
 					logger.debug("SQLWarning ignored: SQL state '" + warningToLog.getSQLState() + "', error code '" +
