@@ -155,6 +155,17 @@ class CglibAopProxy implements AopProxy, Serializable {
 		return getProxy(null);
 	}
 
+
+	/****
+	 *
+	 * 完成 CGLIB 代理 的类是委托给 Cglib2AopProxy 类去实现，我们进入了这个类一探究竟，
+	 * 按照前面的提供的示例，我们容易判断出来，Cglib2AOPProxy 的入口应该是在 getProxy，也就是说在
+	 * cblib2AopProxy 类的 getProxy 方法中实现了 Enhancer 的创建及接口封装
+	 *
+	 *
+	 *
+	 *
+	 */
 	@Override
 	public Object getProxy(@Nullable ClassLoader classLoader) {
 		if (logger.isDebugEnabled()) {
@@ -175,9 +186,11 @@ class CglibAopProxy implements AopProxy, Serializable {
 			}
 
 			// Validate the class, writing log messages as necessary.
+			// 验证 class
 			validateClassIfNecessary(proxySuperClass, classLoader);
 
 			// Configure CGLIB Enhancer...
+			// 创建及配置 Enhancer
 			Enhancer enhancer = createEnhancer();
 			if (classLoader != null) {
 				enhancer.setClassLoader(classLoader);
@@ -191,6 +204,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
 			enhancer.setStrategy(new ClassLoaderAwareUndeclaredThrowableStrategy(classLoader));
 
+			// 设置拦截器
 			Callback[] callbacks = getCallbacks(rootClass);
 			Class<?>[] types = new Class<?>[callbacks.length];
 			for (int x = 0; x < types.length; x++) {
@@ -220,8 +234,8 @@ class CglibAopProxy implements AopProxy, Serializable {
 		enhancer.setInterceptDuringConstruction(false);
 		enhancer.setCallbacks(callbacks);
 		return (this.constructorArgs != null && this.constructorArgTypes != null ?
-				enhancer.create(this.constructorArgTypes, this.constructorArgs) :
-				enhancer.create());
+				enhancer.create(this.constructorArgTypes, this.constructorArgs) :			// 生成代理类以及创建代理
+				enhancer.create());								//生成代理类
 	}
 
 	/**
@@ -279,13 +293,23 @@ class CglibAopProxy implements AopProxy, Serializable {
 		}
 	}
 
+	// 以上的函数完整的阐述了一个创建 Spring 中的 Enhancer 的过程，读者要以参考 Enhandcer 的文档，查看每个步骤的含义，这里最重要的就是
+	// 通过 getCallbacks 方法设置拦截器链
+	// 在 getCallback 中 Spring 考虑到了很多情况，但是对于我们来说，只需要理解最常用的就可以了，比如将 advised 属性封装在 DynamickAdvisedInterceptor
+	// 并加入到 callbacks 中，那么做的目的是什么呢，如何调用呢，在前面的示例中，我们了解到了 CBLIB 对于中对于方法的拦截是通过将自定义的
+	// 拦截器（实现 MethodInterceptor接口）加入 Callback 中并调用代理直接激活拦截器中的 intercept 方法来实现，那么在 getCallBack 中正
+	// 是这样的一个目的，DynamicAdvisedInterceptor 继承自MethodInterceptor，加入 Callback 中后，在再次调用代理时会以直接调用 DynamicAdvisedInterceptor
+	// 中的 intercept方法，由此推断，对于 CGLIB 方式实现的代理 ，其核心逻辑必然在 DynamicAdvisedInterceptor 中的 intercept 中
+
 	private Callback[] getCallbacks(Class<?> rootClass) throws Exception {
 		// Parameters used for optimization choices...
+		// 对于 expose-proxy 属性的处理
 		boolean exposeProxy = this.advised.isExposeProxy();
 		boolean isFrozen = this.advised.isFrozen();
 		boolean isStatic = this.advised.getTargetSource().isStatic();
 
 		// Choose an "aop" interceptor (used for AOP calls).
+		// 将拦截器封装在 DynamicAdvisedInterceptor 中
 		Callback aopInterceptor = new DynamicAdvisedInterceptor(this.advised);
 
 		// Choose a "straight to target" interceptor. (used for calls that are
@@ -308,6 +332,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 				new StaticDispatcher(this.advised.getTargetSource().getTarget()) : new SerializableNoOp();
 
 		Callback[] mainCallbacks = new Callback[] {
+				// 将拦截器链加入到 Callback 中
 				aopInterceptor,  // for normal advice
 				targetInterceptor,  // invoke target without considering advice, if optimized
 				new SerializableNoOp(),  // no override for methods mapped to this
@@ -647,6 +672,26 @@ class CglibAopProxy implements AopProxy, Serializable {
 	/**
 	 * General purpose AOP callback. Used when the target is dynamic or when the
 	 * proxy is not frozen.
+	 * 上述的实现是 JDK 方式实现代理的 invoke 方法大同小异，都是先构造链，然后封装此链进行串联调用，稍有些区别的就是 JDK 中直接构造
+	 * ReflectiveMethodInvocation，而在 cglib 中使用 CblibMethodInvocation，CblibMethodInvocation 继承自 ReflectiveMethodInvocation
+	 * 但是 proceed 方法并没有重写
+	 *
+	 *
+	 *
+	 *
+	 * 加载织入 Load-Time Weaving ，LTW 指的是在虚伪机载入字节码文件的时候动态织入AspectJ切面，Spring 框架的值添加为 AspectJLTW 在
+	 * 动态织入的过程中提供了更加细粒度的控制，使用 Java(5+)的代理能使用一个叫 "Vanilla" 的 AspectJ LTW ，这需要在启动 JVM 的时候
+	 * 将某个 JVM参数设置为开，这种 JVM范围的设置在一些情况下或许不错，但是通常情况下显得有些粗山颗粒，而用 Spring 的 LTw 能让你在 per-ClassLoader
+	 * 的基础上打开 LTW，这显然更加细粒度并且对 单个 JVM 多应用，的环境更具备意义，例如在一个典型应用服务器环境中，另外在某些环境中，这能让你
+	 * 使用 LTW,而不对应用服务器的启动脚本做任何改动，不然则需要添加-javaagent:path/to/aspectjweaver.jar或者 以下将提及的
+	 * -javaagent:path/to/spring-agent.jar
+	 * 开发人员只需要简单的修改应用上下文或其中的几个上下文就能使用 LTW,而不需要依靠那些管理者部署配置，比如启动脚本的系统管理员。
+	 *
+	 *
+	 *
+	 * 我们还是以前的 AOP 示例为基础，如果想从动态代理的方式改成静态代理的方式需要做如下改动
+	 * 1.Spring全局配置文件的修改，加入 LWT 开关
+	 *
 	 */
 	private static class DynamicAdvisedInterceptor implements MethodInterceptor, Serializable {
 
@@ -672,6 +717,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 				// Get as late as possible to minimize the time we "own" the target, in case it comes from a pool...
 				target = targetSource.getTarget();
 				Class<?> targetClass = (target != null ? target.getClass() : null);
+				// 设置拦截器链
 				List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 				Object retVal;
 				// Check whether we only have one InvokerInterceptor: that is,
@@ -682,12 +728,15 @@ class CglibAopProxy implements AopProxy, Serializable {
 					// it does nothing but a reflective operation on the target, and no hot
 					// swapping or fancy proxying.
 					Object[] argsToUse = AopProxyUtils.adaptArgumentsIfNecessary(method, args);
+					// 如果拦截器链路为空，直接激活原来方法
 					retVal = methodProxy.invoke(target, argsToUse);
 				}
 				else {
 					// We need to create a method invocation...
+					//进入链
 					retVal = new CglibMethodInvocation(proxy, target, method, args, targetClass, chain, methodProxy).proceed();
 				}
+				//
 				retVal = processReturnType(proxy, target, method, retVal);
 				return retVal;
 			}

@@ -30,6 +30,15 @@ import org.springframework.context.annotation.ComponentScanBeanDefinitionParser;
  */
 public class ContextNamespaceHandler extends NamespaceHandlerSupport {
 
+
+	/***
+	 * 自定义标签
+	 * 在 Spring 中如果需要使用 AspectJ 的功能，首先要做的第一步就是配置文件中加入配置
+	 * <context:load-time-weaver/> 我们根据之前的介绍的自定义的命名空间的知识便可以推断，引用 AspectJ 的入口便是这里，可以通过查找
+	 * load-time-weaver 来找到对应的自定义的命名处理类
+	 * 我们找到了 ContextNamespaceHandler,在其中有这样的一段函数
+	 *
+	 */
 	@Override
 	public void init() {
 		registerBeanDefinitionParser("property-placeholder", new PropertyPlaceholderBeanDefinitionParser());

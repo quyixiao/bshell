@@ -90,6 +90,11 @@ public class LoadTimeWeaverAwareProcessor implements BeanPostProcessor, BeanFact
 	}
 
 
+	/****
+	 *
+	 * 织入
+	 * 当我们完成了所有的 AspectJ 的准备工作后便可以进行织入
+	 */
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 		if (bean instanceof LoadTimeWeaverAware) {

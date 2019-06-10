@@ -755,7 +755,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	// 增加 AspectJ 的支持，会在第7章中进行详细的讲解
 	// 将相关的环境变量及属性注册以单例的模式注册
 	// 可以读者还是不是很理解每个步骤的具体含义，接下来我们会对各个步骤进行详细的分析
-
+	// 在 AbstractApplicationContext 中的 prepareBeanFactory 函数是在容器初始化的时候调用的，也就是说注册了 LoadTimeWeaverAwareProcessor
+	// 才会激活 AspectJ 的功能
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		// Tell the internal bean factory to use the context's class loader etc.
 		//设置 beanFactory 的 ClassLoader 为当前 context 的 classLoader
@@ -800,6 +801,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
+		// 增加对 AspectJ 的支持
 		if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
 			beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
 			// Set a temporary ClassLoader for type matching.
