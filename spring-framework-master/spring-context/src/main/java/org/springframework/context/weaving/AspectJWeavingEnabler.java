@@ -69,6 +69,11 @@ public class AspectJWeavingEnabler
 		return HIGHEST_PRECEDENCE;
 	}
 
+
+	/*****
+	 *
+	 *
+	 */
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 		enableAspectJWeaving(this.loadTimeWeaver, this.beanClassLoader);
@@ -79,11 +84,14 @@ public class AspectJWeavingEnabler
 	 * Enable AspectJ weaving with the given {@link LoadTimeWeaver}.
 	 * @param weaverToUse the LoadTimeWeaver to apply to (or {@code null} for a default weaver)
 	 * @param beanClassLoader the class loader to create a default weaver for (if necessary)
+	 *
 	 */
+	//
 	public static void enableAspectJWeaving(
 			@Nullable LoadTimeWeaver weaverToUse, @Nullable ClassLoader beanClassLoader) {
 
 		if (weaverToUse == null) {
+			// 此时已经被初始化 DefaultContextLoadTimeWeaver
 			if (InstrumentationLoadTimeWeaver.isInstrumentationAvailable()) {
 				weaverToUse = new InstrumentationLoadTimeWeaver(beanClassLoader);
 			}
@@ -91,6 +99,7 @@ public class AspectJWeavingEnabler
 				throw new IllegalStateException("No LoadTimeWeaver available");
 			}
 		}
+		//使用 DefaultContextLoadTimeWeaver 类型的 bean 中的 loadTimeWeaver 属性注册转换器
 		weaverToUse.addTransformer(
 				new AspectJClassBypassingClassFileTransformer(new ClassPreProcessorAgentAdapter()));
 	}
@@ -100,6 +109,8 @@ public class AspectJWeavingEnabler
 	 * ClassFileTransformer decorator that suppresses processing of AspectJ
 	 * classes in order to avoid potential LinkageErrors.
 	 * @see org.springframework.context.annotation.LoadTimeWeavingConfiguration
+	 * AspectJClassBypassingClassFileTransformer 的作用仅仅是告诉 AspectJ 以 org.aspectj 开头的或者 org/aspectj 开头的类进行处理
+	 *
 	 */
 	private static class AspectJClassBypassingClassFileTransformer implements ClassFileTransformer {
 
@@ -116,6 +127,7 @@ public class AspectJWeavingEnabler
 			if (className.startsWith("org.aspectj") || className.startsWith("org/aspectj")) {
 				return classfileBuffer;
 			}
+			// 委托给 AspectJ 代理继续处理
 			return this.delegate.transform(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
 		}
 	}

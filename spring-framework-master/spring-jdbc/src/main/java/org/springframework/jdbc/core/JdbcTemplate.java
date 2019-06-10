@@ -97,6 +97,35 @@ import org.springframework.util.StringUtils;
  * @see RowCallbackHandler
  * @see RowMapper
  * @see org.springframework.jdbc.support.SQLExceptionTranslator
+ *
+ * JDBC （java Data Base Connnectivity ，java 数据库连接） 是一种用于执行 SQL 语句的 Java API ，可以为多种关系数据库统一访问，它
+ * 由一组用 Java 语言编写的类和接口组成，JDBC 为数据库开发人员提供了一个标准的 API,据此可以构建更高级的工具接口，使数据库开发人员能够
+ * 用纯 Java API 编写数据库应用程序，并且可以跨平台运行，并且不接受数据库供应商的限制。
+ * 		JDBC 连接数据库的流程及其原理如下
+ * 	JDBC 连接数据库的流程及其原理如下
+ * 	1.在开发程序中加载指定的驱动程序，接下来的实验中，使用的数据库是 MySql，所需要去下载 MySql 支持 JDBC 的驱动程序，接下来的实验中
+ * 	，使用数据库是 MYsql,
+ * 	2.在 Java 程序中加载驱动程序，在 Java 程序中，可以通过"Class.forName("指定数据库驱动程序")"的方式来加载添加到开发环境中的驱动程序
+ * 	，例如加载 MySql 的数据库驱动程序，的代码为 Class.forName("com.mysql.jdbc,Driver")
+ * 	3.创建数据库连接对象，通过 DriverManager 类创建数据库连接对象connection ，DriverManager 类作用于 Java 程序和 JDBC 驱动程序之间
+ * 	，用于检查所有的加载驱动程序是否可以建立连接，然后通过的 getConnection 方法根据数据库的 URL，用户名和密码创建一个 JDBC Connection 对象
+ * 	例如 Connection connection = DriverManager.getConnection("连接数据库的 url","用户名","密码"); URL = 协义名+ IP 地址（域名）
+ * 	+ 端口 + 数据库名称 ; 用户名和密码是指登录数据库的用户名+密码，具体示例 创建 MySQL 的数据库连接代码如下
+ *	Connection connectionMysql = DriverManager.getConnection("jdbc:mysql//localhost:3306/myuser","root","root");
+ *
+ * 4.创建 Statement 对象，Statement 类主要是用于执行静态 SQL 语句并返回它所生成结果对象，通过 Connection对象的 createStagement();
+ * 方法可以创建一个 Stagement对象，例如 ： Statement statement = connection.createStatement(); 具体的示例 创建 Statement 对象代码如下
+ *   Statement statementMysql = connectionMYSQL.createstatement();
+ * 5.调用 Statement 对象相关的方法执行相应的 SQL语句，通过 execuUpdate()方法来对数据更新，包括插入和删除等操作，例如向 staff 表中
+ * 插入一条数据的代码
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 
@@ -594,7 +623,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			String sql = getSql(psc);
 			logger.debug("Executing prepared SQL statement" + (sql != null ? " [" + sql + "]" : ""));
 		}
-
+		//获取数据库连接
 		Connection con = DataSourceUtils.getConnection(obtainDataSource());
 		PreparedStatement ps = null;
 		try {

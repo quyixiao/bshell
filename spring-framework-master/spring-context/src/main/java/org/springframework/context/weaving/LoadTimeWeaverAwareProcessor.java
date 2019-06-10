@@ -94,6 +94,33 @@ public class LoadTimeWeaverAwareProcessor implements BeanPostProcessor, BeanFact
 	 *
 	 * 织入
 	 * 当我们完成了所有的 AspectJ 的准备工作后便可以进行织入
+	 * 当我们完成了所有的 AspectJ 的准备工作后便可以进行织入分析了，首先还是从 LoadTimeWeaverAvareProcessor 开始.
+	 * LoadTimeWeaverAwareProcessor 实现 beanPostProcessor方法，对于 beanPostProcessor 接口来讲，postProcessBeforeInittialization
+	 * 与 PostProcessAfterInitialization 有着其特殊意义，也就是说在所有的了 bean 初始化之前与之后都会分别调用对应的庐江，那么在
+	 * LoadTimeWeaverAwareProcessor 中的 postProcessBeforeInitialization 函数中完成了什么样的逻辑呢，
+	 *
+	 * 我们综合之前讲解所有的信息，将所有的相关信息串联在一起来分析这个函数
+	 * 在 LoadTimeWeaverAvareProcessor 中的 postProcessBeforeInitialization 函数中，因为开始判断注定这个后处理器只对 LoadTimeWeaverAware
+	 * 类型的 bean 起作用，而纵观所有的 bean 的实现，LoadTimeWeaver 接口类只有 AspectJWeavingEnabler
+	 *
+	 * 当在 Spring 中调用 AspectJWeavingEnabler时，this.loadTimeWeaver，尚未被初始化，那么会直接调用 beanFactory.getBean 方法
+	 * 获得对应的 beanLoadTimeWeaver 属性中，当然 AspectJWeavingEnabler 同样的实现了 BeanClassLoaderWare 以及 Ordered接口，实现
+	 * BeanClassLoaderAware 接口保证了在 bean 初始化的时候调用，AbstractAutoWireCapableBeanFactory的 invokeAwareMethods 的时候
+	 * 将 beanClassLoader 赋值给当前类，而实现 Ordered 接口，实现 BeanClassLoaderAware 接口保证在 bean 初始化的时候调用 AbstractAutowireCapableBeanFactory
+	 * 的 invokeAwareMethods 的时候，将 beanClassLoader 赋值给当前类，而实现 Ordered 接口则保证在实例化bean 的时候当前 bean 会被
+	 * beanClassLoader 赋值给当前类，而实现了 Ordered 接口则保证了实例化 bean 时，当前 bean 会被最先初始化。
+	 * 		而 DefaultContextLoadTimeWeaver 类又同时实现了，LoadTimeWeaver，BeanClassLoaderAware 以及 DisposableBean ，其中
+	 * DisposableBean 接口保证在 bean 销毁时会调用 destory 进行 bean 的清理，而 BeanClassLoaderAware 接口则保证在 bean 的初始化
+	 * 的调用，AbstractAutowireCapableBeanFactory 的 invokeAwareMethods 时调用 setBeanClassLoader 方法
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
