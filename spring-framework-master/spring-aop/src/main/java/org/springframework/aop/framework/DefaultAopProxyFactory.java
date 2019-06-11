@@ -74,6 +74,8 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 	 *
 	 *
 	 *
+	 *
+	 *
 	 */
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {

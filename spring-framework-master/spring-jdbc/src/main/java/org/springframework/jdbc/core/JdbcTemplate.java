@@ -717,6 +717,17 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	 * @param rse object that will extract results.
 	 * @return an arbitrary result object, as returned by the ResultSetExtractor
 	 * @throws DataAccessException if there is any problem
+	 *
+	 *
+	 *
+	 *  其中用于真正的执行 SQL 的 ps.executeUpdate 没有太多的需要讲解的，因为我们平时在直接使用 JDBC 方式进行调用的时候会经常使用此
+	 *  方法，但是对于设置输入参数的函数 pss.setValues(ps)，我们有必要去探究一下，有没有分析源码之前，我们至少可以知道其功能，不妨再
+	 *  回顾下 Spring 中使用 SQL 执行的过程，直接使用
+	 *
+	 *  jdbcTemplate.update("insert into user(name,age,sex) value(?,?,?) ",new Object[]{user.getName(),user.getSex(),
+	 *  new int[]{Types.VARCHAR,TYPES.INTEGER,Types.VARCHAR}})
+	 *
+	 *
 	 */
 	@Nullable
 	public <T> T query(
@@ -733,6 +744,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 				ResultSet rs = null;
 				try {
 					if (pss != null) {
+						// 设置 PrepareStatement 所需全部参数
 						pss.setValues(ps);
 					}
 					rs = ps.executeQuery();
