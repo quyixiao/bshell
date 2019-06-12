@@ -461,6 +461,8 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Executing SQL query [" + sql + "]");
 		}
+		// 之前的 query 方法最大的不同是少了参数及参数类型的传递，自然也少了 PreparedStatementSetter 类型的封装，既然少了
+		// PreparedStatementSetter 类型传入，调用的 execute 方法自然也会有所改变了
 		class QueryStatementCallback implements StatementCallback<T>, SqlProvider {
 			@Override
 			@Nullable
@@ -747,7 +749,13 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 						// 设置 PrepareStatement 所需全部参数
 						pss.setValues(ps);
 					}
+					//可以看到整个套路与 update 差不多，只不过在回调类 PrepareStatementCallback 的实现中使用的是 ps.executeQuery()
+					// 执行查询操作，而且返回方法也做了一些额外的处理
 					rs = ps.executeQuery();
+					// rse.extractData(rsToUser) 方法负责将结果进行封装并转换至 POJO ，rse 当前代表的类为 RowMapperResultExtractor
+					// 而构造 RowMapperResultSetExtractor ，而构造 RowMapperResultSetExtractor的时候，我们将又将自定义的 rowMapper
+					// 设置进行，调用代码如下
+
 					return rse.extractData(rs);
 				}
 				finally {
@@ -772,6 +780,11 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		return query(new SimplePreparedStatementCreator(sql), pss, rse);
 	}
 
+
+
+	/***
+	 * 跟踪 jdbcTemplate 中的 query 方法
+	 */
 	@Override
 	@Nullable
 	public <T> T query(String sql, Object[] args, int[] argTypes, ResultSetExtractor<T> rse) throws DataAccessException {
@@ -800,6 +813,11 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		query(sql, pss, new RowCallbackHandlerResultSetExtractor(rch));
 	}
 
+
+
+	/***
+	 * 跟踪 jdbcTemplate 中的 query 方法
+	 */
 	@Override
 	public void query(String sql, Object[] args, int[] argTypes, RowCallbackHandler rch) throws DataAccessException {
 		query(sql, newArgTypePreparedStatementSetter(args, argTypes), rch);
@@ -829,6 +847,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	public <T> List<T> query(String sql, Object[] args, int[] argTypes, RowMapper<T> rowMapper) throws DataAccessException {
 		return result(query(sql, args, argTypes, new RowMapperResultSetExtractor<>(rowMapper)));
 	}
+
 
 	@Override
 	public <T> List<T> query(String sql, @Nullable Object[] args, RowMapper<T> rowMapper) throws DataAccessException {

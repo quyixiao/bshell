@@ -85,6 +85,15 @@ public class RowMapperResultSetExtractor<T> implements ResultSetExtractor<List<T
 	}
 
 
+	/***
+	 * 上面的代码中并没有什么复杂的逻辑，只是返回结果遍历并以此使用 rowMapper 进行转换，之前讲过了 update 方法以及 query 方法，
+	 * 使用这两个函数示例的 SQL 都是带有参数的，也就是带有？号的，那么还有一种情况是不带有? 的，Spring中使用了另一种处理方式
+	 *
+	 * 这个 execute 与之前的 execute 并无太式的差别 ，都是做一些常规的处理，诸如 获取连接，释放连接，但是有一个地方是不一样的，就是
+	 * statement 的创建，这里直接使用 connection 创建，而带有参数的 SQL使用的是 Prepared
+	 *
+	 *
+	 */
 	@Override
 	public List<T> extractData(ResultSet rs) throws SQLException {
 		List<T> results = (this.rowsExpected > 0 ? new ArrayList<>(this.rowsExpected) : new ArrayList<>());
