@@ -86,6 +86,7 @@ public class SingleColumnRowMapper<T> implements RowMapper<T> {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
+	// 其实最大的不同还是
 	@Nullable
 	public T mapRow(ResultSet rs, int rowNum) throws SQLException {
 		// Validate column count.

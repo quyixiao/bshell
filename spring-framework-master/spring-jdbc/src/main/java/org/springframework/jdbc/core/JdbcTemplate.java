@@ -405,6 +405,19 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 
 	@Override
 	@Nullable
+	// 这个 execute 与之前的 execute 并无太大的差别，都是做一些常规的处理，诸如获取连接，释放连接，等，但是有一个地方是不一样的，
+	// 就是 statement 的创建，这里直接使用 connection创建，而带来的有参数 SQL 使用的是 PreparedStatementCreator 类来创建的
+	// 一个普通的 Statement 另一个是 PreparedStatement，两者究竟有何区别呢？
+	// PreparedStatement 接口继承 Statement，并与之在两方面有所不同
+	// PreparedStatement 实例包含已编译ement 的 SQL语句，这就是使用语句准备好，包含于 PreparedStatement 对象中的 SQL 语句可具有
+	// 一个或多个 IN 参数，IN 参数的传下在 SQL 语句创建时未指定，相反的，语句为每个 IN 参数保留一个 问号，（"?"），作为占位符，
+	// 每个问号的值必须在该语句执行之前，通过适当的 setXXX 方法来提供
+	// 由于 PrepareStatement 对象已经预编译过，所以其执行速度要已于 Statement对象，因此，多个执行 SQL 语句经常创建为 PreparedStatement
+	// 对象， 以提高效率
+	// 作为 Statement 的子类，PreparedStatement 继承了 Statement 的所有的功能，另外，它还添加了一整套方法，用于设置发送给数据库的
+	// 以取代 IN 参数占位符的值，同是，三种方法的 execute，executeQuery和 executeUpdate 已经被更改以使之不再需要参数，这些方法的 Statement
+	// 接受 SQL 语句参数的形式，不应用于 PreparedStatement 对象
+
 	public <T> T execute(StatementCallback<T> action) throws DataAccessException {
 		Assert.notNull(action, "Callback object must not be null");
 
@@ -509,6 +522,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	@Override
 	@Nullable
 	public <T> T queryForObject(String sql, Class<T> requiredType) throws DataAccessException {
+		// 我们以queryjForObject 为例，来讨论一下 Spring 是如何在返回结果的基础上进行封装的。
 		return queryForObject(sql, getSingleColumnRowMapper(requiredType));
 	}
 
