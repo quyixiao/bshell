@@ -246,6 +246,11 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * Perform a scan within the specified base packages.
 	 * @param basePackages the packages to check for annotated classes
 	 * @return number of beans registered
+	 * scan是个全局方法，扫描工作通过doScan(basePackages)委托给了doScan方法，同时，还饭的includeAnnotationConfig属性的处理
+	 * AnnotationConfigUtils.registerAnnotation  ConfigProcessors(this.registry) 代码主要是完成对注解处理器的简单注册，比如
+	 * autoWiredAnnotationBeanPostProcessor，RequiredAnnotationBeanPostProcessor等，这里不再赘述，我们重点研究文件扫描功能的
+	 * 实现
+	 *
 	 */
 	public int scan(String... basePackages) {
 		int beanCountAtScanStart = this.registry.getBeanDefinitionCount();
@@ -253,6 +258,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		doScan(basePackages);
 
 		// Register annotation config processors, if necessary.
+		//如果配置了includeAnnotationConfig, 则注册对应的注解的处理器保证注解功能正常使用
 		if (this.includeAnnotationConfig) {
 			AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
 		}
