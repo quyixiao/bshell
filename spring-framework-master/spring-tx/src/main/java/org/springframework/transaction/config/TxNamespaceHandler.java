@@ -36,6 +36,16 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @since 2.0
+ *
+ *
+ * Spring声明式事务让我们从复杂的事务处理中得到解脱，使我们再也不需要去处理获得连接，关闭接连，事务提交和回滚等操作，现也不需要在与
+ * 事务相关的方法中处理大量的try...catch...finally 代码，Spring中事务的使用虽然已经相对简单得多，但是，还是有么多的使用及配置规则
+ * ，有兴趣的读者可以自己查阅相关的资料，进行深入研究，这里只列举出最常用的使用方法
+ *
+ * 同样，我们还是以最简单的方法进行直观的介绍
+ *
+ *
+ *
  */
 public class TxNamespaceHandler extends NamespaceHandlerSupport {
 
@@ -50,6 +60,11 @@ public class TxNamespaceHandler extends NamespaceHandlerSupport {
 	}
 
 
+	/****
+	 * 根据自定义标签的使用规则以及上面的代码，可以知道在遇到诸如<tx:annotation-driven 为开关配置，spring者会使用AnnotationDrivenBeanDefinitionParser
+	 * 类的parse方法进行解析
+	 *
+	 */
 	@Override
 	public void init() {
 		registerBeanDefinitionParser("advice", new TxAdviceBeanDefinitionParser());

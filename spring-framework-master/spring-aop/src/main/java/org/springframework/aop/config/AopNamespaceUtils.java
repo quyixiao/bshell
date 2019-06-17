@@ -113,6 +113,18 @@ public abstract class AopNamespaceUtils {
 		}
 	}
 
+	/***
+	 * 对于解析来的代码流程AOP 中已经有所分析，上面的两个函数主要的目的就是注册InfrastructureAdvisorAutoProxyCreator 类型的bean ,
+	 * 那么注册这个类的目的是什么呢，查看这个类的层次如图 ： 10-2 所示
+	 * 从上面的层次结构中可以看到，InfrastructureAdvisorAutoProxyCreator间接实现了SmartInstantiationAwareBeanPostProcessor
+	 * ，而SmartInstantiationAwareBeanPostProcessor 又继承自InstantiationAwareBeanPostProcessor，也就是说在Spring中，所有的bean
+	 * 实例化Spring都保证调用postProcessAfterInitialization方法，其实是在父类AbstractAutoProxyCreator类中实现的
+	 *
+	 * 	以之前的示例为例，当实例化userService 的bean 的时候便会调用此方法，方法如下
+	 *
+	 *
+	 *
+	 */
 	private static void registerComponentIfNecessary(@Nullable BeanDefinition beanDefinition, ParserContext parserContext) {
 		if (beanDefinition != null) {
 			BeanComponentDefinition componentDefinition =

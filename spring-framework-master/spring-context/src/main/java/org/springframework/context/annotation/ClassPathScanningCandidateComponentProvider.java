@@ -307,6 +307,12 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * Scan the class path for candidate components.
 	 * @param basePackage the package to check for annotated classes
 	 * @return a corresponding Set of autodetected bean definitions
+	 *
+	 *
+	 * findCandidateComponents 方法根据传入的包路径信息并结合类文件路径拼成文件的绝对路径，同时完成了文件的扫描过程并且根据对应的文件
+	 * 生成对应的bean ,使用ScannedGenericBeanDefinition类型的bean 承载信息，bean中记录了resource的source信息，这里，我们更加感
+	 * 兴趣的是isCandidateComponent(metadataReader),此句代码用于判断当前找找的文件是否符合要求，而我们之前注册的一些过虑信息也是在此
+	 * 派上用场的，
 	 */
 	public Set<BeanDefinition> findCandidateComponents(String basePackage) {
 		if (this.componentsIndex != null && indexSupportsIncludeFilters()) {
@@ -486,7 +492,14 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * and does match at least one include filter.
 	 * @param metadataReader the ASM ClassReader for the class
 	 * @return whether the class qualifies as a candidate component
-	 */
+	 * 我们看到了之前加入了过滤器中的两个属性，excludeFilters，includeFilters，并且知道对应的文件中是否符合要求是根据过滤器中的match
+	 * 方法所返回的信息来判断的，当然用户可以实现并注册满足自己的业务逻辑的过滤器来控制扫描的结果，metadataReader中有你过滤所需要的全部
+	 * 文件信息，至此，我们完成了文件扫描过程的分析
+	 *
+	 *
+	 *
+	 *
+	 * */
 	protected boolean isCandidateComponent(MetadataReader metadataReader) throws IOException {
 		for (TypeFilter tf : this.excludeFilters) {
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {

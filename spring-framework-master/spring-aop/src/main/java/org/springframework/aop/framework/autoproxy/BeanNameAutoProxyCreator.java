@@ -73,6 +73,9 @@ public class BeanNameAutoProxyCreator extends AbstractAutoProxyCreator {
 
 	/**
 	 * Identify as bean to proxy if the bean name is in the configured list of names.
+	 *
+	 * 获取对应class/method 增强器
+	 * 获取指定的bean 对应的增强器，其中包含两个关键字，增强器与对应的，也就是说，在getAdvicesAndAdvisorsForBean函数中，
 	 */
 	@Override
 	@Nullable

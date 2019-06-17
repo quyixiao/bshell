@@ -273,24 +273,35 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * but rather leaves this up to the caller.
 	 * @param basePackages the packages to check for annotated classes
 	 * @return set of beans registered if any for tooling registration purposes (never {@code null})
+	 *    * 此时，虽然还没有完成介绍到了扫描的过程，但是我们也应该理解了Spring中对于自动扫描注册声明MapperScannerConfigurer类型的bean目的
+	 * 不需要我们对于每个接口都注册一个MapperFactoryBean类型的对应的bean，但是不在配置文件中注册并不代表这个bean 不存在，而是扫描过程
+	 * 中通过编码的方式动态注册，实现过程我们上面的函数中可以看得非常的清楚
+	 *
+	 *
 	 */
 	protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
 		for (String basePackage : basePackages) {
+			// 扫描basePackage路径下的java文件
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			for (BeanDefinition candidate : candidates) {
+				//解析scope属性
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
 				candidate.setScope(scopeMetadata.getScopeName());
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
+
 				if (candidate instanceof AbstractBeanDefinition) {
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
 				if (candidate instanceof AnnotatedBeanDefinition) {
+					// 如果是 AnnotatedBeanDefinition 类型的bean，需要检测下常用注解如 ，Primary,Lazy等
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
+				//检测当前的bean是否已经注册
 				if (checkCandidate(beanName, candidate)) {
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
+					//如果当前的bean 是用于生成代理的bean那么需要进一步处理
 					definitionHolder =
 							AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 					beanDefinitions.add(definitionHolder);

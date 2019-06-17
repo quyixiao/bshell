@@ -362,6 +362,17 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 *
 	 * 虽然，看似简单的，但是每个步骤中都经历了大量复杂的逻辑，首先来看看获取增强的方法的实现逻辑
 	 *
+	 * 这里实现的主要目的是对指定的bean 进行封装，当然首先要确定的是否需要封装，检测及封装的工作都委托给了
+	 * wrapIfNecessary 函数进行
+	 *
+	 * wrapIfNecessary 函数的功能 实现起来很复杂，但是逻辑上理解起来还是相对简单的，在wrapIfNecessary函数中主要的工作如下
+	 *  1.找出指定的bean增强器
+	 *  2.根据找出的增强器创建代理
+	 *  听起来似乎简单逻辑， Spring中做了哪些复杂的工作呢，对于创建代理的部分，通过之前的分析相信大家已经熟悉了，但是对于增强器获取，Spring
+	 *  又是怎样的做到了呢
+	 *
+	 *
+	 *
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
 		//如果已经被加载过，处理过
