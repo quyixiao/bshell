@@ -151,6 +151,11 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 	 * @param ae the annotated method or class
 	 * @return TransactionAttribute the configured transaction attribute,
 	 * or {@code null} if none was found
+	 *
+	 * this.annotationParsers 是在当前类AnnotationTransactionAttributeSource初始化的时候初始化的，其中加入了值被加入
+	 * SpringTransactionAnnotationParser，也就是当前进行属性获取的时候使用SpringTransactionAnnotationParser类的
+	 * parseTransactionAnnotation方法进行解析的
+	 *
 	 */
 	@Nullable
 	protected TransactionAttribute determineTransactionAttribute(AnnotatedElement ae) {

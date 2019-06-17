@@ -96,6 +96,14 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * 对于指定 bean 的增强方法获取一定是包含两个步骤的，获取所有增强以及寻找所有的增强中适用于 bean 增强的并应用，那么 findCandidateAdvisors 与
 	 * findAdvisorsThatCanAppliy 便是做了这两件事情，当然，如果无法找到对应的增强器便返回 DO_NOT_PROXY，其中 DO_NOT_PROXY=null
 	 *
+	 *
+	 * 其实我们也渐渐的体会到了Spring中代码的优秀了，即使一个复杂的逻辑，在Spring中也会拆分成若干个小的逻辑，然后在每个函数中实现
+	 * ，使得每个函数中的逻辑简单的到我们能快速的理解，而不会像有些人开发的那样，将一大堆的逻辑都罗列到一个阳光函数中，然后期维护
+	 * 人员造成巨大的困扰
+	 *
+	 * 同样，通过上面的阳光函数，Spring又将任务进行拆分，分成了获取所有的增强器的增强是否匹配的两个功能点
+	 * 在findCandidateAdvisors 函数中完成了获取增强器的功能
+	 *
 	 */
 	protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
 		List<Advisor> candidateAdvisors = findCandidateAdvisors();

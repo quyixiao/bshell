@@ -80,6 +80,10 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 	 * @param targetClass the target class for this invocation (may be {@code null})
 	 * @return TransactionAttribute for this method, or {@code null} if the method
 	 * is not transactional
+	 *
+	 * 此时的tas表示AnnotationTransactionAttributeSource类型，而AnnotationTransactionAttributeSource类型的
+	 * getTransactionAttribute方法如下
+	 *
 	 */
 	@Override
 	@Nullable
@@ -103,6 +107,9 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 		}
 		else {
 			// We need to work it out.
+			// 很遗憾，在getTransactionAttribute函数中并没有找到我们想要的代码，这里是批常规的一贯的套路，尝试从缓存中加载，如果对应
+			// 信息没有被缓存话，工作又委托给了computeTransactionAttribute函数，在computeTransactionAttribute函数终于我们看到了
+			// 事务标签的提取过程
 			TransactionAttribute txAttr = computeTransactionAttribute(method, targetClass);
 			// Put it in the cache.
 			if (txAttr == null) {
@@ -140,6 +147,12 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 	 * <p>As of 4.1.8, this method can be overridden.
 	 * @since 4.1.8
 	 * @see #getTransactionAttribute
+	 *
+	 * 对于事物的属性的获取规则相信大家都已经很清楚了，如果方法中存在事务属性，则使用方法上的属性，否则使用方法所在的类上的属性
+	 * 如果方法所丰的类的属性上还没有搜寻到对应的事务属性，那么再搜寻接口中的方法，再没有的话，最后尝试搜寻接口的类上面的声明，对于
+	 * 函数computeTransactionAttribute中的逻辑与我们所认识的规则并无送回，但是上面的函数中并没有真正的去做搜寻事务属性的逻辑
+	 * 而是搭建了一个执行框架，将搜寻事务事务属性的任务委托给了findTransactionAttribute方法执行
+	 *
 	 */
 	@Nullable
 	protected TransactionAttribute computeTransactionAttribute(Method method, @Nullable Class<?> targetClass) {
@@ -152,31 +165,38 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 		Class<?> userClass = (targetClass != null ? ClassUtils.getUserClass(targetClass) : null);
 		// The method may be on an interface, but we need attributes from the target class.
 		// If the target class is null, the method will be unchanged.
+		// method 代表接口中的方法，specificMethod代表实现类的方法
 		Method specificMethod = ClassUtils.getMostSpecificMethod(method, userClass);
 		// If we are dealing with method with generic parameters, find the original method.
 		specificMethod = BridgeMethodResolver.findBridgedMethod(specificMethod);
 
 		// First try is the method in the target class.
+		// 查看方法中是否存在事务声明
 		TransactionAttribute txAttr = findTransactionAttribute(specificMethod);
 		if (txAttr != null) {
 			return txAttr;
 		}
 
 		// Second try is the transaction attribute on the target class.
+		// 查看方法所在类中是否存在事物声明
 		txAttr = findTransactionAttribute(specificMethod.getDeclaringClass());
 		if (txAttr != null && ClassUtils.isUserLevelMethod(method)) {
 			return txAttr;
 		}
 
+		//如果存在接口，则接口中去寻找
 		if (specificMethod != method) {
 			// Fallback is to look at the original method.
+			// 查找接口方法
 			txAttr = findTransactionAttribute(method);
 			if (txAttr != null) {
 				return txAttr;
 			}
 			// Last fallback is the class of the original method.
+			//
 			txAttr = findTransactionAttribute(method.getDeclaringClass());
 			if (txAttr != null && ClassUtils.isUserLevelMethod(method)) {
+				//到接口中的类中去寻找，对于
 				return txAttr;
 			}
 		}

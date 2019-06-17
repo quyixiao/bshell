@@ -273,40 +273,79 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * @param invocation the callback to use for proceeding with the target invocation
 	 * @return the return value of the method, if any
 	 * @throws Throwable propagated from the target invocation
+	 * 从上面的函数中，我们尝试整理下事务的处理脉络，在Spring中支持两种事务处理方式，分别是声明式事务与编程式事务处理，两者相对于开发
+	 * 人员来说是差别比较大的，但是对于Spring中的实现来讲，大同小异，在invoke中我们可以看到这两种方式的实现，考虑到对应的事务的应用
+	 * 比声明式的事务处理使用起来方便，也相对于流行些，我们就以此种方式进行分析，对于声明式事务的处理主要有以下两个步骤
+	 *
+	 *
+	 * 获取事务的属性
+	 * 	1.对于事务处理来说，最基础或都最首要的是工作便是获取事务属性了，这是支撑整个事务的功能基石，如果没有事务属性，其他的功能无人谈起
+	 * 	，在分析事务准备阶段时，已经分析事务提取功能，大家应该有所了解
+	 *
+	 * 	2.加载配置中的TransactionManager
+	 * 	3.不同的事务处理方式使用不同的逻辑
+	 *
+	 * 	对于声明式事务处理与编程式事务的处理，第一点区别是事务属性上，因为编程式的事务处理是不需要事务属性的，第二点区别就是在
+	 * 	TransactionManager上的CallbackPreFerringPlatformTransactionManager 实现PlatformTransactionManager接口，暴露了
+	 * 	一个方法用于执行事务处理的回调，所以，这两种方式都可以用作事务处理方式的判断
+	 * 	4.在目标方法执行前获取事务并收集事务信息
+	 * 	事务信息与事务属性并不相同，也就是TransactionInfo 与TransactionAttribute并不相同，TransactionInfo中包含
+	 * 	TransactionAttribute信息，但是除了TransactionAtrribute 外还有其他的事务信息，例如PlamformTransactionManager以及
+	 * 	TransactionStatus 相关的信息
+	 * 	5.执行目标方法
+	 * 	一旦出现异常，尝试异常处理
+	 * 	并不是所有的异常，Spring都会将其回滚，默认只对RunTimeException回滚
+	 * 	7.提交事务前对事务信息清除
+	 * 	8.提交事务
+	 * 	上面的步骤分析旨在让大家对事务功能与步骤有个大致的了解，具体的功能还需要详细地分析
+	 *
+	 *
+	 *
 	 */
 	@Nullable
 	protected Object invokeWithinTransaction(Method method, @Nullable Class<?> targetClass,
 			final InvocationCallback invocation) throws Throwable {
 
 		// If the transaction attribute is null, the method is non-transactional.
+		//
 		TransactionAttributeSource tas = getTransactionAttributeSource();
+		// 获取对应的事务属性
 		final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
+		// 获取对应的beanFactory中的transactionManager
 		final PlatformTransactionManager tm = determineTransactionManager(txAttr);
+		// 构造方法唯一标识，（类，方法，如 service.UserServiceImpl.save()）
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
+		// 声明式事务处理
 		if (txAttr == null || !(tm instanceof CallbackPreferringPlatformTransactionManager)) {
 			// Standard transaction demarcation with getTransaction and commit/rollback calls.
+			// 创建TransactionInfo
 			TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);
 			Object retVal = null;
 			try {
 				// This is an around advice: Invoke the next interceptor in the chain.
 				// This will normally result in a target object being invoked.
+				// 执行被增强的方法
 				retVal = invocation.proceedWithInvocation();
 			}
 			catch (Throwable ex) {
 				// target invocation exception
+
 				completeTransactionAfterThrowing(txInfo, ex);
 				throw ex;
 			}
 			finally {
+				// 清除信息
 				cleanupTransactionInfo(txInfo);
 			}
+			// 提交事务
 			commitTransactionAfterReturning(txInfo);
 			return retVal;
 		}
 
 		else {
 			// It's a CallbackPreferringPlatformTransactionManager: pass a TransactionCallback in.
+			// 编程式事务处理
 			try {
 				Object result = ((CallbackPreferringPlatformTransactionManager) tm).execute(txAttr, status -> {
 					TransactionInfo txInfo = prepareTransactionInfo(tm, txAttr, joinpointIdentification, status);

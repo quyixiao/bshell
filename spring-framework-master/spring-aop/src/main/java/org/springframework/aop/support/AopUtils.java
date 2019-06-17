@@ -225,6 +225,13 @@ public abstract class AopUtils {
 			return false;
 		}
 
+		// 此时的pc 表示，TransactionAttributeSourcePointcut
+		// pc.getMethodMatcher()返回的正是自身（this ）
+		// 通过上面的函数大致可以理清大体脉络，首先获取对应的类所有接口并连同类本身一起遍历，遍历过程中又对类中的方法再遍历
+		// 一旦匹配成功便认为这个类适用于当前增强器
+		// 到了这里我们不禁会有疑问，对于事物的配置不仅仅局限于在函数上配置，我们都知道，在类中的每个函数，那么，如果针对每个函数进行
+		// 检测，在类本身上配置的事物属性岂不是检测不到了吗？带着这个疑问，我们继续探求matcher方法
+		//
 		MethodMatcher methodMatcher = pc.getMethodMatcher();
 		if (methodMatcher == MethodMatcher.TRUE) {
 			// No need to iterate the methods if we're matching any method anyway...
@@ -298,6 +305,16 @@ public abstract class AopUtils {
 	 * @return sublist of Advisors that can apply to an object of the given class
 	 * (may be the incoming List as-is)
 	 * 继续看findAdvisorsThatCanApply:
+	 *
+	 * 当前我们分析的是对于UserService 是否适用此增强的方法，那么当前的advisor就是前查找出来的类型为
+	 * BeanFactoryTransactionAttributeSourceAdvisor的bean实例，而通过类的层次结构我们又知道了：
+	 * BeanFactoryTransactionAttributeSourceAdvisor 间接实现了PointcutAdvisor，因此，在canApply 函数中的第二个
+	 * if判断时就会通过判断，将BeanFactoryTransactionAttributeSourceAdvisor中的getPoint()方法返回值作为参数继续调用
+	 * canApply方法，而getPoint()方法返回的是TransactionAttributeSourcePointcut类型的实例，对于transactionAttributeSource
+	 * 这个属性大家还有印象吗？这个是在解析自定义的标签时注入进去的
+	 *
+	 *
+	 *
 	 */
 	public static List<Advisor> findAdvisorsThatCanApply(List<Advisor> candidateAdvisors, Class<?> clazz) {
 		if (candidateAdvisors.isEmpty()) {
