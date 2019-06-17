@@ -395,6 +395,12 @@ public class AutoProxyCreatorTests {
 			this.proxyObject = proxyObject;
 		}
 
+
+		/***
+		 *  获取指定的bean对应的增强器，其中包含两个关键字，增强器与对应，也就是说在getAdvicesAndAdvisorsForBean 函数中，
+		 *  不但要找出增强器，而且还需要判断增强器是否满足要求
+		 *
+		 */
 		@Override
 		@Nullable
 		protected Object[] getAdvicesAndAdvisorsForBean(Class<?> beanClass, String name, @Nullable TargetSource customTargetSource) {
