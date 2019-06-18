@@ -624,7 +624,47 @@ public class DispatcherServlet extends FrameworkServlet {
 		// <bean id="themeSource" class="org.Springframework.ui.context.support.ResourceBundleThemeSource">
 		//		<property name="basenamePrefix" value="com.test."></property>
 		// </bean>
+		// 默认的状态下是在类路径根目录下查找相应的资源文件，也可以通过 basenamePrefix 来制定这样的，DispatcherServlet 就会在 com.test
+		// 包下查找资源文件
+		// 主题解析器
+		// ThemeSource 定义了一些主题资源，那么不同的用户使用了什么主题资源由谁定义呢，
+		// org.Springframework.web.servlet.ThemeResolver 是主题解析器的接口，主题解析的工作便是由他的子类来完成
+		// 对于主题解析器的子类主要有3个比较常用的实现，以主题文件 summer.properties 为例
+		// FixedThemeResolver 用于选择一个固定的主题
+		// <bean id="themeResolver" class="org.Springframework.web.servlet.thme.FixedThemeResolver">
+		// 		<property name="defaultThemeName" value="summer">
+		// </bean>
+		// 以上配置的作用是设置主题文件为 summer.properties，在整个项目内固定不变
+		// CookieThemeResolver 用于实现用户所选主题，以 cookie 为形式存放在客户端的机器上，配置如下
+		// <bean id="themeResolver" class="org.Springframework.web.servlet.theme.CookieThemeResolver">
+		// 	<property name="defaultThemeName" value="summer">
+		// </bean>
+		// 以上的配置用于设置主题名称，并且将该名称保存在用户的 HttpSession 中
+		// AbstractThemeResolver 是一个抽象的类被 SessionThemeResolver 和 FixThemeResolver继承，用户也可以继承它自定义的主题解析器
+		// 拦截器
+		// 如果需要根据用户请求来改变主题，那么 Spring 提供了一个已经实现了拦截器的 ThemeChangeInterceptor 拦截器了，配置如下
+		// <bean id="themeChangeInterceptor" class="org.Springframework.web.servlet.theme.themeChangeInterceptor">
+		// 		<property name="paramName" value="themeName"></property>
+		// </bean>
+		// 以上的配置用于设置主题的名称，并且将该名称保存在用户的 HttpSession 中
+		// AbstractThemeResolver 是一个抽象类被 SessionThemeResolver 和 FixThemeResolver 继承，用户也可以继承它来自定义主题解析器
+		// 拦截器
+		// 如果需要根据用户的请求来改变主题，那么 Spring 提供了一个已经实现的拦截器 ThemeChangeInterceptor 拦截器了，配置如下
+		// <bean id="themeChangeInterceptor" class="org.Spring.framework.web.servlet.theme.ThemeChangeInterceptor">
+		// 		<property name="paramName" value="themeName"></property>
+		// </bean>
+		// 其中设置了用户的请求参数名为 themeName ，即 URL 为?themeName=具体的主题名称，此外还需要在 handlerMapping 中配置拦截器，
+		// 当然需要在 HandleMapping 中添加拦截器
+		// <property name="interceptors">
+		// 		<list>
+		// 				<ref local="themeChangeInterceptor"/>
+		// 		</list>
+		// </property>
+		// 了解了主题文件的简单的使用方式后，再来查看解析器的初始化工作，与其他变量的初始化工作相同，主题文件解析器初始化工作并没有任何特别
+		// 需要的说明的地方
 		//
+
+
 		initThemeResolver(context);
 		// 初始化 HandlerMappings
 		initHandlerMappings(context);
