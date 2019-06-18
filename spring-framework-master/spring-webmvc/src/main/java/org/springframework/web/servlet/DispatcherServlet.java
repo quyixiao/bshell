@@ -16,26 +16,8 @@
 
 package org.springframework.web.servlet;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -59,6 +41,13 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.util.NestedServletException;
 import org.springframework.web.util.WebUtils;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Central dispatcher for HTTP request handlers/controllers, e.g. for web UI controllers
@@ -153,7 +142,101 @@ import org.springframework.web.util.WebUtils;
  * @see org.springframework.web.HttpRequestHandler
  * @see org.springframework.web.servlet.mvc.Controller
  * @see org.springframework.web.context.ContextLoaderListener
+ *
+ * 在Spring中，ContextLoaderListener只是辅助的功能，用于创建WebApplicationContext类型的实例，而真正的逻辑的实现其实是在DispatcherServlet
+ * 中进行的，DispatcherServlet的实现servlet接口的实现类
+ *
+ * DispatcherServlet
+ * 在Spring中，ContextLoaderListener 中是辅助功能，用于创建WebApplicationContext类型的实例，而真正的逻辑实现其实是在DispatcherServlet
+ * 中进行的，DispatcherServlet是实现servlet接口的实现类
+ *
+ * servlet是一个java编写程序，此程序是基于http协义的，在服务器运行的（如 tomcat）是按照servlet规范编写的一个Java类，主要是处理客户端
+ * 的请求并将结果发送到客户端，servlet的生命周期是由servlet的容器来控制的，它可以分为3个阶段，初始化，运行和销毁
+ *
+ * 1.初始化阶段
+ * servlet容器加载servlet类，把servlet类的.class文件数据读取到内存中
+ * servlet容器创建了一个ServletConfig对象，ServletConfig对象包含了servlet的初始化配置信息
+ * servlet容器创建一个servlet对象
+ * servlet容器调用servlet对象的init方法进行初始化
+ *
+ * 2.运行阶段
+ * 当servlet容器接收到了一个请求时，servlet容器会针对这个请求创建servletRequest和servletResponse对象，然后调用service方法，并把
+ * 这两个参数传递给了service方法，service方法通过servletRequest对象获得请求信息，并处理该请求信息，并处理该请求，再通过servletResponse
+ * 对象生成的这个请求的响应结果，然后销毁servletRequest,servletResponse对象，我们不管这个请求是post提交，还是get提交，最终这个请求
+ * 都是由service方法来处理的。
+ * 3.销毁阶段
+ * 	当web应用被终止时，servlect容器先会被调用servlet对象的destory方法，然后再销毁servlet对象，同时也会销毁与servlet对象，同时也会
+ * 	销毁与servlet对象相关联的，关闭文件输入输出流等
+ * 	servlet框架是由两个java包组成，javax.servlet和javax.servlet.http,在javax.servlet包中定义了所有的servlet类都必须实现或扩展
+ * 	的能用接口和类，在javax.servlecthttp包中定义了采用HTTP通信协义的HttpServlect类
+ * 	servlet被设计成了请求驱动，servlet的请求可能包含多个数据项，当Web容器接收到了某个servlet请求时，servlet把请求封装成一个
+ * 	HttpServletRequest对象，然后把这个对象传给servlet的对应的服务方法
+ * 	Http的请求方法包括delete,get,options,post,put和trace，在HttpServlet类中分别提供了相应的服务方法，它们的doDelete，doGet()，
+ * 	doOptions()，doPost()，doPut()，和doTrace()
+ * 	我们两样还是以最简单的servlet来快速体验其用法
+ *
+ *
+ *
+ *	public class MyServlet extends HttpServlet {
+ *
+ *	public void init() {
+ *		System.out.println("this is init method ");
+ *	}
+ *
+ *	public void doGet(HttpServletRequest request, HttpServletResponse response) {
+ *		handleLogic(request, response);
+ *	}
+ *
+ *	public void doPost(HttpServletRequest request, HttpServletResponse response) {
+ *		handleLogic(request, response);
+ *	}
+ *
+ *
+ *	private void handleLogic(HttpServletRequest request, HttpServletResponse response) {
+ *		System.out.println("handle myLogic");
+ *		ServletContext sc = getServletContext();
+ *		RequestDispatcher rd = null;
+ *		rd = sc.getRequestDispatcher("/index.jsp");
+
+ *		try {
+ *			rd.forward(request, response);
+ *		} catch (ServletException e) {
+ *			e.printStackTrace();
+ *		} catch (IOException e) {
+ *			e.printStackTrace();
+ *		}
+ *	  }
+ *
+ *	}
+ *
+ *
+ * 	麻雀虽小，但是五脏俱全，实例中包含了对 init 方法和get/post 方法的处理，init 方法保证在 servlet 加载的时候能做一些逻辑操作，而
+ * 	httpServlet 类则会帮助我们根据方法类型的不同而将逻辑引入不同的函数，在子类中我们只需要重写对应的函数的逻辑便可，如以下的代码重写
+ * 	doGet 和 doPost 方法并将逻辑处理的部分引导到 handleLogic 函数中，最后，又将页面跳转到 index.jsp
+ *
+ * 	为了使servlet 能够正常的使用，需要在 web.xml 文件中添加以下的配置
+ *
+ * 	<servlet>
+ * 	    <servlet-name>myservlet</servlet-name>
+ * 	    <servlet-class>test.servlet.MyServlet</servlet-class>
+ * 	    <load-on-startup>1</load-on-startup>
+ * 	</servlet>
+ *
+ * 	<servlet-mapping>
+ * 	    <servlet-name>myservlet</servlet-name>
+ * 	    <url-pattern>*.htm</url-pattern>
+ * 	</servlet-mapping>
+ *
+ * 配置后便可以根据对应的配置访问响应的路径了
+ *
+ *
+ *
+ *
+ *
+ *
  */
+
+
 @SuppressWarnings("serial")
 public class DispatcherServlet extends FrameworkServlet {
 

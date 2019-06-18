@@ -143,6 +143,10 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 	 * invoke subclass initialization.
 	 * @throws ServletException if bean properties are invalid (or required
 	 * properties are missing), or if subclass initialization fails.
+	 *
+	 * 通过上面的实例我们了解到了，在 servlet 初始化的阶段会调用其 init 方法，所以我们首先要查看 DispatcherServlet 中是否重写了
+	 * init 方法，我们在其父类 httServletBean 中找到了相应的该方法
+	 *
 	 */
 	@Override
 	public final void init() throws ServletException {
@@ -151,13 +155,19 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		}
 
 		// Set bean properties from init parameters.
+		// 解析 init-param 并封装只 pvs 中
 		PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
 		if (!pvs.isEmpty()) {
 			try {
+				// 将当前的这个 Servlet 类转化为一个 BeanWapper，从而能够以 Spring 的方式来对 Spring 的方式来对 init param 的值
+				// 进行注入
 				BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(this);
 				ResourceLoader resourceLoader = new ServletContextResourceLoader(getServletContext());
+				// 注册自定义属性编辑器，一旦遇到 Resource 类型的属性将会使用 ResourceEdit 进行解析
 				bw.registerCustomEditor(Resource.class, new ResourceEditor(resourceLoader, getEnvironment()));
+				// 空实现，留给子类覆盖
 				initBeanWrapper(bw);
+				// 属性注入
 				bw.setPropertyValues(pvs, true);
 			}
 			catch (BeansException ex) {
@@ -169,6 +179,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		}
 
 		// Let subclasses do whatever initialization they like.
+		// 留给子类的扩展
 		initServletBean();
 
 		if (logger.isDebugEnabled()) {
@@ -220,6 +231,22 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		 * @param requiredProperties set of property names we need, where
 		 * we can't accept default values
 		 * @throws ServletException if any required properties are missing
+		 *
+		 *
+		 * DispatcherServlet 的初始化过程主要是通过将当前的 servlet 类型的实例转换为 BeanWrapper类型实例，以便使用 Spring 中提供的
+		 * 注入功能进行属性的注入，这些属性如 contextAttribute,contextClass ，nameSpace,contextConfigLocation等，都可以在 web.xml
+		 * 文件中以初始化参数的方式配置在 servlet 的声明中，DispatcherServlet 继承自FrameworkServlet，FrameworkServlet 类上包含
+		 * 对应的同名属性，Spring 会保证这些参数被注入到对应的值中，属性注入主要包含下面几个步骤
+		 *
+		 *
+		 * 1.封装及验证初始化的参数
+		 * ServletConfigPropertyValues 除了封装属性外还有对属性的验证的功能
+		 * 从代码中得知，封装属性主要对初始化参数进行封装，也就是 servlet 中配置的<init-param>中的配置封装，当然，用户可以通过对
+		 * requiredProperties 参数的初始化强制验证某些属性的必要性，这样的属性封装的过程中，一旦检测到 requiredProperties 中的属性
+		 * 没有指定初始值，就会抛出异常
+		 *
+		 * 2.
+		 *
 		 */
 		public ServletConfigPropertyValues(ServletConfig config, Set<String> requiredProperties)
 				throws ServletException {
