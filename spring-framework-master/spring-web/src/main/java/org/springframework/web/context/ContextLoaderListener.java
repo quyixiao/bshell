@@ -33,6 +33,15 @@ import javax.servlet.ServletContextListener;
  * @since 17.02.2003
  * @see #setContextInitializers
  * @see org.springframework.web.WebApplicationInitializer
+ *
+ *
+ *
+ * Spring 中的ContextLoaderListener
+ * 		分析了ServletContextListener 的使用方式后再来分析Spring中的ContextLoaderListener的实现就很容易理解的多，但是大致的套路还是万变
+ * 不离其宗的
+ * 		ServletContext 启动之后会调用ServletContextListener 的contextInitialized方法，那么我们就从这个函数开始进行分析
+ *
+ *
  */
 public class ContextLoaderListener extends ContextLoader implements ServletContextListener {
 

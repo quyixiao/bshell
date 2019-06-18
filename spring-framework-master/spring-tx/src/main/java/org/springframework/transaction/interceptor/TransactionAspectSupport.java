@@ -301,6 +301,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 *
 	 *
 	 *
+	 *
 	 */
 	@Nullable
 	protected Object invokeWithinTransaction(Method method, @Nullable Class<?> targetClass,
@@ -478,12 +479,26 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * The {@code hasTransaction()} method on TransactionInfo can be used to
 	 * tell if there was a transaction created.
 	 * @see #getTransactionAttributeSource()
+	 *
+	 * 获取CreateTransactionIfNesssar函数主要做了这样的几件事情
+	 * 1.使用DelegatingTransactionAttribute封装传入的TransactionAttribute实例
+	 *  对于传入的TransactionAttribute类型的参数txAttr ，当前的实际类型是RuleBasedTransactionAttribute，是由获取事务的属性时生成
+	 *  ，主要用于数据的承载，而这里之所以使用DelegatingTransactionAttribute进行封装，当然是提供了很多的功能的
+	 *  3.获取事务
+	 *  事务的处理当然 是以事务为核心，那么获取事务就是最重要的事情
+	 *  4.构建事务信息
+	 *   根据之前的几个步骤获取信息构建TransactionInfo并返回
+	 *   我们分别对以上的步骤进行详细的解析
+	 *
+	 *
+	 *
 	 */
 	@SuppressWarnings("serial")
 	protected TransactionInfo createTransactionIfNecessary(@Nullable PlatformTransactionManager tm,
 			@Nullable TransactionAttribute txAttr, final String joinpointIdentification) {
 
 		// If no name specified, apply method identification as transaction name.
+		// 如果没有名称指定则使用方法唯一标识，并使用DelegatingTransactionAttribute封装txAttr
 		if (txAttr != null && txAttr.getName() == null) {
 			txAttr = new DelegatingTransactionAttribute(txAttr) {
 				@Override
@@ -496,6 +511,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		TransactionStatus status = null;
 		if (txAttr != null) {
 			if (tm != null) {
+				// 获取 TransactionStatus
 				status = tm.getTransaction(txAttr);
 			}
 			else {
@@ -505,6 +521,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				}
 			}
 		}
+		// 根据指定的属性与status 准备一个TransactionInfo
 		return prepareTransactionInfo(tm, txAttr, joinpointIdentification, status);
 	}
 
@@ -515,6 +532,11 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * (used for monitoring and logging purposes)
 	 * @param status the TransactionStatus for the current transaction
 	 * @return the prepared TransactionInfo object
+	 *
+	 * 准备事务信息
+	 * 当已经建立事务的连接并完成了事务信息的提取后，我们需要将所有的事务信息统一记录在TransactionInfo类型实例中，这个实例包含了目标
+	 * 方法开始前的所有的状态信息，一旦事务执行失败，Spring会通过TransactionInfo类型实例中的信息来进行回滚等后续操作
+	 *
 	 */
 	protected TransactionInfo prepareTransactionInfo(@Nullable PlatformTransactionManager tm,
 			@Nullable TransactionAttribute txAttr, String joinpointIdentification,
@@ -527,6 +549,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				logger.trace("Getting transaction for [" + txInfo.getJoinpointIdentification() + "]");
 			}
 			// The transaction manager will flag an error if an incompatible tx already exists.
+			// 记录事务状态
 			txInfo.newTransactionStatus(status);
 		}
 		else {
@@ -548,12 +571,25 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * Execute after successful completion of call, but not after an exception was handled.
 	 * Do nothing if we didn't create a transaction.
 	 * @param txInfo information about the current transaction
+	 *
+	 *  事务提交
+	 *               之前我们分析了Spring事务异常处理机制，那么事务的执行并没有出现任何异常，也就是意味关事务可以走正常的事务提交
+	 *     流程了，
+	 *
+	 *
 	 */
 	protected void commitTransactionAfterReturning(@Nullable TransactionInfo txInfo) {
+		// 在真正的提交数据提交之前，还需要做个判断，不知道大家还有没有印象，在我们分析事务异常的处理规则时候，当某个事务既没有保存点
+		// 又不是新的事务的时候，Spring对它的处理方式只是设置了一个回滚标识，这个回滚标识在这里就会派上用场了，主要的应用场景如下
+		// 某个事务是另一个事务的嵌入事务，但是这些事务又不在Spring的管理范围之内，或者无法设置保存点，那么Spring会通过设置回滚标识的方式
+		// 来禁提交，首先当某个嵌入事务发生回滚的时候会设置回滚的标识，而等到外部事务提交时，一旦判断当前事务流被设置了回滚标识，则由外部
+		// 事务来统一进行整体事务的回滚
+		// 所以，当事务没有被异常捕获的时候并不意味着一定会被执行提交过程
 		if (txInfo != null && txInfo.getTransactionStatus() != null) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() + "]");
 			}
+			// 提交事务
 			txInfo.getTransactionManager().commit(txInfo.getTransactionStatus());
 		}
 	}
@@ -563,15 +599,38 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * We may commit or roll back, depending on the configuration.
 	 * @param txInfo information about the current transaction
 	 * @param ex throwable encountered
+	 * 回滚处理
+	 *   之前已经完成了目标方法运行前的事务准备工作，而这些准备工作最大的目的是无非是对于程序没有按照我们期待来那样进行，也就是说出现
+	 * 特定的错误，那么，当出现错误的时候，Spring是怎么对数据恢复的呢。
+	 *
+	 *  在对目标方法的执行过程中，一旦出现Throwable就会被引导到此方法进行处理，但是并不代表所有的Throwable都会被回滚处理，比如我们
+	 *  最常用的exception ，默认是不会被处理的，默认情况下，即使出现异常，数据也是会被正常的提交的，而这个关键的地方就是
+	 *  txInfo.transactionAttribute.rollbackOn(ex)这个函数
+	 *
+	 *
+	 * 	@Override
+	 *	public boolean rollbackOn(Throwable ex) {
+	 * 		return (ex instanceof RuntimeException || ex instanceof Error);
+	 *	}
+	 *
+	 * 看到了吗？默认的情况下是Spring中的事务异常处理机制只对RuntimeException 和Error 两种情况感兴趣的，当然你可以通过扩展来改变
+	 * ，不过，我们最常用的还是使用事务提供的设置，利用注解的方式使用例如
+	 * @Transactional(propagation=Propagation.REQUIRED,rollbackFor=Exception.class)
+	 *
+	 *
 	 */
 	protected void completeTransactionAfterThrowing(@Nullable TransactionInfo txInfo, Throwable ex) {
+		// 当抛出异常的时候首先判断是否存在事务，这是基础依据
 		if (txInfo != null && txInfo.getTransactionStatus() != null) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() +
 						"] after exception: " + ex);
 			}
+
+			// 这里判断是否回滚的依据是抛出异常是否是RuntimeException或者是Error的类型
 			if (txInfo.transactionAttribute != null && txInfo.transactionAttribute.rollbackOn(ex)) {
 				try {
+					// 根据TransactionStatus 信息进行回滚处理
 					txInfo.getTransactionManager().rollback(txInfo.getTransactionStatus());
 				}
 				catch (TransactionSystemException ex2) {
@@ -591,6 +650,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			else {
 				// We don't roll back on this exception.
 				// Will still roll back if TransactionStatus.isRollbackOnly() is true.
+				// 如果不满足回滚条件即使抛出异常也会被提的
 				try {
 					txInfo.getTransactionManager().commit(txInfo.getTransactionStatus());
 				}

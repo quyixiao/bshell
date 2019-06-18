@@ -150,6 +150,15 @@ public abstract class AbstractTransactionStatus implements TransactionStatus {
 	/**
 	 * Roll back to the savepoint that is held for the transaction
 	 * and release the savepoint right afterwards.
+	 *
+	 * 这里使用的是JDBC的方式进行数据库的连接，那么getSavepointManager()函数返回的是JdbcTransactionObjectSupport,也就是说上面
+	 * 函数的调用会JdbcTransactionObjectSupport中的rollbackToSavepoint方法
+	 *
+	 * 当前已经保存了事务信息中的事务为新事务，那么直接回滚，常用于单独事务的处理，对于没有保存点的回滚，Spring同样的使用底层的数据库
+	 * 连接的提供的API来操作的，由于我们使用的是DataSourceTransactionManager，那么doRollback函数会使用此类中的实现
+	 *
+	 *
+	 *
 	 */
 	public void rollbackToHeldSavepoint() throws TransactionException {
 		Object savepoint = getSavepoint();

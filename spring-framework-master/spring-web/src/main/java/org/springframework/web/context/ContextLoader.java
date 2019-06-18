@@ -134,6 +134,22 @@ public class ContextLoader {
 
 	private static final Properties defaultStrategies;
 
+
+	/***
+	 * ClassLoader类中有这样的静态代码
+	 * 根据以上的静态代码的内部，我们推断在当前的类ContextLoader同样的目录下下必定会存在属性文件ContextLoader.properties ,
+	 * 查看后果然存在，内容如下
+	 * org.Springframework.web.context.WebApplicationContext=org.Springframework.web.context.support.XmlWebApplicationContext
+	 * 综合以上的代码，在初始化的过程中，程序首先会读取ContextLoader类的同目录下的属性文件ContextLoader.properties，并根据其中的配置
+	 * 提取将要实现WebApplicationContext接口的实现类，并根据这个实现类通过反射方式进行实例的创建
+	 *
+	 *
+	 * 将实例的记录在servletContext
+	 * 映射当前的类加载与创建到全局变量currentContextPerThread中
+	 *
+	 *
+	 *
+	 */
 	static {
 		// Load default strategy implementations from properties file.
 		// This is currently strictly internal and not meant to be customized
@@ -250,15 +266,64 @@ public class ContextLoader {
 	 * Initialize Spring's web application context for the given servlet context,
 	 * using the application context provided at construction time, or creating a new one
 	 * according to the "{@link #CONTEXT_CLASS_PARAM contextClass}" and
-	 * "{@link #CONFIG_LOCATION_PARAM contextConfigLocation}" context-params.
+	 * {@link #CONFIG_LOCATION_PARAM contextConfigLocation}" context-params.
 	 * @param servletContext current servlet context
 	 * @return the new WebApplicationContext
 	 * @see #ContextLoader(WebApplicationContext)
 	 * @see #CONTEXT_CLASS_PARAM
 	 * @see #CONFIG_LOCATION_PARAM
+	 *
+	 *
+	 *	Spring构架提供了构建web应用程序的全部功能,通过策略接口，Spring框架是高度可配置的，而且支持多种视图的技术，例如
+	 *javaService Pages JSP 技术，velocity ,Tiles，iText和POI ，Spring 框架并不知道使用视图，所以不会强迫你使用JSP技术，
+	 * Spring MVC  分离了控制器，模型对象，分派器以及处理程序对象角色，这种分离让他们更加容易 进行定制
+	 * 	Spring 的MVC 是基于Servlet功能实现的，通过实现了Servlet接口的DispatcherServlet并封装其核心的功能实现，通过将请求分派给处理
+	 * 	程序，同时带有可配置的处理程序映射，视图解析，本地语言，主题解析以及上传下载文件的支持，默认的处理程序是非常简单的Contoller接口
+	 * 	只有一个方法ModelAndViewHandleRequest(request,response); Spring提供了一个控制器层次的结构可以派生子类 ，如果应用程序需要
+	 * 	处理用户输入表单，那么可以继承AbstractFormController ，如果需要把多页输入处理到一个表单，那么可以继承AbstractFormController
+	 * 	如果需要把多页输入处理到一个表单，那么可以继承AbstractWizardFormContoller
+	 *
+	 * 		Spring MVC 或者其他的比较成熟的框架而言，解决的问题无外乎于以下的几点
+	 * 	将Web页面的请求传入给服务器
+	 * 	根据不同的请求处理不同的逻辑单元
+	 * 	返回处理结果数据并跳转到响应的页面
+	 * 	我们首先通过一个简单的示例来快速的回顾一下Spring MVC 的使用
+	 *
+	 *
+	 * 	1.配置web.xml
+	 * 	一个web中可以没有web.xml 文件，也就是说，web.xml文件并不是Web工程必须的，web.xml 文件用来初始化信息：比如Welcome 页面
+	 * 	servlet ,servlet-mapping,filter,listener，启动加载级别等，但是SpringMVC 的实现原理是通过Servlet拦截所有的URL来达到
+	 * 	控制控制目的的，所以web.xml的配置是必须的
+	 *
+	 *
+	 *
+	 *
+	 * 初始化WebApplicationContext
+	 *
+	 * 这里涉及了一个常用的类WebApplicationContext ： 在Web应用中，我们会用到WebApplicationContext,WebApplicationContext继承自
+	 * 在ApplicationContext的基础上又追加了一些特定于Web操作及属性，非常类似于我们通过编程方式使用Spring时使用
+	 * ClassPathXmlApplicationContext 类提供的功能，继续跟踪代码
+	 *
+	 *
+	 *  initWebApplicationContext 函数主要体现了创建WebApplicationContext实例的一个功能，架构 ，从函数中我们看到了初始化的大致步骤
+	 *  1.WebApplicationContext存在性的验证
+	 *  在配置文件中只允许声明一次ServletContextListener，多次声明会扰乱Spring执行逻辑，所以以这里首先做的就是对此验证，在Spring中如果
+	 *  创建WebApplicationContext实例记录在ServletContext中以方便全局调用，而使用的key 就是WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
+	 *  所以验证的方式就是查看ServletContext实例中是否有对应的key属性，
+	 *  2.创建webApplicationContext实例
+	 *  如果是通过验证，则Spring将创建WebApplicationContext实例工作委托给了createWebApplicationContext函数
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	public WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
 		if (servletContext.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE) != null) {
+			// web.xml 中存在多次ContextLoader 定义
 			throw new IllegalStateException(
 					"Cannot initialize context because there is already a root application context present - " +
 					"check whether you have multiple ContextLoader* definitions in your web.xml!");
@@ -275,6 +340,7 @@ public class ContextLoader {
 			// Store context in local instance variable, to guarantee that
 			// it is available on ServletContext shutdown.
 			if (this.context == null) {
+				// 初始化context
 				this.context = createWebApplicationContext(servletContext);
 			}
 			if (this.context instanceof ConfigurableWebApplicationContext) {
@@ -291,6 +357,7 @@ public class ContextLoader {
 					configureAndRefreshWebApplicationContext(cwac, servletContext);
 				}
 			}
+			// 记录servletContext 中
 			servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, this.context);
 
 			ClassLoader ccl = Thread.currentThread().getContextClassLoader();

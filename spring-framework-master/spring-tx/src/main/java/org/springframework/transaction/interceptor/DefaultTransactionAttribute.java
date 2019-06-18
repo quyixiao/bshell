@@ -134,7 +134,6 @@ public class DefaultTransactionAttribute extends DefaultTransactionDefinition im
 		return (ex instanceof RuntimeException || ex instanceof Error);
 	}
 
-
 	/**
 	 * Return an identifying description for this transaction attribute.
 	 * <p>Available to subclasses, for inclusion in their {@code toString()} result.
