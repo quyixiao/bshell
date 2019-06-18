@@ -567,6 +567,9 @@ public class DispatcherServlet extends FrameworkServlet {
 
 	/**
 	 * This implementation calls {@link #initStrategies}.
+	 * onRefresh 是 FrameworkServlet 类中提供了模板方法，在其子类DispatcherServlet 中进行重写，主要用于刷新 Spring 在 Web 功能实现
+	 * 所必须使用的是全局变量，下面我们会介绍它们的初始化过程以及使用场景，而至于具体的使用场景，而至于具体的使用细节在稍后的章节中，再做
+	 * 详细的介绍
 	 */
 	@Override
 	protected void onRefresh(ApplicationContext context) {
@@ -578,14 +581,62 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 */
 	protected void initStrategies(ApplicationContext context) {
+		// 初始化 MultipartResolver
+		// 在 Spring中，MultipartResolver 主要用来处理文件上传，默认的情况下，Spring 是没有 multipart处理的，因为一些开发者想
+		// 要自己处理它们，如果想使用 Spring 的 multipart，则需要在 web 应用的上下文中添加 multipart 解析器，这样，每个请求就会检查
+		// 是否包含 multipart，那么上下文中定义的 MultipartResolver 就会解析它，这样请求中的 multipart 属性就会象其他的属性一样
+		// 被处理，常用的配置如下
+		// <bean id="multipartResolver" class="org.Springframework.web.multipart.commons.CommonsMultipartResolver">
+		// 		<!--该属性用来配置可上传文件的最大 byte 数-->
+		//
+		// 当然，CommonsMultipartResolver 还提供了其他的功能用于帮助用户完成上传功能，有兴趣的读者可以进一步查看
+		// 因为之前的步骤已经完成了 Spring 中配置文件的解析，所以在这里只需要在配置文件注册过都可以通过 ApplicationContext 提供的bean
+		// 方法来直接获取对应的 bean ,进而初始化 MultipartResolver 中的 multipartResolver变量
 		initMultipartResolver(context);
+		// 初始化 LocaleResolver
+		// 在 Spring 国际化配置中其有3种使用方式
+		// 基于 URL 参数的配置
+		// 通过 URL 参数搂控制国际化，比如你在页面上加一句<a href="?locale=zh_CN"></a> 来控制项目中的使用国际化的参数，而提供了这个功能
+		// 的就是 AcceptHeaderLocaleResolver，默认的参数名为 locale，注意大小写，里面放的就是你的提交的参数，比如 en_US,zh_CN 之类的
+		// 具体的配置如下：
+		// <bean id="localeResolver" class="org.Springframework.web.servlet.il8n.AcceptHeaderLocaleResolver">
+		// 基于 session 的配置
+		// 它通过检验用户会话中预置的属性来解析区域，最常用的根据用户本次会话过程中的语言设定决定语言的种类，（例如，用户登录时选择语言种类）
+		// 则此次登录周期内统一的使用此语言设定的，如果该传话属性不存在，它会根据 accept-languageHttp 头部确定默认的区域
+		// <bean id="localeResolver" class="org.Springframework.web.servlet.il8n.SessionLocaleResolver">
+		// 基于 Cookie实现国际化配置
+		// CookieLocaleResolver 用于通过浏览器的 cookie 设置取得 Locale 对象，这种策略在应用程序中不支持会话或者状态必须保存在客户端时有用
+		// 配置如下：
+		// <bean id="localeResolver" class="org.Springframework.web.sservlet.il8n.CookieLocaleResolver">
+		// 这三种方式都可以解决国际化问题，但是对于 LocalResolver 的使用基础是在 DispatcherServlet 中的初始化
 		initLocaleResolver(context);
+		// 初始化 ThemeResolver
+		// 在 Web 开发中经常会遇到通过主题 Theme 来控制网页风格，这将进一步改善用户体验，简单的来说，一个主题就是一组静态资源，比如
+		// 样式表和图片，它们可以影响应用程序的视觉效果，Spring 中的主题功能和国际化功能非常的类似，构成 Spring 主题功能主要包括如下的
+		// 内容
+		// 主题资源
+		// org.Springframework.ui.context.ThemeSource是 Spring中主题资源的接口，Spring 的主题的需要通过 ThemeSource 接口实现存在主题
+		// 信息的资源
+		// org.Springframework.ui.context.ThemeSource 是 Spring中主题资源的接口，Spring 的主题需要通过 ThemeSource 接口来实现
+		// 主题信息的资源
+		// org.Springframework.ui.context.support.ResourceBundleThemeSource 是 ThemeSource 接口默认的实现类，也就是通过 ResourceBundle
+		// 资源的方式定义主题，在 Spring 中的配置如下
+		// <bean id="themeSource" class="org.Springframework.ui.context.support.ResourceBundleThemeSource">
+		//		<property name="basenamePrefix" value="com.test."></property>
+		// </bean>
+		//
 		initThemeResolver(context);
+		// 初始化 HandlerMappings
 		initHandlerMappings(context);
+		// 初始化 HandlerAdapters
 		initHandlerAdapters(context);
+		// 初始化 HandlerException
 		initHandlerExceptionResolvers(context);
+		// 初始化 RequestToViewNameTranslator
 		initRequestToViewNameTranslator(context);
+		// 初始化 ViewResolvers
 		initViewResolvers(context);
+		// 初始化 FlashMapManager
 		initFlashMapManager(context);
 	}
 

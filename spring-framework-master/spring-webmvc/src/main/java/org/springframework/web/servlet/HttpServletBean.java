@@ -245,7 +245,24 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		 * requiredProperties 参数的初始化强制验证某些属性的必要性，这样的属性封装的过程中，一旦检测到 requiredProperties 中的属性
 		 * 没有指定初始值，就会抛出异常
 		 *
-		 * 2.
+		 * 2. 将当前的 servlet 实例转化成 beanWrapper 实例
+		 * PropertyAccessorFactory.forBeanPropertyAccess 是 Spring 中提供的工具方法，主要用于将指定的实例转化为 Spring 中可以处理
+		 * 的 BeanWapper 类型的实例
+		 *
+		 * 3.注册相对于 Resource 的属性编辑器
+		 * 属性编辑器，我们在上下文中已经介绍了并且分析了其过程和原理，这里使用的属性编辑器的目的就是在对当前的实例 DispatcherServlet 属性
+		 * 注入的过程中一旦遇到 Resource 类型的属性就会使用 ResourceEdit 去解析
+		 *
+		 * 4.属性的注入
+		 * BeanWapper 为 Spring 中的方法，支持 Spring 自动注入，其实我们最常用的属性注入无非是 contextAttribute,contextClass,
+		 * nameSpace,contextConfigLoaction 等属性
+		 *
+		 * 5.servletBean的初始化
+		 * 在 ContextLoaderListener 加载的时候已经创建了 WebApplicationContext 实例，而在这个函数中最重要的就是对这个实例进一步的
+		 * 补充初始化
+		 *
+		 *
+		 *
 		 *
 		 */
 		public ServletConfigPropertyValues(ServletConfig config, Set<String> requiredProperties)
