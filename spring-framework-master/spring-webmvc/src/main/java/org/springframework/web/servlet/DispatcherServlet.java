@@ -362,6 +362,9 @@ public class DispatcherServlet extends FrameworkServlet {
 		// Load default strategy implementations from properties file.
 		// This is currently strictly internal and not meant to be customized
 		// by application developers.
+		// 在系统加载的时候，defaultStrategies 根据当前路径，DispatcherServlet.properties 来初始化本身，查看DispatcherServlet.properties
+		// 中对应的 HandlerAdapter 的属性
+		//
 		try {
 			ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, DispatcherServlet.class);
 			defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);
@@ -667,6 +670,13 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		initThemeResolver(context);
 		// 初始化 HandlerMappings
+		// 当客户端发出 Request 时 DispacherSevlet 会将 Request 提交给 HandlerMapping，然后将 HandlerMapping 根据 WebApplicationContext
+		// 的配置来回传给 DispatcherServlet 相应的 Controller
+		// 在基于 Spring MVC 的 WEB 应用程序中，我们可以认为 DispatcherServlet 提供了多个 HandlerMapping 供其使用，DispatcherServlet 在选
+		// 用 HandlerMapping 的过程中，将根据我们所指定的一系列的 HandlerMapping 的优先级进行排序，然后优先级在前的 HandlerMapping，如果
+		// 当前的 HandlerMapping 能够返回可用的 Handler，DispatcherServlet 则使用当前返回的 Handler 进行 Web 请求处理，而不再继续
+		// 询问其他的 HandlerMapping ，否则，DispatcherServlet 将继续按照和个 HandlerMapping 的优先级进行询问，直接获取一个可用的
+		// Handler 为止，初始化配置如下
 		initHandlerMappings(context);
 		// 初始化 HandlerAdapters
 		initHandlerAdapters(context);
@@ -750,6 +760,18 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Initialize the HandlerMappings used by this class.
 	 * <p>If no HandlerMapping beans are defined in the BeanFactory for this namespace,
 	 * we default to BeanNameUrlHandlerMapping.
+	 * 默认的情况下，SpringMVC 加载当前系统中所有的实现 HandlerMapping接口的 bean,如果只希望 Spring 加载指定的 HandleMapping 时
+	 * 可以修改 web.xml 中的 disPatcherServlet 的初始化参数 ，将 detectAllHandlerMappings 的值设置为 false
+	 * <init-param>
+	 *     <param-name>detectAllHandlerMappings</param-name>
+	 *     <param-value>false</param-value>
+	 * </init-param>
+	 * 此时，Spring MVC 将查找名为"handleMapping"的 bean ,并作为当前系统中唯一的 handlerMapping，如果没有定义，handlerMapping 的话
+	 * 则 Spring MVC 将按照 org.Springframework.web.servlet.dispatcherServlet 所在的目录下的 disPpatcherServletMapping 的内部来
+	 * 加载默认的 HandlerMapping （用户没有自定义的 Strategies） 的情况下
+
+	 *
+	 *
 	 */
 	private void initHandlerMappings(ApplicationContext context) {
 		this.handlerMappings = null;
@@ -788,6 +810,14 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Initialize the HandlerAdapters used by this class.
 	 * <p>If no HandlerAdapter beans are defined in the BeanFactory for this namespace,
 	 * we default to SimpleControllerHandlerAdapter.
+	 * 	 * 初始化 HandlerAdapters
+	 * 从名字上也能联想到是一个典型的适配器模式的使用，在计算机编程中，适配器模式将一个类的接口适配成用户所期待的，使用适配器，可以使用接口
+	 * 不兼容而无法在一起工作类协同工作，做法是将类自己的接口包裹在一个已经存在的类中，那么处理 handler 时为什么会适配模式呢，回答这个问题
+	 * 我们首先要分析初始化逻辑
+	 * 同样的 在初始化 的过程中涉及了一个变量 detectAllHandlerAdapters，detectAllHandleMappings 类似，只不过作用对象为 handlerAdapter
+	 * ，亦通过如下的配置来强制只加载 bean  name 为 handlerAdapter ，handlerAdapter
+	 *
+	 *
 	 */
 	private void initHandlerAdapters(ApplicationContext context) {
 		this.handlerAdapters = null;
@@ -815,6 +845,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		// Ensure we have at least some HandlerAdapters, by registering
 		// default HandlerAdapters if no other adapters are found.
 		if (this.handlerAdapters == null) {
+			//如果无法找到对应的 bean ，那么系统会尝试加载默认的适配器
 			this.handlerAdapters = getDefaultStrategies(context, HandlerAdapter.class);
 			if (logger.isDebugEnabled()) {
 				logger.debug("No HandlerAdapters found in servlet '" + getServletName() + "': using default");
@@ -1007,6 +1038,8 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @param context the current WebApplicationContext
 	 * @param strategyInterface the strategy interface
 	 * @return the List of corresponding strategy objects
+	 * 在 getDefaultStrategies 函数中，Spring 会尝试从 defaultStrategies 中加载对应的 HandlerAdapter 属性，那么 defaultStragegies
+	 * 是如何初始化代码的呢
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> List<T> getDefaultStrategies(ApplicationContext context, Class<T> strategyInterface) {
