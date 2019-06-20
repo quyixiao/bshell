@@ -364,7 +364,20 @@ public class DispatcherServlet extends FrameworkServlet {
 		// by application developers.
 		// 在系统加载的时候，defaultStrategies 根据当前路径，DispatcherServlet.properties 来初始化本身，查看DispatcherServlet.properties
 		// 中对应的 HandlerAdapter 的属性
-		//
+		// org.Springframework.web.servlet.HandlerAdapter=org.Springframework.web.servlet.mvc.HttpRequestHandlerAdapter，
+		// org.Springframework.web.servlet.mvc.SimpleControllerHandlerAdapter,\
+		// org.Springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter
+		// 由此得知，如果程序开发人员没有在配置文件中定义自己的适配器，那么 Spring 会默认的加载配置文件中的3个适配器
+		// 作为总控制器派遣器 servlet 通过处理器映射得到处理器后，会轮询处理适配器模块，查找能够处理当前 HTTP 请求的处理器适配器实现，处理
+		//适配器模块根据处理器映射返回的处理类型，例如简单的控制器类型，注解，控制器类型或者远程调用处理器类型，来选择某个适当的处理处理
+		// 类型，例如简单的控制器类型，注解控制器类型或者远程调用处理器类型来选择一个适当的处理器适配器的实现，从面适配当前的 HTTP 请求
+		// HTTP 请求处理器适配器（HttpRequestHandlerAdapter）
+		// http 请求处理器适配器仅仅支持对 HTTP 请求处理器的适配，它简单的将 HTTP 请求对象响应对象传递给 HTTP 请求处理器的实现，它并
+		// 不需要返回值，它主要应用的在基于 HTTP 远程调用的实现上
+		// HTTP 请求处理器适配器
+		// HTTP 请求处理器的适配仅仅支持对 HTTP请求的处理器的适配，它将简单的将 HTTP 请求对象和响应对象传递给了 HTTP 请求处理器的实现
+		// 它并不需要返回值，它主要应用在基于 Http 的远程调用的实现上
+
 		try {
 			ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, DispatcherServlet.class);
 			defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);

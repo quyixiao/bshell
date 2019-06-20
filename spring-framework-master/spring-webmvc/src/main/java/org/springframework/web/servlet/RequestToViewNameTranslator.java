@@ -28,6 +28,12 @@ import org.springframework.lang.Nullable;
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @since 2.0
+ *
+ * 初始化 RequestToViewNameTranslator
+ * 当 controller 处理方法没有一个view 对象或逻辑视图名称，并且在该方法中没有直接 response 的输出流程里面写数据的时候，Spring 就会采用
+ * 约定好的方式提供一个逻辑视图的名称，这个逻辑视图的名称是通过 Spring 定义的 org.Springframework.web.servlet.RequestToViewNameTranslator
+ * 接口的 getViewName 方法来实现的，我们可以实现自己的 RequestToViewNameTranslator 接口来约定好没有返回名称的时候如何确定视图的名称
+ * Spring 已经
  */
 public interface RequestToViewNameTranslator {
 

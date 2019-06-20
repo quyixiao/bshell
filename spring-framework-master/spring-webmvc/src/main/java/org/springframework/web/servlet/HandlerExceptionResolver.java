@@ -32,6 +32,14 @@ import org.springframework.lang.Nullable;
  *
  * @author Juergen Hoeller
  * @since 22.11.2003
+ *
+ *
+ * 初始化 HandlerExceptionResolvers
+ * 基于 HandlerExceptionResolver 接口的异常处理，使用这种方式只需要实现 resolveException 方法，该方法返回一个 ModelAndView 对象
+ * ,在方法的内部对异常的类型进行判断，然后尝试生成对应的 ModelAndView 对象，如果该方法返回一个 null，则 Spring 会继续寻找其他的实现
+ * HandlerExceptionResolver 接口的 bean，换句话说，Spring 会搜索所有的注册在其他环境中的实现了 HandlerExceptionResolver 接口的 bean
+ * 逐个实现，直到返回一个 ModelAndView 对象
+ *
  */
 public interface HandlerExceptionResolver {
 
