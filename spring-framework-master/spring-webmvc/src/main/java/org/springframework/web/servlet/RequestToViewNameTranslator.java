@@ -38,7 +38,13 @@ import org.springframework.lang.Nullable;
  * 		prefix:前缀，表示约定好的视图名称需要加上前缀，默认的是空串
  * 		suffix: 后缀，表示约定好的视图名称需要加上后缀，默认是空串
  * 		separator: 分隔符，默认是反斜杠
- * 		stripLeadingSlash : 如果是首
+ * 		stripLeadingSlash : 如果是首字符分隔符，是否要去除，默认的 true
+ * 		stripTrailingSlash: 如果是最后一个字符的分隔符，是否要去除，默认是 true
+ * 		stripExtension: 如果请求的路径包含扩展名是否要去除，默认是 true
+ * 		urlDecode :是否需要对 URL解码，默认是 true,它会采用 request指定的编码或者 ISO-8859-1编码 URL 进行解析
+ * 	当我们没有在 SpringMVC 的配置文件中的定义一个名为 viewNameTranslator 的 bean的时候，Spring 会为我们提供一个默认的 viewNameTranslatokr
+ * 		，即 DefaultRequestToViewNameTranslator
+ *
  *
  */
 public interface RequestToViewNameTranslator {
