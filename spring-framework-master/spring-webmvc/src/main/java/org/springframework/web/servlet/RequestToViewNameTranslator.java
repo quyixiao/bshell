@@ -43,7 +43,15 @@ import org.springframework.lang.Nullable;
  * 		stripExtension: 如果请求的路径包含扩展名是否要去除，默认是 true
  * 		urlDecode :是否需要对 URL解码，默认是 true,它会采用 request指定的编码或者 ISO-8859-1编码 URL 进行解析
  * 	当我们没有在 SpringMVC 的配置文件中的定义一个名为 viewNameTranslator 的 bean的时候，Spring 会为我们提供一个默认的 viewNameTranslatokr
- * 		，即 DefaultRequestToViewNameTranslator
+ * 	，即 DefaultRequestToViewNameTranslator
+ *		接下来，我们看一下，当 Controller 处理器方法没有返回逻辑视图名称时，DefaultRequestToViewNameTranslator 是如何约定视图名称的
+ *	，DefaultRequestToViewNameTranslator 会获取到请求的 URI,然后根据提供的属性做一些改造，把改造视图名称返回，这里以请求路径的
+ * http://localhost/app/test.index.html 为例，来说明一下 DefaultRequestToViewNameTranslator 是如何工作的，请求路径对应的请求 URI
+ * 为/test/index.html ，我们来看以下的几个情况，它分别是对应的逻辑视图名称为什么
+ * 		prefix和 suffix 如果都存在，其他的默认值，那么对应的返回逻辑视图名称应该是 prefixtest/indexsuffix
+ * 		tripLeadingSlash 和stripExtension 都为 false,其他默认的，这个时候对应的逻辑视图的名称是/product/index.html
+ * 		都采用默认的配置时，返回的逻辑视图的名称应该是 product/index
+ *
  *
  *
  */

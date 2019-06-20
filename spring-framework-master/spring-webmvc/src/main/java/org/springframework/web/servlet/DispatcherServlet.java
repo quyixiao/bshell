@@ -908,6 +908,9 @@ public class DispatcherServlet extends FrameworkServlet {
 	/**
 	 * Initialize the RequestToViewNameTranslator used by this servlet instance.
 	 * <p>If no implementation is configured then we default to DefaultRequestToViewNameTranslator.
+	 *  如果逻辑视图名称跟请求路径相同或者关系都一样，那么我们就可以采用 Spring 为我们事先约定好的逻辑视图名称返回，这可以大大的简化我们
+	 *  的开发工作，而以上的功能实现的关键属性viewNameTranslator，则是 initRequestToViewNameTranslator 中完成 。
+	 *
 	 */
 	private void initRequestToViewNameTranslator(ApplicationContext context) {
 		try {
@@ -932,6 +935,25 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Initialize the ViewResolvers used by this class.
 	 * <p>If no ViewResolver beans are defined in the BeanFactory for this
 	 * namespace, we default to InternalResourceViewResolver.
+	 *
+	 * 初始化 ViewResolvers
+	 * 在 SpringMVC 中，Controller 请将请求的结果放到 ModelAndView 中以后，DispatcherServlet 会根据 ModelAndView 选择合适的
+	 * 视图进行渲染，那么在 SpringMVC 中是加如何选择合适的 View呢，View 对象是如何创建的呢，答案就是在 ViewResolver 中，ViewResolver
+	 * 接口定义了 resolverViewName 方法，根据 ViewName 创建合适的类型的 View 的实现
+	 *
+	 *  那么如何配置 ViewResolver呢，在 Spring 中，ViewResolver 作为 Spring Bean 的存在，可以在 Spring 配置文件中进行配置
+	 *  例如下面的代码，配置了 JSP 相关的 viewResolver
+	 *
+	 *  <bean class="org.Springframework.web.servlet.view.InternalResourceViewResolver">
+	 *  	<property name="prefix" value="/WEB-INF/views/"></property>
+	 *  	<property name="suffix" value=".jsp"></property>
+	 *  </bean>
+	 *
+	 * 	viewResolvers 属性的初始化工作在 initViewkResolvers 中完成
+	 *
+	 *
+	 *
+	 *
 	 */
 	private void initViewResolvers(ApplicationContext context) {
 		this.viewResolvers = null;
@@ -970,6 +992,23 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Initialize the {@link FlashMapManager} used by this servlet instance.
 	 * <p>If no implementation is configured then we default to
 	 * {@code org.springframework.web.servlet.support.DefaultFlashMapManager}.
+	 *
+	 *
+	 * 初始化 FlashMapManager
+	 * SpringMVC  Flash attributes 提供了一个请求存储属性，可供其他请求使用，在使用重定向时候非常必要，例如 Post/Redirect/Get模式
+	 * Flash attributes 在重定向之前暂存（就像存在 sesion 中，以便重定向之后还能使用，）并立即删除
+	 * Spring MVC 有两个主要的抽象来支持 flash Attributes ，Flash Map 用于保持 flash Attributes 而 FlashMapManager 用于存储
+	 * ，检索，管理 FlashMap 实例
+	 *
+	 * flash attribute 支持默认开户（"on"） 并不需要显式的启用，它永远不会导致 HTTP session 的创建，这两个 FlashMap 实例都是可以
+	 * 通过静态方法 RequestContextUtis从 Spring MVC 的任何位置访问的
+	 *
+	 * flashMapManager 的初始化的 initFlashMapManager 中完成
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	private void initFlashMapManager(ApplicationContext context) {
 		try {
