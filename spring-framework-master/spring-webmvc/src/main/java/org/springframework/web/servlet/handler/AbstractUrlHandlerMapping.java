@@ -116,28 +116,46 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 * Look up a handler for the URL path of the given request.
 	 * @param request current HTTP request
 	 * @return the handler instance, or {@code null} if none found
+	 * 函数中首先会使用 getHandlerInternal 方法根据 request 信息获取对应的Handler，如果以 SimpleUrlHandlerMapping为例分析，
+	 * 那么我们推断此步骤提供了功能很可能就是根据 URL找到匹配的 Controller 并返回，当然如果没有找到对应的 Controller 处理器那么
+	 * 程序会尝试去查找配置中的默认的处理器，当然，当查找的 controller 为 String类型时，那就意味着返回的是配置 bean 的名称，需要
+	 * 根据 bean 的名称查找对应的 bean，最后，还要通过 getHandlerExecutionChain 方法返回 Handler 进行封装，以保证满足返回类型的
+	 * 匹配，下面是一个详细的分析过程
+	 * 	首先从根据 request查找对应的 Handler 开始分析
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	@Override
 	@Nullable
 	protected Object getHandlerInternal(HttpServletRequest request) throws Exception {
+		// 截取用于匹配的 url 有效路径
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
+		// 根据路径寻找 Handler
 		Object handler = lookupHandler(lookupPath, request);
 		if (handler == null) {
 			// We need to care for the default handler directly, since we need to
 			// expose the PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE for it as well.
 			Object rawHandler = null;
 			if ("/".equals(lookupPath)) {
+				// 如果请求的路径仅仅只是"/"，那么使用 RootHandler进行处理
 				rawHandler = getRootHandler();
 			}
 			if (rawHandler == null) {
+				// 无法找到 handler 则使用默认的 handler
 				rawHandler = getDefaultHandler();
 			}
 			if (rawHandler != null) {
 				// Bean name or resolved handler?
+				// 根据 beanName 获取对应的 bean
 				if (rawHandler instanceof String) {
 					String handlerName = (String) rawHandler;
 					rawHandler = obtainApplicationContext().getBean(handlerName);
 				}
+				// 模版方法
 				validateHandler(rawHandler, request);
 				handler = buildPathExposingHandler(rawHandler, lookupPath, lookupPath, null);
 			}
@@ -167,6 +185,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	@Nullable
 	protected Object lookupHandler(String urlPath, HttpServletRequest request) throws Exception {
 		// Direct match?
+		// 直接匹配情况的处理
 		Object handler = this.handlerMap.get(urlPath);
 		if (handler != null) {
 			// Bean name or resolved handler?
@@ -179,6 +198,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 		}
 
 		// Pattern match?
+		// 通配符匹配的处理
 		List<String> matchingPatterns = new ArrayList<>();
 		for (String registeredPattern : this.handlerMap.keySet()) {
 			if (getPathMatcher().match(registeredPattern, urlPath)) {
@@ -260,6 +280,15 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 * @param pathWithinMapping the path to expose before executing the handler
 	 * @param uriTemplateVariables the URI template variables, can be {@code null} if no variables found
 	 * @return the final handler object
+	 * 根据 URL 获取对应的 Handler 的匹配规则代码实现起来虽然很长，但是并不难理解，考虑到直接匹配与通配符两种情况，其中要提及
+	 * 的是buildPathExposingHandler 函数,它将 Handler 封装成了 HandlerExecutionChain 类型实例，加入了两个拦截器，此时我们
+	 * 似乎已经了解了 Spring 这样大番周折的目的，链处理机制，在 Spring 中非常常用的处理方式，是 AOP中重要的组成部分，可以方便的
+	 * 对目标对象进行扩展及拦截，这是一个非常优秀的设计
+	 *
+	 * 加入拦截器到执行链
+	 *
+	 * getHandlerExecutionChain 函数最主要的目的是将配置中的对应拦截器加入到执行链中，以保证这些拦截器可以有效地作用
+	 * 于目标对象
 	 */
 	protected Object buildPathExposingHandler(Object rawHandler, String bestMatchingPattern,
 			String pathWithinMapping, @Nullable Map<String, String> uriTemplateVariables) {

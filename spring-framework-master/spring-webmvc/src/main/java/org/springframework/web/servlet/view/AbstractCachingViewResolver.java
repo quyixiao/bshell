@@ -143,13 +143,21 @@ public abstract class AbstractCachingViewResolver extends WebApplicationObjectSu
 	}
 
 
+	/****
+	 * 我们以 org.Springframework.web.servlet.view.InternalRosourceViewResolver 为例来分析 ViewResolver 逻辑的解析过程，
+	 * 其中的 resolverViewName 函数的实现是在其父类 AbstractCachingViewResolver 中完成的
+	 *
+	 */
 	@Override
 	@Nullable
 	public View resolveViewName(String viewName, Locale locale) throws Exception {
 		if (!isCache()) {
+			// 不存在缓存的情况下直接创建视图
+			// 在父类 URLBasedViewResolver 中重写了 createView 函数
 			return createView(viewName, locale);
 		}
 		else {
+			// 直接从缓存中提取
 			Object cacheKey = getCacheKey(viewName, locale);
 			View view = this.viewAccessCache.get(cacheKey);
 			if (view == null) {

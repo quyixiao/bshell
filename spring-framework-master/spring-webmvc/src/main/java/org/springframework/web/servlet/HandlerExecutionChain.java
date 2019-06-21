@@ -150,6 +150,7 @@ public class HandlerExecutionChain {
 			throws Exception {
 
 		HandlerInterceptor[] interceptors = getInterceptors();
+		// 应用所有拦截器 postHandle 方法
 		if (!ObjectUtils.isEmpty(interceptors)) {
 			for (int i = interceptors.length - 1; i >= 0; i--) {
 				HandlerInterceptor interceptor = interceptors[i];

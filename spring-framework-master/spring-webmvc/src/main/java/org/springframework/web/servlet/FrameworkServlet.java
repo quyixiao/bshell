@@ -1024,10 +1024,21 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * Process this request, publishing an event regardless of the outcome.
 	 * <p>The actual event handling is performed by the abstract
 	 * {@link #doService} template method.
+	 * 对于不同的方法，Spring 并没有做特殊的处理，而是统一将程序再一次地引导至 processRequest(request,response);
+	 * 函数中已经开始了请求的处理，虽然把细节转移到了 doService 函数中的实现，但是我们不难看出处理请求前后所做准备与处理工作
+	 * 1.为了保证当前线程 LocaleContext 以及 RequestAttributes 可以当前请求后还能恢复，提取当前线程的两个属性
+	 * 2.根据当前 request 创建对应的 LoacaleContext 和 RequestAttributes，并绑定到当前线程
+	 * 3.委托给 doService 方法进一步处理
+	 * 4.请求处理结束后恢复线程的原始状态
+	 * 5.请求处理结束后无论成功与否发布事件通知
+	 * 继续查看 doService 方法
+	 *
+	 *
+	 *
 	 */
 	protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-
+		// 记录当前的时间，用于计算 web 请求的处理时间
 		long startTime = System.currentTimeMillis();
 		Throwable failureCause = null;
 

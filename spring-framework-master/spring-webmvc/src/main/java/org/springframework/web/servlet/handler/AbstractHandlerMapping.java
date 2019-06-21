@@ -348,10 +348,13 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	@Override
 	@Nullable
 	public final HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+		// 根据 request 获取对应的 handler
 		Object handler = getHandlerInternal(request);
 		if (handler == null) {
+			// 如果没有对应的 request 的 handler 则使用默认的 handler
 			handler = getDefaultHandler();
 		}
+		// 如果也没有提供默认的 handler 则无法继续处理返回 null
 		if (handler == null) {
 			return null;
 		}
@@ -409,6 +412,9 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 * @param request current HTTP request
 	 * @return the HandlerExecutionChain (never {@code null})
 	 * @see #getAdaptedInterceptors()
+	 *  加入拦截器到执行链
+	 *  getHandlerExecutionChain 函数中最主要的目的就是将配置中的对应拦截器加入到拦截器加入到执行链中，以保证
+	 *  以保证这些拦截器可以有效地作用于目标对象
 	 */
 	protected HandlerExecutionChain getHandlerExecutionChain(Object handler, HttpServletRequest request) {
 		HandlerExecutionChain chain = (handler instanceof HandlerExecutionChain ?
