@@ -141,9 +141,22 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 	 * @throws RemoteLookupFailureException if RMI stub creation failed
 	 * @see #setLookupStubOnStartup
 	 * @see #lookupStub
+	 * 所有的推断所有的客户端都应该在prepare方法中实现，继续查看prepare()
+	 * 1.通过代理拦截并获取stub
+	 * 在父类的afterPropertiesSet方法中完成了对serviceUrl的验证，那么prepare函数又完成了什么功能呢
+	 *
+	 *
 	 */
 	public void prepare() throws RemoteLookupFailureException {
 		// Cache RMI stub on initialization?
+		// 如果配置了lookupStubOnStartup的属性便会在启动的时候寻找stub
+		// 从上面的代码中，我们了解到了一个很重要的属性lookupStubOnStartup，如果将此属性设置为true，那么获取stub的工作就会在系统启动的
+		// 时候被执行，并缓存，从而提高使用的时候的响应时间
+		// 获取stub是RMI应用中的关键步骤，当然你可以使用两种方式进行
+		// 1.使用自定义的套接字工厂，如果使用的这种方式，你需要在构造Registry实例时将自定义套接字工厂传入，并使用registry中提供的lookup
+		// 方法来获取对应的sub
+		// 直接使用RMI提供的标准方法，Naming.lookup(getServiceUrl()).
+		//
 		if (this.lookupStubOnStartup) {
 			Remote remoteObj = lookupStub();
 			if (logger.isDebugEnabled()) {
@@ -158,6 +171,7 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 				}
 			}
 			if (this.cacheStub) {
+				// 将获取的stub缓存
 				this.cachedStub = remoteObj;
 			}
 		}
@@ -173,6 +187,20 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 	 * @throws RemoteLookupFailureException if RMI stub creation failed
 	 * @see #setCacheStub
 	 * @see java.rmi.Naming#lookup
+	 *
+	 * 为了使用registryClientSocketFactory，代码量比使用RMI 标准获取sub方法多出了很多的那么registryClientSocketFactory到义是做了
+	 * 什么用的呢
+	 *
+	 * 与之前的服务端套接字工厂类似，这里的registryClientSocketFactory 用来连接RMI服务器通过实现RMIClientSocketFactory接口来
+	 * 控制用于连接socket的各种参数
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	protected Remote lookupStub() throws RemoteLookupFailureException {
 		try {
@@ -184,11 +212,15 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 				// straight LocateRegistry.getRegistry/Registry.lookup calls.
 				URL url = new URL(null, getServiceUrl(), new DummyURLStreamHandler());
 				String protocol = url.getProtocol();
+				// 验证传输协义
 				if (protocol != null && !"rmi".equals(protocol)) {
 					throw new MalformedURLException("Invalid URL scheme '" + protocol + "'");
 				}
+				// 主机
 				String host = url.getHost();
+				// 端口
 				int port = url.getPort();
+				// 服务名
 				String name = url.getPath();
 				if (name != null && name.startsWith("/")) {
 					name = name.substring(1);
@@ -227,14 +259,21 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 	 * @return the RMI stub to use for an invocation
 	 * @throws RemoteLookupFailureException if RMI stub creation failed
 	 * @see #lookupStub
+	 * 众所周知，当客户端使用的接口进行方法调用的时候，通过RMI获取stub的，然后再通过stub中封装的信息进行服务器调用，这个stub就是在
+	 * 构建服务器发布对象，那么，客户端调用时最关键的一步也就是进行stub的获取了
+	 *
+	 *
+	 *
 	 */
 	protected Remote getStub() throws RemoteLookupFailureException {
 		if (!this.cacheStub || (this.lookupStubOnStartup && !this.refreshStubOnConnectFailure)) {
+			// 如果有缓存，直接使用缓存
 			return (this.cachedStub != null ? this.cachedStub : lookupStub());
 		}
 		else {
 			synchronized (this.stubMonitor) {
 				if (this.cachedStub == null) {
+					// 获取stub
 					this.cachedStub = lookupStub();
 				}
 				return this.cachedStub;
@@ -253,9 +292,22 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 	 * @see java.rmi.ConnectException
 	 * @see java.rmi.ConnectIOException
 	 * @see java.rmi.NoSuchObjectException
+	 *
+	 * 2.增强器进行远程连接
+	 *	之前分析的类型为RMI ProxyFactoryBean的bean初始化完成逻辑操作，在初始化时创建了代理并将本身作为增强器加入代理中（
+	 *	RMIProxyFactoryBean 间接实现了MethodInterceptor ）这么这样一来，当在客户端用代理接口中的某个方法时，就会首先执行
+	 * RMIProxyFactoryBean	中的invoke方法进行增强
+	 *
 	 */
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
+		// 获取服务器的注册的remote 对象，通过序列传输
+		// 当获取到stub后便可以进行远程方法的调用了，Spring中对于远程方法的调用其实是分两种情况的考虑的
+		// 1.获取stub是RMIInvocationHandler类型的，从服务端获取的stub是RMIInvocationHandler，就意味着服务端同样使用了Spring去构建
+		//  那么自然会使用Spring中作的约定 ，进行客户端调用处理，Spring中处理方式被委托给了doInvoke方法
+		// 2.当获取stub不是RMIInvocationHandler类型，那么服务端构建RMI服务可能是通过普通的方式或者借助于Spring外的第三方插件，那么处理
+		// 方式自然会按照RMI中普通的处理方式进行，而这种普通的处理方式无非是反射，因为在invocation中包含了所需要调用的方法的各种信息，
+		// 包括方法名称以及参数等，而调用的实体正是stub，那么通过反射方法完全可能激活stub中的远程调用
 		Remote stub = getStub();
 		try {
 			return doInvoke(invocation, stub);
@@ -343,6 +395,7 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 	 */
 	@Nullable
 	protected Object doInvoke(MethodInvocation invocation, Remote stub) throws Throwable {
+		// stub 从服务器传回且经过Spring的封装
 		if (stub instanceof RmiInvocationHandler) {
 			// RMI invoker
 			try {
@@ -364,6 +417,7 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 		}
 		else {
 			// traditional RMI stub
+			// 直接使用反射方法继续激活
 			try {
 				return RmiClientInterceptorUtils.invokeRemoteMethod(invocation, stub);
 			}
@@ -392,6 +446,10 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 	 * @throws IllegalAccessException if the method could not be accessed
 	 * @throws InvocationTargetException if the method invocation resulted in an exception
 	 * @see org.springframework.remoting.support.RemoteInvocation
+	 * 之前反复的提到了Spring中客户端处理RMI的方式，其实在分析服务器发布RMI的方式时，我们已经了解到了Spring将RMI的导出Object封装成了
+	 * RMIInvocationHandler类型进行发布，那么当客户端获取stub的时候是包含了远程连接信息代理类的RMIInvocationHandler，也就是说，当调用
+	 * RMIInvocationHandler中的方法时会使用RMI中提供的代理进行远程连接，而此时，Spring中要做的就是将代码引向RMIInvocationHandler接口的
+	 * invoke方法调用
 	 */
 	@Nullable
 	protected Object doInvoke(MethodInvocation methodInvocation, RmiInvocationHandler invocationHandler)
@@ -400,7 +458,7 @@ public class RmiClientInterceptor extends RemoteInvocationBasedAccessor
 		if (AopUtils.isToStringMethod(methodInvocation.getMethod())) {
 			return "RMI invoker proxy for service URL [" + getServiceUrl() + "]";
 		}
-
+		// 将methodInvocation 中的方法及参数等信息重新封装到RemoteInvocation，并通过远程代理直接调用
 		return invocationHandler.invoke(createRemoteInvocation(methodInvocation));
 	}
 

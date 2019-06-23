@@ -146,15 +146,34 @@ public abstract class RemoteExporter extends RemotingSupport {
 	 * @see #setServiceInterface
 	 * @see #setRegisterTraceInterceptor
 	 * @see RemoteInvocationTraceInterceptor
+	 *
+	 *
+	 * 语法处理类的初始化主要规则为，如果配置的service属性对应的类实现了Remote接口且没有配置serviceInterface属性，那么直接使用service
+	 * 作为处理类，否则，使用RMIInvocationWrapper对service的代理类和当前类也就是RMIServiceExporter进行封装
+	 *
+	 * 结过这样的封装，客户端与服务端便可以达成一致的协义，当客户端与服务端很好的连接在一起了，而RMIInvocationWapper封装了处理请求的代理类
+	 * 在invoke中便会用不用代理类进一步的处理
+	 *
+	 * 之前的逻辑已经非常的清楚了，当请求RMI服务时会由注册表Registry实例将请求转向之前注册的处理类去处理，也就是说之前封装的RMIInvocationWrapper
+	 * ,然后由RMIInvocationWrapper中的invoke方法进行处理，那么为什么不是在invoke方法中直接使用这些service，而是通过代理再次使用service封装呢
+	 *
+	 * 这其中的一个关键点是，在创建代理时添加一个增强拦截器RemoteInvocationTraceInterceptor ,目的是为了对方法的调用进行打印跟踪，
+	 * 但是如果直接在invoke方法中的硬编码这此日志，会使代码看起来很不优雅，而且耦合度很高，使用代理的方式就会解决这样的问题，而且会有很高的可
+	 * 扩展性
+	 *
 	 */
 	protected Object getProxyForService() {
+		// 验证 service
 		checkService();
+		// 验证serviceInterface
 		checkServiceInterface();
-
+		// 使用JDK的方式创建代理
 		ProxyFactory proxyFactory = new ProxyFactory();
+		// 添加代理接口
 		proxyFactory.addInterface(getServiceInterface());
 
 		if (this.registerTraceInterceptor != null ? this.registerTraceInterceptor : this.interceptors == null) {
+			// 加入代理的横切面RemoteInvocationTranceInterceptor 并记录exporter名称
 			proxyFactory.addAdvice(new RemoteInvocationTraceInterceptor(getExporterName()));
 		}
 		if (this.interceptors != null) {
@@ -163,10 +182,10 @@ public abstract class RemoteExporter extends RemotingSupport {
 				proxyFactory.addAdvisor(adapterRegistry.wrap(interceptor));
 			}
 		}
-
+		// 设置要代理的目标类
 		proxyFactory.setTarget(getService());
 		proxyFactory.setOpaque(true);
-
+		// 创建代理
 		return proxyFactory.getProxy(getBeanClassLoader());
 	}
 

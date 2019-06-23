@@ -92,6 +92,14 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * @return the RemoteInvocation object
 	 * @throws IOException in case of I/O failure
 	 * @throws ClassNotFoundException if thrown by deserialization
+	 * Spring 开发小组意识到了RMI服务是基于HTTP的服务的如HEssian和Burlap之间的空白，一方面，RMI使用的是Java标准的对象序列化，但是很难
+	 * 穿越防火墙，另一方面，Hessian/Burlap能很好的穿过防火墙工作，但是使用自己的私有的一套对象序列化机制
+	 * 就这样，Spring的HttpInvoker应运而生了，HttpInvoker是一个新的远程调用模型，作为Spring框架的一部分，来执行基于HTTP的远程调用
+	 * 让防火墙高兴的事情，并使用Java的序列化机制，这是让程序员高兴的事情
+	 *
+	 * 我们首先看看HttpInvoker的使用示例，HttpInvoker是基于HTTP的远程调用，同是也是使用Spring中提供了的web服务作为基础的，所以我们的测试需要首先搭建
+	 * Web工程
+	 *
 	 */
 	protected RemoteInvocation readRemoteInvocation(HttpServletRequest request)
 			throws IOException, ClassNotFoundException {

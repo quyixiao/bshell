@@ -67,6 +67,17 @@ public abstract class RemoteInvocationBasedExporter extends RemoteExporter {
 	 * @throws IllegalAccessException if the method could not be accessed
 	 * @throws InvocationTargetException if the method invocation resulted in an exception
 	 * @see RemoteInvocationExecutor#invoke
+	 * RMI 服务激活调用
+	 * 	之前反复的提到过bean初始化的时候，做了服务名称绑定，this.registry.bind(this.ServiceName,this.exportedObject),其中的
+	 * 	exportedObject其实是被RMIInvocationWrapper进行封装的，也就是说当其他服务调用serviceName的RMI服务时，Java会为我们封装其
+	 * 	内部操作，而直接将代码转向RMIInvocationWrapper的invoke方法
+	 *
+	 * 	因此this.RMIExporter为之前初始化的RMIServiceExporter，
+	 * 	invocation为包含着需要激活的方法参数
+	 * 	而wrappedObject则是之前封装的代理类
+	 *
+	 *
+	 *
 	 */
 	protected Object invoke(RemoteInvocation invocation, Object targetObject)
 			throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {

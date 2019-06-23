@@ -46,6 +46,9 @@ public abstract class UrlBasedRemoteAccessor extends RemoteAccessor implements I
 	}
 
 
+	/***
+	 * 继续追踪代码，发现父类的父类，也就是UrlBasedRemoteAccessor中的afterPropertiesSet方法只完成了对serviceUrl属性的验证
+	 */
 	@Override
 	public void afterPropertiesSet() {
 		if (getServiceUrl() == null) {

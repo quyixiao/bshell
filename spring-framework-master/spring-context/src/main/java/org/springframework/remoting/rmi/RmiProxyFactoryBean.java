@@ -57,6 +57,28 @@ import org.springframework.util.Assert;
  * @see org.springframework.remoting.RemoteAccessException
  * @see org.springframework.remoting.caucho.HessianProxyFactoryBean
  * @see org.springframework.remoting.httpinvoker.HttpInvokerProxyFactoryBean
+ *
+ *
+ *
+ * 客户端的实现
+ *
+ * 根据客户端配置文件，锁定入口类为RMIProxyFactoryBean，同样根据类的层次结构查找人口函数，如图 12-2 所示
+ *
+ * 根据层次关系以及之前的分析，我们提出该类实现比较重要的接口，InitializingBean,BeanClassLoaderAware以及MethodInterceptor
+ *
+ * 其中实现了InitializingBean，则Spring会确保此初始化bean时调用afterPropertiesSet进行逻辑的初始化
+ *
+ * 同时，RMI proxyFactoryBean实现了FactoryBean接口，那么当获取Bean时并不是直接获取bean，而是获取该bean的getObject方法
+ *
+ *  public Object getObject(){
+ *      return this.serviceProxy;
+ *  }
+ *  这样，我们似乎已经形成了一个大致的轮廓，当获取该bean时，首先通过afterPropertiesSet创建代理类，并使用当前类作为增强方法，而在调用该
+ *  bean时其实返回的是代理类，既然调用的地代理类，那么又会使用当前bean作为增强器进行增强，也就是说会调用RMIProxyFactoryBean的父类
+ *  RMIClientInterceptor的invoke方法
+ *
+ *
+ *
  */
 public class RmiProxyFactoryBean extends RmiClientInterceptor implements FactoryBean<Object>, BeanClassLoaderAware {
 
@@ -68,6 +90,7 @@ public class RmiProxyFactoryBean extends RmiClientInterceptor implements Factory
 		super.afterPropertiesSet();
 		Class<?> ifc = getServiceInterface();
 		Assert.notNull(ifc, "Property 'serviceInterface' is required");
+		// 同时RMIProxyFactoryBean又实现了Bean接口，那么当获取Bean时并不是直接获取bean，而是获取该bean的getObject方法
 		this.serviceProxy = new ProxyFactory(ifc, this).getProxy(getBeanClassLoader());
 	}
 
