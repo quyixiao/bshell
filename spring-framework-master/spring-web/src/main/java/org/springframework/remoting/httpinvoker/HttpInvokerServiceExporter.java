@@ -69,14 +69,31 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * @see #readRemoteInvocation(HttpServletRequest)
 	 * @see #invokeAndCreateResult(org.springframework.remoting.support.RemoteInvocation, Object)
 	 * @see #writeRemoteInvocationResult(HttpServletRequest, HttpServletResponse, RemoteInvocationResult)
+	 *
+	 * 处理来自客户端的request
+	 * 当有Web请求时，根据配置中的规则会把路径匹配的访问直接引入对应的HttpRequestHandler中，本例中的Web请求与普通的Web请求是有些区别的
+	 * ，因为此处的请求包含着HttpInvoker的处理过程
+	 *
+	 *
+	 * 在HandlerRequest函数中，我们很清楚的看到了HttpInvoker处理的大致的框架，HttpInvoker服务简单点来说就是将就请求的处理方法，也就是说
+	 * RemoteInvocation对象，从客户端序列化并通过Web请求出入服务端，服务端对传过来的的序列化对象进行反序列化还原，RemoteInvocation实例
+	 * 然后通过实例中的相关信息进行相关方法的调用，并将执行的结果再次返回给客户端，从handleRequest函数中的，我们也可以清晰的看到程序执行的
+	 * 构架结构，
+	 *
+	 *
 	 */
 	@Override
 	public void handleRequest(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
 		try {
+			// 从request中读取序列化对象
 			RemoteInvocation invocation = readRemoteInvocation(request);
+			// 执行调用
 			RemoteInvocationResult result = invokeAndCreateResult(invocation, getProxy());
+			// 将结果序列化对象写入输出流
+
+			//
 			writeRemoteInvocationResult(request, response, result);
 		}
 		catch (ClassNotFoundException ex) {
@@ -100,6 +117,13 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * 我们首先看看HttpInvoker的使用示例，HttpInvoker是基于HTTP的远程调用，同是也是使用Spring中提供了的web服务作为基础的，所以我们的测试需要首先搭建
 	 * Web工程
 	 *
+	 *
+	 *
+	 * 从request中读取序列化对象
+	 * 主要是从HttpServletRequest提取相关的信息，也就是提取HttpServletRequest中的RemoteInvocation对象序列化信息以及反序列化的过程
+	 *
+	 *
+	 *
 	 */
 	protected RemoteInvocation readRemoteInvocation(HttpServletRequest request)
 			throws IOException, ClassNotFoundException {
@@ -119,12 +143,22 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * @return the RemoteInvocation object
 	 * @throws IOException in case of I/O failure
 	 * @throws ClassNotFoundException if thrown during deserialization
+	 *
+	 *
+	 *
+	 * 对于序列化提取与转换的过程其实并没有太多的需要解释的东西，这里完全按照标准的方式进行操作，包括创建ObjectInputStrem
+	 * 以及从ObjectInputStream中提取对象实例
+	 *
+	 *
+	 *
+	 *
 	 */
 	protected RemoteInvocation readRemoteInvocation(HttpServletRequest request, InputStream is)
 			throws IOException, ClassNotFoundException {
-
+		// 创建对象输入流
 		ObjectInputStream ois = createObjectInputStream(decorateInputStream(request, is));
 		try {
+			//输入流中读取序列化对象
 			return doReadRemoteInvocation(ois);
 		}
 		finally {
@@ -152,6 +186,13 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * @param response current HTTP response
 	 * @param result the RemoteInvocationResult object
 	 * @throws IOException in case of I/O failure
+	 *
+	 *
+	 * 将结果也包括结果的序列化过程
+	 * 同样这里也包括将结果序列化过程
+	 *
+	 *
+	 *
 	 */
 	protected void writeRemoteInvocationResult(
 			HttpServletRequest request, HttpServletResponse response, RemoteInvocationResult result)
@@ -180,9 +221,11 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 			HttpServletRequest request, HttpServletResponse response, RemoteInvocationResult result, OutputStream os)
 			throws IOException {
 
+		// 获取输入流
 		ObjectOutputStream oos =
 				createObjectOutputStream(new FlushGuardedOutputStream(decorateOutputStream(request, response, os)));
 		try {
+			// 将序列化对象写入输入流
 			doWriteRemoteInvocationResult(result, oos);
 		}
 		finally {

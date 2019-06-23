@@ -161,6 +161,26 @@ public abstract class RemoteExporter extends RemotingSupport {
 	 * 但是如果直接在invoke方法中的硬编码这此日志，会使代码看起来很不优雅，而且耦合度很高，使用代理的方式就会解决这样的问题，而且会有很高的可
 	 * 扩展性
 	 *
+	 *
+	 * 对于Spring中HttpInvoker服务的实现，我们还是首先从服务端进行分析，
+	 * 根据remote-servlet.xml中配置，我们分析入口应该为org.Springframework.remoting.httpinvoker.HttpInvokerServiceExporter,
+	 * 如图12-3 所示
+	 *
+	 * 通过层次关系我们看到HttpInvokerServiceExporter 类实现了，InitializingBean接口以及HttpRequestHandler接口，分析RMI服务时
+	 * 我们已经解析了，当某个bean 继承自InitiazingBean 接口的时候，Spring会确保这个bean在初始化时调用其afterPropertiesSet方法，而对于
+	 * HttpRequestHandler接口，因为我们在配置中已经将此接口配置成Web服务，那么当有相应的请求的时候，Spring的Web服务就会将程序导致
+	 * HttpRequestHandler的HandleRequest方法中首先，我们从afterPropertiesSet方法开始分析，看看bean的初始化的过程做了哪些逻辑
+	 *
+	 * 通过将上面的3个方法中联，可以看到，初始化过程中实现的逻辑主要创建一个代理，代理中封装了对特定请求的处理方法以及接口等信息，而这个代理 的最
+	 * 关键的目的是加入了RemoteInvocationTranceInterceptor增强器，当然创建代理还有些其他的好处，比如代码优雅，方便扩展，
+	 * RemoteInvocationTraceInterceptor中的增强主要对增强的目标方法进行了一些相关的信息日志打印，并没有在此基础上进行任何功能的增强，
+	 * 那么这个任何功能性的增强，那么这个代理究竟是在什么时候使用的呢，暂留下悬念，我们接下来分析当有Web请求时，HttpRequestHandler
+	 * 的HandleRequest方法的处理
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	protected Object getProxyForService() {
 		// 验证 service
