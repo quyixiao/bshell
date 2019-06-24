@@ -82,6 +82,11 @@ public class HttpInvokerProxyFactoryBean extends HttpInvokerClientInterceptor im
 	// 	ApplicationContext context = new ClassPathXmlApplicationContext("classpath:applicationContext-client.xml");
 	//	HttpInvokeTestI httpInvokeTestI = (HttpInvokeTestI)context.getBean("remoteService");
 	//  System.out.println(httpInvokeTestI.getTestPo("dddddddd"));
+
+
+	// 这时，所有的逻辑分析其实已经被转向了对于增强器也就是HttpInvokeProxyFactoryBean类本身的invoke方法分析了
+	// 在分析invoke方法之前，其实我们已经猜出了该方法所提供的主要功能就是将信息封装在RemoteInvocation中，发送给服务端等待返回结果
+
 	@Override
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();

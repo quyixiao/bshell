@@ -183,18 +183,26 @@ public class HttpComponentsHttpInvokerRequestExecutor extends AbstractHttpInvoke
 	 * @see #executeHttpPost
 	 * @see #validateResponse
 	 * @see #getResponseBody
+	 * 在doExecuteRequest 方法中真正的实现了对远程构造的通信，与远程方法的连接功能实现中，Spring引入了第三方的JAR :
+	 * HttpClient，HttpClient是Apache JAKarta Common下的子项目，可以用来提供高效的，最新的，功能丰富的支持Http协义的客户端
+	 * 编程工具包，并且它支持HTTP协义版本和建义，对HttpClient的具体的使用方法有兴趣的读者可以参考更多的资料和文档
 	 */
 	@Override
 	protected RemoteInvocationResult doExecuteRequest(
 			HttpInvokerClientConfiguration config, ByteArrayOutputStream baos)
 			throws IOException, ClassNotFoundException {
-
+		// 创建httpPost方法
 		HttpPost postMethod = createHttpPost(config);
+		// 设置含有方法的输出流到post中
 		setRequestBody(config, postMethod, baos);
 		try {
+			//执行方法并等待结果响应
 			HttpResponse response = executeHttpPost(config, getHttpClient(), postMethod);
+			//验证
 			validateResponse(config, response);
+			// 提取返回的输入流
 			InputStream responseBody = getResponseBody(config, response);
+			// 从输入流中提取结果
 			return readRemoteInvocationResult(responseBody, config.getCodebaseUrl());
 		}
 		finally {
@@ -210,17 +218,19 @@ public class HttpComponentsHttpInvokerRequestExecutor extends AbstractHttpInvoke
 	 * target service
 	 * @return the HttpPost instance
 	 * @throws java.io.IOException if thrown by I/O methods
+	 * 创建HttpPost
 	 */
 	protected HttpPost createHttpPost(HttpInvokerClientConfiguration config) throws IOException {
+		// 设置需要访问的url
 		HttpPost httpPost = new HttpPost(config.getServiceUrl());
-
 		RequestConfig requestConfig = createRequestConfig(config);
 		if (requestConfig != null) {
 			httpPost.setConfig(requestConfig);
 		}
-
+		//
 		LocaleContext localeContext = LocaleContextHolder.getLocaleContext();
 		if (localeContext != null) {
+			// 加入Accept-Language属性
 			Locale locale = localeContext.getLocale();
 			if (locale != null) {
 				httpPost.addHeader(HTTP_HEADER_ACCEPT_LANGUAGE, StringUtils.toLanguageTag(locale));
@@ -228,6 +238,7 @@ public class HttpComponentsHttpInvokerRequestExecutor extends AbstractHttpInvoke
 		}
 
 		if (isAcceptGzipEncoding()) {
+			// 加入Accept-Encoding属性
 			httpPost.addHeader(HTTP_HEADER_ACCEPT_ENCODING, ENCODING_GZIP);
 		}
 
@@ -292,6 +303,7 @@ public class HttpComponentsHttpInvokerRequestExecutor extends AbstractHttpInvoke
 
 		ByteArrayEntity entity = new ByteArrayEntity(baos.toByteArray());
 		entity.setContentType(getContentType());
+		// 将序列化流加入到PostMethod中，并声明ContentType类型为application/x-java-serialized-object
 		httpPost.setEntity(entity);
 	}
 

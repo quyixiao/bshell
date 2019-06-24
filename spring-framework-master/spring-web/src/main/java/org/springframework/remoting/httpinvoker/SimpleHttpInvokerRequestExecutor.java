@@ -90,9 +90,10 @@ public class SimpleHttpInvokerRequestExecutor extends AbstractHttpInvokerRequest
 		HttpURLConnection con = openConnection(config);
 		prepareConnection(con, baos.size());
 		writeRequestBody(config, con, baos);
+		// 对于Http调用响应码处理，大于300则是非正常的调用响应码
 		validateResponse(config, con);
 		InputStream responseBody = readResponseBody(config, con);
-
+		// 提取结果的流程主要是从输入流中提取响应的序列化信息
 		return readRemoteInvocationResult(responseBody, config.getCodebaseUrl());
 	}
 
@@ -205,6 +206,9 @@ public class SimpleHttpInvokerRequestExecutor extends AbstractHttpInvokerRequest
 	 * @see java.net.HttpURLConnection#getInputStream()
 	 * @see java.net.HttpURLConnection#getHeaderField(int)
 	 * @see java.net.HttpURLConnection#getHeaderFieldKey(int)
+	 *
+	 * 提取响应信息
+	 * 从服务器返回的输入流可能是经过压缩的，不同的方式且采用不同的办法进行提前
 	 */
 	protected InputStream readResponseBody(HttpInvokerClientConfiguration config, HttpURLConnection con)
 			throws IOException {

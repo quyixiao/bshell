@@ -141,16 +141,28 @@ public class HttpInvokerClientInterceptor extends RemoteInvocationBasedAccessor
 	}
 
 
+
+	// 函数主要有3 个步骤
+	// 1 构建 RemoteInvacation实例
+	// 因为代理中增强方法的调用，调用方法及参数信息会在代理中封装至MethodInvocation实例中，并在增强方法中进行传递，也就意味着当程序
+	// 进入invoke方法时已经包含了调用接口相关的信息，那么，首先要做的就是将 MethodInvocation中的信息提取并构建RemoteInvocation实例中
+	// 2.远程执行方法
+	// 3.提取结果
+	// 考虑到序列化问题，在Spring中约定使用HttpInvoker方式进行远程方法调用，结果使用RemoteInvocationResult进行封装，那么提取结果
+	// 后还需要从封装的结果中提取对应的结果
+	// 而这三个步骤，中的最关键的就是远程的执行，执行远程调用的首要步骤就是将调用方法的实例写入输出流中。
+
 	@Override
 	public Object invoke(MethodInvocation methodInvocation) throws Throwable {
 		if (AopUtils.isToStringMethod(methodInvocation.getMethod())) {
 			return "HTTP invoker proxy for service URL [" + getServiceUrl() + "]";
 		}
-
+		// 将要调用的方法封装成RemoteInvocation
 		RemoteInvocation invocation = createRemoteInvocation(methodInvocation);
 		RemoteInvocationResult result;
 
 		try {
+			// 远程执行方法
 			result = executeRequest(invocation, methodInvocation);
 		}
 		catch (Throwable ex) {
@@ -159,6 +171,7 @@ public class HttpInvokerClientInterceptor extends RemoteInvocationBasedAccessor
 		}
 
 		try {
+			// 提取结果
 			return recreateRemoteInvocationResult(result);
 		}
 		catch (Throwable ex) {
