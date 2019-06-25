@@ -481,6 +481,14 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 	 * @throws JmsException if there is any problem
 	 * @see #execute(SessionCallback)
 	 * @see #receive
+	 * 根据之前的分析 JdbcTemplate 的经验，我们推断，在 execute 中一定封装了 Connection 以及 Session 的创建操作
+	 *
+	 * 在导示单独使用 ActiveAQ 时，我们知道为了发送和条消息需要做很多的工作，需要很多的辅助代码，而这些代码又是千篇一律的，没有任何的差异
+	 * ，所以 eecute 方法的上的就是帮助我们抽离这些冗余的代码使我们更加专注于业务逻辑的实现，从函数中看到，这些冗余的代码包括创建 Connection
+	 * ,创建 session，当然也包括关闭 Session 和关闭 Connection，而在准备工作结束后，调用回调函数将程序引入用户自定义实现的个性化处理
+	 * 至于如何创建 SEssion 与 Connection，有兴趣的读者可以进一步研究 mybatis 源码
+	 *
+	 *
 	 */
 	@Nullable
 	public <T> T execute(SessionCallback<T> action, boolean startConnection) throws JmsException {
@@ -491,8 +499,11 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 			Session sessionToUse = ConnectionFactoryUtils.doGetTransactionalSession(
 					obtainConnectionFactory(), this.transactionalResourceFactory, startConnection);
 			if (sessionToUse == null) {
+				// 创建 connection
 				conToClose = createConnection();
+				// 根据 connection 创建 session
 				sessionToClose = createSession(conToClose);
+				// 是否开启向服务器推送连接信息，只有接收信息的时候需要，发送信息的时候不需要
 				if (startConnection) {
 					conToClose.start();
 				}
@@ -501,13 +512,16 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 			if (logger.isDebugEnabled()) {
 				logger.debug("Executing callback on JMS Session: " + sessionToUse);
 			}
+			// 调用回调函数
 			return action.doInJms(sessionToUse);
 		}
 		catch (JMSException ex) {
 			throw convertJmsAccessException(ex);
 		}
 		finally {
+			// 关闭 session
 			JmsUtils.closeSession(sessionToClose);
+			// 释放连接
 			ConnectionFactoryUtils.releaseConnection(conToClose, getConnectionFactory(), startConnection);
 		}
 	}
@@ -571,11 +585,19 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 		}
 	}
 
+	// 现在的风格不得不让我们回想起 JdbcTemplate 的类的实现风格，极为相似，都是提取了一下公共的方法作为最底层，最能用的功能是实现
+	// 然后又通过回调函数的不同来区分个性化的功能
+	// 我们首先查看能用的代码的抽取实现
+
 	@Override
 	public void send(final Destination destination, final MessageCreator messageCreator) throws JmsException {
-		execute(session -> {
-			doSend(session, destination, messageCreator);
-			return null;
+		execute(new SessionCallback<Object>() {
+			@Nullable
+			@Override
+			public Object doInJms(Session session) throws JMSException {
+				JmsTemplate.this.doSend(session, destination, messageCreator);
+				return null;
+			}
 		}, false);
 	}
 
@@ -594,6 +616,8 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 	 * @param destination the JMS Destination to send to
 	 * @param messageCreator callback to create a JMS Message
 	 * @throws JMSException if thrown by JMS API methods
+	 * 此时的发送的逻辑已经完全转向了 doSend方法，这样，使整个功能实现变得更加清晰
+	 *
 	 */
 	protected void doSend(Session session, Destination destination, MessageCreator messageCreator)
 			throws JMSException {
@@ -622,6 +646,11 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 	 * @param producer the JMS MessageProducer to send with
 	 * @param message the JMS Message to send
 	 * @throws JMSException if thrown by JMS API methods
+	 * 在演示独立的使用消息功能的时候，我们大体上了解了消息发送的基本套路，虽然这些步骤已经被 Spring拆得支离破碎，但是我们还是能捕捉到
+	 * 一些影子，在发送消息的时候还是遵循一些消息发送的规则，比如根据 Destination 创建 MessageProducer,创建 message，并使用 MessageProducer
+	 * 实例来发送消息
+	 *
+	 *
 	 */
 	protected void doSend(MessageProducer producer, Message message) throws JMSException {
 		if (this.deliveryDelay >= 0) {
@@ -777,6 +806,10 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 	 * @param consumer the JMS MessageConsumer to receive with
 	 * @return the JMS Message received, or {@code null} if none
 	 * @throws JMSException if thrown by JMS API methods
+	 * 实现的套路与发送差不多，同时还是使用 execute()函数来封装冗余的公共操作，而最终的目标还是通过 consumer.receive()来接收消息，
+	 * 其中的过程就是对于 MessageConsumer的创建以及一些辅助的操作
+	 *
+	 *
 	 */
 	@Nullable
 	protected Message doReceive(Session session, MessageConsumer consumer) throws JMSException {

@@ -159,11 +159,16 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 
 	/**
 	 * Delegates to {@link #validateConfiguration()} and {@link #initialize()}.
+	 * 监听器容器中的初始化包含了三句代码，其中前两句只用于属性的验证，比如 connectionFactory 或者 destination 等属性是否
+	 * 为空等，而真正初始化操作委托给了 initialize()
 	 */
 	@Override
 	public void afterPropertiesSet() {
+		//验证 connectionFactory
 		super.afterPropertiesSet();
+		// 验证配置文件
 		validateConfiguration();
+		// 初始化
 		initialize();
 	}
 
@@ -197,6 +202,7 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 	 */
 	public void initialize() throws JmsException {
 		try {
+			// lifecycleMonitor 用于控制生命周期的同步处理
 			synchronized (this.lifecycleMonitor) {
 				this.active = true;
 				this.lifecycleMonitor.notifyAll();

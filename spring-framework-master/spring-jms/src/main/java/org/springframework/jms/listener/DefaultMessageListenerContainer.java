@@ -121,6 +121,30 @@ import org.springframework.util.backoff.FixedBackOff;
  * @see javax.jms.MessageConsumer#receive(long)
  * @see SimpleMessageListenerContainer
  * @see org.springframework.jms.listener.endpoint.JmsMessageEndpointManager
+ *
+ * 监听器容器
+ * 消息监听器容器是一个用于查看 JMS 目标等待消息到达的特殊 bean，一旦消息到达它就可以获取消息，并通过调用 onMessage()方法将消息传递给
+ * 一个 MessageListener实现，Spring 中消息监听器容器的类型如下
+ *
+ * SimpleMessageListenerContainer:最简单的消息监听器容器，只能处理固定数量的 JMS会话，且不支持事务
+ * DefaultMessageListenerContainer: 这个消息监听器容器建立在 SimpleMessageContainer 容器之上，添加了对事务的支持
+ * serversession.ServerSessionMessage.ListenerContainer： 这个功能最强大的消息监听器，与 DefaltMessageListenerContainer相同，
+ * 它支持事务，但是它还允许动态的管理 JMS 会话
+ *
+ * 下面以 DefaultMessageListenerContainer为例进行分析，看看消息监听器的容器实现，在之前的消息监听器的使用示例中，我们了解到在使用示例中
+ * ，我们了解到在使用消息映射器容器时，一定要将自定义的消息监听器置入到容器中，这样才可以在收到信息时，容器把消息转身监听器处理，
+ * 查看 DefaultMessageListenerContainer 层次结构力，如图所示13-2
+ *
+ *
+ * 同样的，我们看看此类实现的 inittializingBean接口，按照以往的风格，我们还是首先查看接口方法，afterPropertiesSet()逻辑，其方法实现
+ * 在父类 AbstractJMSListeningContainer中
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 public class DefaultMessageListenerContainer extends AbstractPollingMessageListenerContainer {
 
@@ -549,6 +573,13 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 	@Override
 	protected void doInitialize() throws JMSException {
 		synchronized (this.lifecycleMonitor) {
+			// 这里用concurrentConsumers 属性，网络中此属性的用法说明如下
+			// 消息监听器允许创建多个 Session 和 MessageConsumer 来接收消息，具体的个数由 concurrentConsumers 属性指定，
+			// 需要注意的是，应该只是在 Destination为 Queue 的时候才使用多个 MessageConsumer（Queue 中的一个消息只能被一个 Consumer 接收）
+			// 虽然使用多个 MessageConsumer 会提高消息的处理性能，但是消息处理的顺序却得不到保证，消息被接收的顺序仍然是消息
+			// 消息发送时的顺序，但是由于消息可能会被并发处理，因此消息处理的顺序可能和消息发送的有顺序不同，此外，不应该在
+			// Destination 为 Topic 的时候使用多个 MessageConsumer，因为多个 MessageConsumer会接收到同样的消息
+
 			for (int i = 0; i < this.concurrentConsumers; i++) {
 				scheduleNewInvoker();
 			}
@@ -717,6 +748,14 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 	/**
 	 * Re-executes the given task via this listener container's TaskExecutor.
 	 * @see #setTaskExecutor
+	 * 分析源码得知，根据 concurrentConsumers 数量建立了对应的数量的线程，即使读者不了解线程池的使用，至少根据以上的
+	 * 代码可以推断出 doRescheduleTask 函数其实是开启了一个线程执行的 runnable接口， 我们反追踪这个传入的参数，可以
+	 * 看到这个参数其实是 AsyncMessageListenerInvoker 类型的实例，因此我们可以推断，Spring 是根据 concurrentConsumers
+	 * 的数量建立了对应的数量的线程，而每个线程作为独立的接收者在循环接收消息
+	 *
+	 *
+	 *
+	 *
 	 */
 	@Override
 	protected void doRescheduleTask(Object task) {
@@ -1050,19 +1089,31 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 
 		private volatile boolean idle = true;
 
+
+		/***
+		 * 从以下的函数中主要根据变量maxMessagesPerTask的值来分为不同的情况处理，当然，函数中还使用大量的代码处理异常机制的数据
+		 * 维护，但是我们还是相信大家跟我一样更加关注程序的正常的流程是如何处理的
+		 *其实核心的处理就是调用 invokeListener 来接收信息并激活消息监听器，但是之所以两种情况分开处理，下是考虑到在
+		 * 无限制循环接收消息的情况下，用户可以通过设置标志位running 来控制消息接收的暂停与恢复，并维护当前消息的监听器的数量
+		 *
+		 * */
 		@Override
 		public void run() {
+			// 并发控制
 			synchronized (lifecycleMonitor) {
 				activeInvokerCount++;
 				lifecycleMonitor.notifyAll();
 			}
 			boolean messageReceived = false;
 			try {
+				// 根据每个任务设置最大处理消息数量而作不同的处理
+				// 小于0默认为无限制，一直在接收消息
 				if (maxMessagesPerTask < 0) {
 					messageReceived = executeOngoingLoop();
 				}
 				else {
 					int messageCount = 0;
+					// 消息数量控制，一旦超出数量则停止循环
 					while (isRunning() && messageCount < maxMessagesPerTask) {
 						messageReceived = (invokeListener() || messageReceived);
 						messageCount++;
@@ -1070,6 +1121,7 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 				}
 			}
 			catch (Throwable ex) {
+				// 清理操作，包括关闭 session 等
 				clearResources();
 				if (!this.lastMessageSucceeded) {
 					// We failed more than once in a row or on startup -
