@@ -232,6 +232,12 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 	 * @return whether a message has been received
 	 * @throws JMSException if thrown by JMS methods
 	 * @see #doReceiveAndExecute
+	 *
+	 * 在介绍消息监听器容器分类时，已经介绍了 DefaultMessageListenerContainer 消息监听器容器建立在 SimpleMessageListenerContainer
+	 * 容器之上，添加了对事务的支持，那么此事务的特性的实现已经开始，如果用户配置了 this.transactionManager，也就是配置了事务，那么
+	 * 消息的接收会被控制在事务之内，一旦出现任何异常都会被回滚，而回滚操作也会交由事务管理，器的统一处理，比如
+	 * this.transactionManager.rollback(status)
+	 * doReceiveAndExecute 包含了整个消息的接收处理过程，由于参杂事务，所以并没有利用模版中的方法
 	 */
 	protected boolean receiveAndExecute(
 			Object invoker, @Nullable Session session, @Nullable MessageConsumer consumer)

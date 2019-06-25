@@ -1181,6 +1181,20 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 			}
 		}
 
+
+		// 以上的函数主要根据变量 maxMessagesPerTask 的值来分别为不同的情况处理，当然，函数中还使用了大量的代码处理异常机制的数据维护
+		// 但是我们相信大家跟我一样，更加关注程序的正常流程是如何处理的
+		// 其实核心的处理就是调用 invokeListener 来接收信息并激活消息监听器，但是之所以两种情况分开处理，正是考虑到循环接收消息的情况
+		// 用户可以设置标志位 running 来控制消息接收的暂停和恢复，并维护当前的消息监听器的数量
+		// 如果按照正常的流程其实是不会进入 while 循环中的，而是直接进入函数 invokeListener()来接收消息并激活监听器，但是我们不可能
+		// 让循环一直持续下去，我们要考虑暂停线程或者恢复线程的情况，这时，isRunning()函数就派上用场了
+		// isRunning()用来检测标志位，this.isRunning 状态进而判断是否需要进入 while循环，由于要维护当前线程的数量，所以就引入了 wasWaitting
+		// 变量，用来判断线程是否处于等待状态，如果是线程首次进入等待状态，则需要减少线程激活的计数器
+		// 当然，还有一个地方需要提一下的就是，线程的等待一是一味的通过采用 while 循环来控制，因为如果单纯的采用 while 循环的话会浪费
+		// CPU 的始终周期，给资源造成巨大的浪费，这里 Spring 采用的是全部的控制变量，lifecycleMonitor 的 wait()方法来暂停线程，所以
+		// 如果终止线程需要再次恢复的话，除了更改 this.running 标志位外，还需要调用 lifecycleMonitor.notify 或者 lifecycleMonitor.nitifyAll 来
+		// 使线程恢复
+
 		private boolean executeOngoingLoop() throws JMSException {
 			boolean messageReceived = false;
 			boolean active = true;
@@ -1188,16 +1202,20 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 				synchronized (lifecycleMonitor) {
 					boolean interrupted = false;
 					boolean wasWaiting = false;
+					// 如果当前的任务已经处于激活状态，但是却给了暂时终止命令
 					while ((active = isActive()) && !isRunning()) {
 						if (interrupted) {
 							throw new IllegalStateException("Thread was interrupted while waiting for " +
 									"a restart of the listener container, but container is still stopped");
 						}
 						if (!wasWaiting) {
+							// 如果并非处于等待状态说明是第一次执行，需要将激活任务的数量减少
 							decreaseActiveInvokerCount();
 						}
+						// 开始进入等待状态，等待任务的恢复命令
 						wasWaiting = true;
 						try {
+							// 通过等待，也就是等待 notify或者 notifyAll
 							lifecycleMonitor.wait();
 						}
 						catch (InterruptedException ex) {
@@ -1213,6 +1231,7 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 						active = false;
 					}
 				}
+				// 正常的处理流程
 				if (active) {
 					messageReceived = (invokeListener() || messageReceived);
 				}
@@ -1220,9 +1239,13 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 			return messageReceived;
 		}
 
+		// 接下来就是消息的接收的处理了
+
 		private boolean invokeListener() throws JMSException {
+			// 初始化资源包括首次创建的时候创建 session 与 consumer
 			initResourcesIfNecessary();
 			boolean messageReceived = receiveAndExecute(this, this.session, this.consumer);
+			// 改变标志位，信息成功处理
 			this.lastMessageSucceeded = true;
 			return messageReceived;
 		}
