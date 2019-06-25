@@ -306,6 +306,7 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 				consumerToUse = createListenerConsumer(sessionToUse);
 				consumerToClose = consumerToUse;
 			}
+			// 接收消息
 			Message message = receiveMessage(consumerToUse);
 			if (message != null) {
 				if (logger.isDebugEnabled()) {
@@ -313,6 +314,7 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 							consumerToUse + "] of " + (transactional ? "transactional " : "") + "session [" +
 							sessionToUse + "]");
 				}
+				// 模板方法，当消息接收且在未处理的情况下给子类机会做出相应的处理，当期空实现
 				messageReceived(invoker, sessionToUse);
 				boolean exposeResource = (!transactional && isExposeListenerSession() &&
 						!TransactionSynchronizationManager.hasResource(obtainConnectionFactory()));
@@ -321,6 +323,9 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 							obtainConnectionFactory(), new LocallyExposedJmsResourceHolder(sessionToUse));
 				}
 				try {
+					// 激活监听器，
+					// 这个函数的代码看似繁杂，但是下真正的逻辑并不是很多，大多的固定的套路，而我们关心的就是监听器的激活处理
+
 					doExecuteListener(sessionToUse, message);
 				}
 				catch (Throwable ex) {
@@ -350,6 +355,7 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 					logger.trace("Consumer [" + consumerToUse + "] of " + (transactional ? "transactional " : "") +
 							"session [" + sessionToUse + "] did not receive a message");
 				}
+				// 接收到空消息的处理
 				noMessageReceived(invoker, sessionToUse);
 				// Nevertheless call commit, in order to reset the transaction timeout (if any).
 				if (shouldCommitAfterNoMessageReceived(sessionToUse)) {
