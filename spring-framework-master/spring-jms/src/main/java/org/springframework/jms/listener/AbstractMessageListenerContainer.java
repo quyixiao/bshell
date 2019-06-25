@@ -738,6 +738,8 @@ public abstract class AbstractMessageListenerContainer extends AbstractJmsListen
 	protected void doInvokeListener(SessionAwareMessageListener listener, Session session, Message message)
 			throws JMSException {
 
+
+
 		Connection conToClose = null;
 		Session sessionToClose = null;
 		try {
