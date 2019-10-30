@@ -15,8 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.test.com.test.bsh.TestUtil.eval;
-import static bsh.TestUtil.toMap;
+import static com.test.bsh.TestUtil.eval;
+import static com.test.bsh.TestUtil.toMap;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 

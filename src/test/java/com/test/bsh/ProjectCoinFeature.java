@@ -20,7 +20,7 @@
 
 package com.test.bsh;
 
-public class ProjectCoinFeature extends KnownIssue {
+public class ProjectCoinFeature {
 
     // public static boolean IS_BELOW_JAVA_v7 = "1.7".compareTo(System.getProperty("java.version").substring(0,3)) < 0;
 

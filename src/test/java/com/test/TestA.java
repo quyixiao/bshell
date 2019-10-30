@@ -11,7 +11,7 @@ public class TestA {
     public void testAMulB() throws Exception {
         Interpreter i = new Interpreter();  // Construct an interpreter
         try {
-            Object object = i.source("/Users/quyixiao/git/bshell/src/test/source/ab.bsh");
+            Object object = i.source("/Users/quyixiao/project/bshell/src/test/source/ab1.bsh");
             System.out.println(object);
         } catch (Exception e) {
             e.printStackTrace();
