@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
-import static bsh.TestUtil.eval;
+import static com.test.bsh.TestUtil.eval;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 

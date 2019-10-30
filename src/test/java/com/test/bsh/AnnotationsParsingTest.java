@@ -22,8 +22,8 @@ package com.test.bsh;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static bsh.TestUtil.eval;
+import static org.junit.Assert.assertEquals;
+import static com.test.bsh.TestUtil.eval;
 
 
 /**

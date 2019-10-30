@@ -2,15 +2,15 @@ package com.test.bsh;
 
 import bsh.EvalError;
 import bsh.Interpreter;
-import mypackage.IFoo;
+import com.test.mypackage.IFoo;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
-import static bsh.TestUtil.eval;
-import static bsh.TestUtil.script;
-import static bsh.matchers.StringUtilValue.valueString;
+import static com.test.bsh.TestUtil.eval;
+import static com.test.bsh.TestUtil.script;
+import static com.test.bsh.matchers.StringUtilValue.valueString;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.*;
 
@@ -198,7 +198,7 @@ public class InterfaceMethodsTest {
         assertTrue("boolean field is Primitive", (Boolean)foo.run().get(0));
         assertTrue("boolean field value is true", (Boolean)foo.run().get(1));
         assertTrue("int field is Primitive", (Boolean)foo.run().get(2));
-        assertEquals("int field value is 5 (called 5 times)", 5, (int)foo.run().get(3));
+        assertEquals("int field value is 5 (called 5 times)", 5, foo.run().get(3));
         assertFalse("Boolean wrapper type field is NOT Primitive", (Boolean)foo.run().get(4));
         assertTrue("Boolean wrapper type field value is true", (Boolean)foo.run().get(5));
     }

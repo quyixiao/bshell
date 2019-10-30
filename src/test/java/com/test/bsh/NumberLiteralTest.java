@@ -5,7 +5,9 @@ import org.junit.runner.RunWith;
 
 import java.math.BigInteger;
 
-import static bsh.TestUtil.eval;
+import static com.test.bsh.TestUtil.eval;
+import static org.junit.Assert.assertEquals;
+
 
 @RunWith(FilteredTestRunner.class)
 public class NumberLiteralTest {

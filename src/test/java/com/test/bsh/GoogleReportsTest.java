@@ -31,7 +31,7 @@ import javax.script.ScriptEngineManager;
 
 import static bsh.Capabilities.haveAccessibility;
 import static bsh.Capabilities.setAccessibility;
-import static bsh.TestUtil.eval;
+import static com.test.bsh.TestUtil.eval;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 

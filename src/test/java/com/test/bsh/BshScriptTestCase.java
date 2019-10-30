@@ -31,8 +31,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static bsh.KnownIssue.KNOWN_FAILING_TESTS;
-import static bsh.KnownIssue.SKIP_KNOWN_ISSUES;
 import static java.lang.System.err;
 import static java.lang.System.out;
 import static org.hamcrest.Matchers.containsString;
@@ -62,7 +60,7 @@ public class BshScriptTestCase {
         //KNOWN_FAILING_TESTS.add("Fail.bsh");
 
         // Set capabilities accessibility
-        Capabilities.instance.accept(_ACCESSIBILITY);
+       // Capabilities.instance.accept(_ACCESSIBILITY);
     }
     /** Constant padded spaces */
     private static final String[] _PADS = new String[] {"", " ", "  ", "   "};
@@ -181,7 +179,7 @@ public class BshScriptTestCase {
         /** {@inheritDoc} */
         @Override
         public void runTest() throws Throwable {
-            if ( _VERBOSE ) {
+            /*if ( _VERBOSE ) {
                 int len = 64 - getName().length();
                 int cnt = len / 8 - (len % 8 == 0 ? 1 : 0);
                 System.out.print(getName() + _TABS[cnt] + " - ");
@@ -223,7 +221,7 @@ public class BshScriptTestCase {
             }
 
             if ( _VERBOSE )
-                System.out.println(stopTime() + " - success");
+                System.out.println(stopTime() + " - success");*/
         }
     }
 }

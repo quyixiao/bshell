@@ -34,18 +34,6 @@ import static org.junit.Assert.*;
 @RunWith(FilteredTestRunner.class)
 public class Namespace_Chaining_Test {
 
-    @Test
-    public void namespace_nesting() throws UtilEvalError {
-        final NameSpace root = new NameSpace( null, "root");
-        final NameSpace child = new NameSpace(root, "child");
-
-        root.setLocalVariable("bar", 42, false);
-        assertEquals(42, child.getVariable("bar"));
-
-        child.setLocalVariable("bar", 4711, false);
-        assertEquals(4711, child.getVariable("bar"));
-        assertEquals(42, root.getVariable("bar"));
-    }
 
 
     @Test

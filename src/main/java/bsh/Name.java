@@ -87,7 +87,7 @@ import java.lang.reflect.InvocationTargetException;
 
 	</pre>
 */
-class Name implements Serializable
+public class Name implements Serializable
 {
 	// These do not change during evaluation
 	public NameSpace namespace;
@@ -1053,6 +1053,8 @@ class Name implements Serializable
 	}
 
 	// end compound name routines
+
+
 
 
 	public String toString() { return value; }

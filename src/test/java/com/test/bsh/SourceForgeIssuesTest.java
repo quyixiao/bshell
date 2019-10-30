@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
@@ -28,14 +28,11 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.io.StringReader;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
 
 import static bsh.Capabilities.haveAccessibility;
-import static bsh.TestUtil.eval;
+import static com.test.bsh.TestUtil.eval;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -45,7 +42,7 @@ public class SourceForgeIssuesTest {
 
     @After
     public void after() {
-        Interpreter.DEBUG.set(false);
+        Interpreter.DEBUG = false;
     }
 
 //    @Test
@@ -54,24 +51,26 @@ public class SourceForgeIssuesTest {
 //
 //    }
 
-    /** <a href="http://sourceforge.net/tracker/?func=detail&aid=2898046&group_id=4075&atid=104075">Sourceforge issue "Error HERE! thrown while SAX parsing" - ID: 2898046</a>. */
+    /**
+     * <a href="http://sourceforge.net/tracker/?func=detail&aid=2898046&group_id=4075&atid=104075">Sourceforge issue "Error HERE! thrown while SAX parsing" - ID: 2898046</a>.
+     */
     @Test
     public void sourceforge_issue_2898046_sax_parsing_error() throws Exception {
         assumeTrue("testing illegal access assumes accessibility", haveAccessibility());
         final String CODE_2898046 =
-                /* 1*/ "import javax.xml.parsers.*;\n"+
-                /* 2*/ "import org.xml.sax.InputSource;\n"+
-                /* 3*/ "events = new ArrayList();"+
-                /* 4*/ "factory = SAXParserFactory.newInstance();\n"+
-                /* 5*/ "saxParser = factory.newSAXParser();\n"+
-                /* 6*/ "parser = saxParser.getXMLReader();\n"+
-                /* 7*/ "parser.setContentHandler( this );\n"+
-                /* 8*/ "\n"+
-                /* 9*/ "invoke( name, args ) {\n"+
-                /*10*/ "    events.add( name );\n"+
-                /*11*/ "}\n"+
-                /*12*/ "\n"+
-                /*13*/ "source = new InputSource(new StringReader(\"<xml>test</xml>\"));\n"+
+                /* 1*/ "import javax.xml.parsers.*;\n" +
+                /* 2*/ "import org.xml.sax.InputSource;\n" +
+                /* 3*/ "events = new ArrayList();" +
+                /* 4*/ "factory = SAXParserFactory.newInstance();\n" +
+                /* 5*/ "saxParser = factory.newSAXParser();\n" +
+                /* 6*/ "parser = saxParser.getXMLReader();\n" +
+                /* 7*/ "parser.setContentHandler( this );\n" +
+                /* 8*/ "\n" +
+                /* 9*/ "invoke( name, args ) {\n" +
+                /*10*/ "    events.add( name );\n" +
+                /*11*/ "}\n" +
+                /*12*/ "\n" +
+                /*13*/ "source = new InputSource(new StringReader(\"<xml>test</xml>\"));\n" +
                 /*14*/ "parser.parse( source );" +
                 /*15*/ "return events;";
         assertEquals(
@@ -80,7 +79,9 @@ public class SourceForgeIssuesTest {
     }
 
 
-    /** <a href="http://sourceforge.net/tracker/?func=detail&aid=2884749&group_id=4075&atid=104075">Sourceforge issue "Memory leak with WeakReferences" - ID: 2884749</a>. */
+    /**
+     * <a href="http://sourceforge.net/tracker/?func=detail&aid=2884749&group_id=4075&atid=104075">Sourceforge issue "Memory leak with WeakReferences" - ID: 2884749</a>.
+     */
     @Test
     public void sourceforge_issue_2884749_weakreference_memory_leak() throws Exception {
         final ClassManagerImpl classManager = new ClassManagerImpl();
@@ -91,37 +92,26 @@ public class SourceForgeIssuesTest {
             weakRef = new WeakReference<BshClassManager.Listener>(listener);
         }
         for (int i = 0; i < 10000; i++) {
-              classManager.addListener(new DummyListener(1024 * 100));
+            classManager.addListener(new DummyListener(1024 * 100));
         }
         assertNull(weakRef.get());
     }
 
-    /** <a href="http://sourceforge.net/tracker/?func=detail&aid=2562805&group_id=4075&atid=104075">Sourceforge issue "Debug fails if called method argument is null" - ID: 2562805</a>. */
+    /**
+     * <a href="http://sourceforge.net/tracker/?func=detail&aid=2562805&group_id=4075&atid=104075">Sourceforge issue "Debug fails if called method argument is null" - ID: 2562805</a>.
+     */
     @Test
     public void sourceforge_issue_2562805_debug_nullpointerexception() throws Exception {
-        try (ByteArrayOutputStream baOut = new ByteArrayOutputStream();
-            PrintStream out = new PrintStream(baOut)) {
-            Interpreter bsh = new Interpreter(new StringReader(""), out, out, false);
-            Interpreter.DEBUG.set(true);
-            String ret = "" + bsh.eval(
-                "ByteArrayOutputStream baOut = new ByteArrayOutputStream();" +
-                "PrintStream out = new PrintStream(baOut);" +
-                "out.println(null);" +
-                "String ret = baOut.toString();" +
-                "out.close();" +
-                "baOut.close();" +
-                "return ret;"
-            );
-            Interpreter.DEBUG.set(false);
-            assertEquals("null", ret.trim());
-            assertTrue(baOut.toString().contains("args[0] = null type"));
-        }
+
     }
 
 
-    /** <a href="http://sourceforge.net/tracker/?func=detail&aid=2081602&group_id=4075&atid=104075">Sourceforge issue "NullPointerException Thrown by Overriden Method" - ID: 2081602</a>.
+    /**
+     * <a href="http://sourceforge.net/tracker/?func=detail&aid=2081602&group_id=4075&atid=104075">Sourceforge issue "NullPointerException Thrown by Overriden Method" - ID: 2081602</a>.
      * Just a "learning test" to check the call flow for constructors of generated classes.
-     * @see #sourceforge_issue_2081602 */
+     *
+     * @see #sourceforge_issue_2081602
+     */
     @Test
     public void sourceforge_issue_2081602_nullpointerexception_overridden_method() throws Exception {
         final Object result = eval(
@@ -142,12 +132,14 @@ public class SourceForgeIssuesTest {
                 "   }",
                 "}",
                 "return new B (2);");
-        assertEquals(4, ( (Callable<?>) result).call());
+        assertEquals(4, ((Callable<?>) result).call());
     }
 
 
-    /** <a href="http://sourceforge.net/tracker/?func=detail&aid=2081602&group_id=4075&atid=104075">Sourceforge issue "NullPointerException Thrown by Overriden Method" - ID: 2081602</a>.
-     * Overriding a method which is invoked from super-constructor issues a NPE. */
+    /**
+     * <a href="http://sourceforge.net/tracker/?func=detail&aid=2081602&group_id=4075&atid=104075">Sourceforge issue "NullPointerException Thrown by Overriden Method" - ID: 2081602</a>.
+     * Overriding a method which is invoked from super-constructor issues a NPE.
+     */
     @Test
     public void sourceforge_issue_2081602_overridden_method_called_from_super() throws Exception {
         Callable<?> result = (Callable<?>) eval(
@@ -181,14 +173,18 @@ public class SourceForgeIssuesTest {
     }
 
 
-    /** <a href="http://sourceforge.net/tracker/?func=detail&aid=1897313&group_id=4075&atid=104075">Sourceforge issue "error when looping over collections containing null" - ID: 1897313</a>.*/
+    /**
+     * <a href="http://sourceforge.net/tracker/?func=detail&aid=1897313&group_id=4075&atid=104075">Sourceforge issue "error when looping over collections containing null" - ID: 1897313</a>.
+     */
     @Test
     public void sourceforge_issue_1897313_collection_containing_null() throws Exception {
         eval("for (x: new String[]{\"foo\",null,\"bar\"}) { a = x; }");
     }
 
 
-    /** <a href="http://sourceforge.net/tracker/?func=detail&aid=1796035&group_id=4075&atid=104075">Sourceforge issue "Grammar error when defining arrays" - ID: 1796035</a>. */
+    /**
+     * <a href="http://sourceforge.net/tracker/?func=detail&aid=1796035&group_id=4075&atid=104075">Sourceforge issue "Grammar error when defining arrays" - ID: 1796035</a>.
+     */
     @Test
     public void sourceforge_issue_1796035_variable_declared_array() throws Exception {
         Object ret = eval("byte array[] = new byte[0]; return array;");
@@ -199,19 +195,19 @@ public class SourceForgeIssuesTest {
         assertArrayEquals(new int[0][0], (int[][]) ret);
         ret = eval("array = new int[] {1,2}; return array;");
         assertThat(ret, instanceOf(new int[0].getClass()));
-        assertArrayEquals(new int[] {1,2}, (int[]) ret);
+        assertArrayEquals(new int[]{1, 2}, (int[]) ret);
         ret = eval("String array[] = new String[0]; return array;");
         assertThat(ret, instanceOf(new String[0].getClass()));
         assertArrayEquals(new String[0], (Object[]) ret);
         ret = eval("String array[] = new String[] {'foo'}; return array;");
         assertThat(ret, instanceOf(new String[0].getClass()));
-        assertArrayEquals(new String[] {"foo"}, (Object[]) ret);
+        assertArrayEquals(new String[]{"foo"}, (Object[]) ret);
         ret = eval("String array[][] = new String[0][0]; return array;");
         assertThat(ret, instanceOf(new String[0][0].getClass()));
         assertArrayEquals(new String[0][0], (Object[][]) ret);
         ret = eval("String array[][] = new String[][] {new String[]{'foo'}}; return array;");
         assertThat(ret, instanceOf(new String[0][0].getClass()));
-        assertArrayEquals(new String[][] { new String[] {"foo"} }, (Object[][]) ret);
+        assertArrayEquals(new String[][]{new String[]{"foo"}}, (Object[][]) ret);
     }
 
 

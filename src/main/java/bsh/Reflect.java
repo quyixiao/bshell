@@ -28,7 +28,9 @@
 package bsh;
 
 import java.lang.reflect.*;
+import java.util.Map;
 import java.util.Vector;
+import java.util.WeakHashMap;
 
 /**
  * All of the reflection API code lies here.  It is in the form of static
@@ -45,7 +47,7 @@ import java.util.Vector;
 	having to catch the exceptions.  Method lookups are now cached at a high 
 	level so they are less important, however the logic is messy.
 */
-class Reflect 
+public class Reflect
 {
     /**
 		Invoke method on arbitrary object instance.
@@ -950,6 +952,22 @@ class Reflect
 					+" in class: "+ clas.getName() );
 	}
 
+	private static final Map<Class<?>,Object> instanceCache = new WeakHashMap<Class<?>,Object>();
+	/*
+   * Class new instance or null, wrap exception handling and
+   * instance cache.
+   */
+	public static Object getNewInstance(Class<?> type) {
+		if (instanceCache.containsKey(type))
+			return instanceCache.get(type);
+		try {
+			instanceCache.put(type, type.getConstructor().newInstance());
+		} catch ( Exception e) {
+			instanceCache.put(type, null);
+		}
+		return instanceCache.get(type);
+	}
+
 	private static boolean isPublic( Class c ) {
 		return Modifier.isPublic( c.getModifiers() );
 	}
@@ -962,5 +980,8 @@ class Reflect
 	private static boolean isStatic( Method m ) {
 		return Modifier.isStatic( m.getModifiers() );
 	}
+
+
+
 }
 

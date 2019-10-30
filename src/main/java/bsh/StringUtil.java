@@ -27,6 +27,11 @@
 
 package bsh;
 
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -115,4 +120,69 @@ public class StringUtil
 	{
 		return Reflect.normalizeClassName( type );
 	}
+
+
+
+	/** Format value string.
+	 * @param value to format
+	 * @return string formatted value */
+	public static String valueString(final Object value) {
+		StringBuilder val = new StringBuilder(""+value);
+		if (null != value && value.getClass().isArray()) {
+			val = new StringBuilder("{");
+			for (int i = 0; i < Array.getLength(value); i++)
+				val.append(valueString(Array.get(value, i))).append(", ");
+			if (val.reverse().charAt(0) == ' ')
+				val.delete(0, 2);
+			return val.reverse().append("}").toString();
+		}
+		if (value instanceof Collection) {
+			val = new StringBuilder("[");
+			for (Object v : ((Collection<?>) value))
+				val.append(valueString(v)).append(", ");
+			if (val.reverse().charAt(0) == ' ')
+				val.delete(0, 2);
+			return val.reverse().append("]").toString();
+		}
+		if (value instanceof Map) {
+			val = new StringBuilder("{");
+			for (Map.Entry<?, ?> e : ((Map<?, ?>) value).entrySet())
+				val.append(valueString(e.getKey())).append("=")
+						.append(valueString(e.getValue())).append(", ");
+			if (val.reverse().charAt(0) == ' ')
+				val.delete(0, 2);
+			return val.reverse().append("}").toString();
+		}
+		if (value instanceof Map.Entry) {
+			return new StringBuilder(
+					valueString(((Map.Entry<?, ?>) value).getKey()))
+					.append("=").append(
+							valueString(((Map.Entry<?, ?>) value).getValue()))
+					.toString();
+		}
+		if (value instanceof String)
+			return val.insert(0, "\"").append("\"").toString();
+		if (Primitive.unwrap(value) instanceof Character)
+			return val.insert(0, "'").append("'").toString();
+		if (Primitive.unwrap(value) instanceof Number) {
+			if (Primitive.unwrap(value) instanceof Byte)
+				return val.append("o").toString();
+			if (Primitive.unwrap(value) instanceof Short)
+				return val.append("s").toString();
+			if (Primitive.unwrap(value) instanceof Integer)
+				return val.append("I").toString();
+			if (Primitive.unwrap(value) instanceof Long)
+				return val.append("L").toString();
+			if (Primitive.unwrap(value) instanceof BigInteger)
+				return val.append("W").toString();
+			if (Primitive.unwrap(value) instanceof Float)
+				return val.append("f").toString();
+			if (Primitive.unwrap(value) instanceof Double)
+				return val.append("d").toString();
+			if (Primitive.unwrap(value) instanceof BigDecimal)
+				return val.append("w").toString();
+		}
+		return val.toString();
+	}
+
 }

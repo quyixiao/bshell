@@ -27,8 +27,8 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static bsh.TestUtil.measureConcurrentTime;
-import static bsh.TestUtil.script;
+import static com.test.bsh.TestUtil.measureConcurrentTime;
+import static com.test.bsh.TestUtil.script;
 import static org.junit.Assert.assertEquals;
 
 public class InterpreterConcurrencyTest {

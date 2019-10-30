@@ -11,7 +11,7 @@ public class Beanshell {
     @Test
     public void testBillqQry() throws Exception {
         Interpreter i = new Interpreter();  // Construct an interpreter
-        Interpreter.DEBUG.set(true);
+        Interpreter.DEBUG  = true;
         try {
             Object object = i.source("/Users/quyixiao/git/beanshell/src/test/bsh/login.bsh");
             System.out.println(object);

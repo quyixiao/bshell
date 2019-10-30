@@ -37,8 +37,28 @@ package bsh;
 	This holds a reference to the declaring interpreter for callbacks from
 	outside of bsh.
 */
-public class This implements java.io.Serializable, Runnable 
+public class This implements java.io.Serializable, Runnable
+
 {
+
+	enum Keys {
+		/** The name of the static field holding the reference to the bsh
+		 * static This (the callback namespace for static methods) */
+		BSHSTATIC { public String toString() { return "_bshStatic"; } },
+		/** The name of the instance field holding the reference to the bsh
+		 * instance This (the callback namespace for instance methods) */
+		BSHTHIS { public String toString() { return "_bshThis"; } },
+		/** The prefix for the name of the super delegate methods. e.g.
+		 * _bshSuperfoo() is equivalent to super.foo() */
+		BSHSUPER { public String toString() { return "_bshSuper"; } },
+		/** The bsh static namespace variable name of the instance initializer */
+		BSHINIT { public String toString() { return "_bshInstanceInitializer"; } },
+		/** The bsh static namespace variable that holds the constructor methods */
+		BSHCONSTRUCTORS { public String toString() { return "_bshConstructors"; } },
+		/** The bsh static namespace variable that holds the class modifiers */
+		BSHCLASSMODIFIERS { public String toString() { return "_bshClassModifiers"; } }
+	}
+
 	/**
 		The namespace that this This reference wraps.
 	*/

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static bsh.TestUtil.eval;
+import static com.test.com.test.bsh.TestUtil.eval;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.*;
 

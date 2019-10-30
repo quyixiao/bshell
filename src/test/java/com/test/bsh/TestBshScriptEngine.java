@@ -14,7 +14,6 @@ import javax.script.*;
 import java.io.*;
 import java.lang.reflect.Method;
 
-import static javax.script.ScriptContext.ENGINE_SCOPE;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
