@@ -63,8 +63,9 @@ public class TestUtil {
     }
 
     static {
-      //  Capabilities.instance.accept(Boolean.valueOf(System.getProperty("accessibility")));
+       Capabilities.instance.accept(Boolean.valueOf(System.getProperty("accessibility")));
     }
+
 
     /**
      * Measure the time of concurrent executions of the provided runnable instance - the first error or runtime exceptions

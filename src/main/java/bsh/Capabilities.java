@@ -28,6 +28,8 @@
 package bsh;
 
 import java.util.Hashtable;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
 	The map of extended features supported by the runtime in which we live.
@@ -40,9 +42,10 @@ import java.util.Hashtable;
 	BshClassManager, as it may require other optional class files to be 
 	loaded.  
 */
-public class Capabilities 
+public class Capabilities    implements Supplier<Boolean>, Consumer<Boolean>
 {
 	private static boolean accessibility = false;
+	public  static final Capabilities instance = new Capabilities();
 
 	public static boolean haveSwing() {
 		// classExists caches info for us
@@ -131,6 +134,16 @@ public class Capabilities
 	public static class Unavailable extends UtilEvalError
 	{
 		public Unavailable(String s ){ super(s); }
+	}
+
+	@Override
+	public Boolean get() {
+		return this.accessibility;
+	}
+
+	@Override
+	public void accept(Boolean t) {
+		this.accessibility = t.booleanValue();
 	}
 }
 
