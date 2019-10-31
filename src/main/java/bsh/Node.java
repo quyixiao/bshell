@@ -57,7 +57,7 @@ interface Node extends java.io.Serializable
 	public Node jjtGetParent();
 
 /**
-	This method tells the node to add its argument to the node's
+	this method tells the node to add its argument to the node's
 	list of children.
 */
 	public void jjtAddChild(Node n, int i);
@@ -69,7 +69,7 @@ interface Node extends java.io.Serializable
 	public Node jjtGetChild(int i);
 
 /**
-	Return the number of children the node has.
+	return the number of children the node has.
 */
 	public int jjtGetNumChildren();
 }
