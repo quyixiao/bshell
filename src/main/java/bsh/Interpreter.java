@@ -533,7 +533,7 @@ public class Interpreter
     // begin source and eval
 
     /**
-     * Read text from fileName and eval it.
+     * Read text from fileName and eval it.   从fileName读取文本并进行评估。
      */
     public Object source(String filename, NameSpace nameSpace)
             throws FileNotFoundException, IOException, EvalError {
@@ -549,8 +549,8 @@ public class Interpreter
     }
 
     /**
-     * Read text from fileName and eval it.
-     * Convenience method.  Use the global namespace.
+     * Read text from fileName and eval it.   从fileName读取文本并进行评估。
+     * Convenience method.  Use the global namespace.        方便的方法。使用全局名称空间。
      */
     public Object source(String filename)
             throws FileNotFoundException, IOException, EvalError {
@@ -560,24 +560,31 @@ public class Interpreter
     /**
      * Spawn a non-interactive local interpreter to evaluate text in the
      * specified namespace.
+     * 生成非交互式本地解释器以评估
+     *  指定名称空间中的文本。
      * <p>
      * Return value is the evaluated object (or corresponding primitive
      * wrapper).
-     *
+     * 返回值是被评估的对象（或相应的原始包装器）
      * @param sourceFileInfo is for information purposes only.  It is used to
      *                       display error messages (and in the future may be made available to
      *                       the script).
+     *                       它用于显示错误消息（将来可能会用于脚本
      * @throws EvalError   on script problems
-     * @throws TargetError on unhandled exceptions from the script
+     * @throws TargetError on unhandled exceptions from the script    脚本中未处理的异常
      */
 	/*
 		Note: we need a form of eval that passes the callstack through...
+		注意：我们需要一种eval形式，它将调用栈传递给
 	*/
 	/*
 	Can't this be combined with run() ?
 	run seems to have stuff in it for interactive vs. non-interactive...
 	compare them side by side and see what they do differently, aside from the
 	exception handling.
+
+	不能将它与run（）结合使用吗？ run似乎具有交互性和非交互性的东西...并排比较它们，看看除了异常处理之外它们有什么不同。
+
 	*/
     public Object eval(
             Reader in, NameSpace nameSpace, String sourceFileInfo
@@ -590,6 +597,8 @@ public class Interpreter
 			Create non-interactive local interpreter for this namespace
 			with source from the input stream and out/err same as 
 			this interpreter.
+
+			使用来自输入流的源和与此解释器相同的out / err来为此名称空间创建非交互式本地解释器。
 		*/
         Interpreter localInterpreter =
                 new Interpreter(
@@ -604,7 +613,7 @@ public class Interpreter
                 eof = localInterpreter.Line();
                 if (localInterpreter.get_jjtree().nodeArity() > 0) {
                     node = (SimpleNode) localInterpreter.get_jjtree().rootNode();
-                    // quick filter for when we're running as a compiler only
+                    // quick filter for when we're running as a compiler only    仅当我们作为编译器运行时的快速过滤器
                     if (getSaveClasses()
                             && !(node instanceof BSHClassDeclaration)
                             && !(node instanceof BSHImportDeclaration)
@@ -612,7 +621,7 @@ public class Interpreter
                             )
                         continue;
 
-                    // nodes remember from where they were sourced
+                    // nodes remember from where they were sourced   节点记住它们的来源
                     node.setSourceFile(sourceFileInfo);
 
                     if (TRACE)

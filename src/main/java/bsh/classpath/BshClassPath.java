@@ -260,7 +260,7 @@ public class BshClassPath
             for (int i = 0; i < compPaths.size(); i++)
                 ((BshClassPath) compPaths.get(i)).insureInitialized(false);
 
-        // initialize ourself
+        // initialize ourself   初始化自己
         if (!mapsInitialized)
             map((URL[]) path.toArray(new URL[0]));
 
@@ -370,6 +370,7 @@ public class BshClassPath
 
     /**
      * call map(url) for each url in the array
+     * 为数组中的每个URL调用map（url）
      */
     synchronized void map(URL[] urls) {
         for (int i = 0; i < urls.length; i++)
@@ -422,16 +423,16 @@ public class BshClassPath
         }
         set.add(className);
 
-        // Add to classSource map
+        // Add to classSource map   添加到类源map
         Object obj = classSource.get(className);
-        // don't replace previously set (found earlier in classpath or
-        // explicitly set via setClassSource() )
+        // don't replace previously set (found earlier in classpath or 不要替换先前设置的（在classpath或更高版本中找到
+        // explicitly set via setClassSource() )   通过setClassSource（）显式设置）
         if (obj == null)
             classSource.put(className, source);
     }
 
     /**
-     * Clear everything and reset the path to empty.
+     * Clear everything and reset the path to empty.   清除所有内容并将路径重置为空。
      */
     synchronized private void reset() {
         path = new ArrayList();
@@ -440,7 +441,7 @@ public class BshClassPath
     }
 
     /**
-     * Clear anything cached.  All will be reconstructed as necessary.
+     * Clear anything cached.  All will be reconstructed as necessary.   清除所有缓存的内容。所有将在必要时进行重建。
      */
     synchronized private void clearCachedStructures() {
         mapsInitialized = false;
@@ -464,7 +465,7 @@ public class BshClassPath
 	}
 */
 
-    // Begin Static stuff
+    // Begin Static stuff   开始静态的东西
 
     static String[] traverseDirForClasses(File dir)
             throws IOException {
@@ -507,7 +508,7 @@ public class BshClassPath
 
     /**
      * get the class file entries from the jar
-     * 从罐子中获取类文件条目
+     * 从jar包中获取类文件条目
      */
     static String[] searchJarForClasses(URL jar)
             throws IOException {
