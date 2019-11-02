@@ -153,7 +153,7 @@ public class TestUtil {
     }
 
     public static <K,E> Map<K,E> mapOf(Object... input) {
-        Map<K,E> map = new HashMap<>(input.length >> 1);
+      /*  Map<K,E> map = new HashMap<>(input.length >> 1);
         for ( int i = 0; i < input.length; i += 2 ) {
             @SuppressWarnings("unchecked")
             K key = (K) input[i];
@@ -161,7 +161,10 @@ public class TestUtil {
             E value = (E) input[i+1];
             map.put(key, value);
         }
-        return Collections.unmodifiableMap(map);
+        return Collections.unmodifiableMap(map);*/
+
+
+        return null;
     }
 
     static class MeasureRunnable implements Runnable {

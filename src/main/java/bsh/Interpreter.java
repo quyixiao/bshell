@@ -27,6 +27,8 @@
 
 package bsh;
 
+import com.alibaba.fastjson.JSON;
+
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -557,6 +559,7 @@ public class Interpreter
     public Object source( String filename, NameSpace nameSpace ) 
 		throws FileNotFoundException, IOException, EvalError 
 	{
+		System.out.println(" Interpreter source = " + filename);
 		File file = pathToFile( filename );
 		if ( Interpreter.DEBUG ) debug("Sourcing file: "+file);
 		Reader sourceIn = new BufferedReader( new FileReader(file) );
@@ -606,7 +609,7 @@ public class Interpreter
 		throws EvalError 
 	{
 		Object retVal = null;
-		if ( Interpreter.DEBUG ) debug("eval: nameSpace = "+nameSpace);
+		if ( Interpreter.DEBUG ) debug("eval: nameSpace = "+ nameSpace);
 
 		/* 
 			Create non-interactive local interpreter for this namespace
@@ -623,7 +626,7 @@ public class Interpreter
         while(!eof)
         {
 			SimpleNode node = null;
-            try
+			try
             {
                 eof = localInterpreter.Line();
                 if (localInterpreter.get_jjtree().nodeArity() > 0)

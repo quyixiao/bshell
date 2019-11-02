@@ -159,6 +159,7 @@ public class Parser/*@bgen(jjtree)*/implements ParserTreeConstants, ParserConsta
         }
 
 /*
+    感谢Sreenivasa Viswanadha在这里建议如何摆脱昂贵的前瞻。
 	Thanks to Sreenivasa Viswanadha for suggesting how to get rid of expensive
 	lookahead here.
 */

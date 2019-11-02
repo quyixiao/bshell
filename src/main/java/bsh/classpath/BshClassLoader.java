@@ -33,16 +33,18 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
-	One of the things BshClassLoader does is to address a deficiency in
-	URLClassLoader that prevents us from specifying individual classes
-	via URLs.
+	ONE OF THE THINGS BSHCLASSLOADER DOES IS TO ADDRESS A DEFICIENCY IN
+	URLCLASSLOADER THAT PREVENTS US FROM SPECIFYING INDIVIDUAL CLASSES
+	VIA URLS.
+	 BSHCLASSloaderer要做的一件事情就是解决URLCLASSloaderer中的缺陷，这阻止了我们通过URL指定单个类
+
 */
 public class BshClassLoader extends URLClassLoader 
 {
 	BshClassManager classManager;
 
 	/**
-		@param bases URLs JARClassLoader seems to require absolute paths 
+		@param bases URLs JARClassLoader seems to require absolute paths   URL JARClassLoader似乎需要绝对路径
 	*/
 	public BshClassLoader(BshClassManager classManager, URL [] bases ) {
 		super( bases );

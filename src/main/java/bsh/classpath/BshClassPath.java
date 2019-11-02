@@ -64,22 +64,22 @@ public class BshClassPath
 {
 	String name;
 
-	/** The URL path components */
+	/** The URL path components URL路径组件 */
 	private List path;
-	/** Ordered list of components BshClassPaths */
+	/** Ordered list of components BshClassPaths  组件BshClassPaths的有序列表 */
 	private List compPaths;
 
-	/** Set of classes in a package mapped by package name */
+	/** Set of classes in a package mapped by package name   包中按包名称映射的类集 */
 	private Map packageMap;
-	/** Map of source (URL or File dir) of every clas */
+	/** Map of source (URL or File dir) of every class  每个分类的源（URL或文件目录）映射 */
 	private Map classSource;
-	/**  The packageMap and classSource maps have been built. */
+	/**  The packageMap and classSource maps have been built.  packageMap和classSource映射已构建。 */
 	private boolean mapsInitialized;
 
 	private UnqualifiedNameTable unqNameTable;
 
 	/**
-		This used to be configurable, but now we always include them.
+		This used to be configurable, but now we always include them. 他曾经是可配置的，但现在我们总是将它们包括在内
 	*/
 	private boolean nameCompletionIncludesUnqNames = true;
 
@@ -108,7 +108,7 @@ public class BshClassPath
 
 	/**
 		Add the specified BshClassPath as a component of our path.
-		Changes in the bcp will be reflected through us.
+		Changes in the bcp will be reflected through us.   将指定的BshClassPath添加为路径的一部分。 bcp中的更改将通过我们反映出来。
 	*/
 	public void addComponent( BshClassPath bcp ) {
 		if ( compPaths == null )
@@ -130,7 +130,7 @@ public class BshClassPath
 	}
 
 	/**
-		Get the path components including any component paths.
+		get the path components including any component paths.  获取路径组件，包括任何组件路径
 	*/
 	public URL [] getPathComponents() {
 		return (URL[])getFullPath().toArray( new URL[0] );
@@ -138,7 +138,7 @@ public class BshClassPath
 
 	/**
 		Return the set of class names in the specified package
-		including all component paths.
+		including all component paths.  返回指定包中的所有类路径的类名称集
 	*/
 	synchronized public Set getClassesForPackage( String pack ) {
 		insureInitialized();
@@ -160,17 +160,24 @@ public class BshClassPath
 	/**
 		Return the source of the specified class which may lie in component 
 		path.
+	    返回可能位于组件路径中的指定类的源。
 	*/
 	synchronized public ClassSource getClassSource( String className ) 
 	{
 		// Before triggering classpath mapping (initialization) check for
 		// explicitly set class sources (e.g. generated classes).  These would
 		// take priority over any found in the classpath anyway.
+
+
+		//在触发类路径映射（初始化）之前，检查
+		// 明确设置的类源（例如，生成的类）。无论如何，这些
+		// 将优先于在类路径中找到的所有优先级。
+
 		ClassSource cs = (ClassSource)classSource.get( className );
 		if ( cs != null )
 			return cs;
 
-		insureInitialized(); // trigger possible mapping
+		insureInitialized(); // trigger possible mapping   触发可能的映射
 
 		cs = (ClassSource)classSource.get( className );
 		if ( cs == null && compPaths != null )
@@ -183,6 +190,9 @@ public class BshClassPath
 		Explicitly set a class source.  This is used for generated classes, but
 		could potentially be used to allow a user to override which version of
 		a class from the classpath is located.
+
+
+	 	明确设置类源。这用于生成的类，但可能会用于允许用户覆盖来自类路径的类的哪个版本。
 	*/
 	synchronized public void setClassSource( String className, ClassSource cs ) 
 	{
@@ -192,6 +202,9 @@ public class BshClassPath
 	/**
 		If the claspath map is not initialized, do it now.
 		If component maps are not do them as well...
+	 如果claspath映射未初始化，请立即执行。如果没有组件映射，则也不要这样做。
+
+	 随机注释：应该是“确保”还是“确保”。我知道我已经在JDK源代码中看到了“确保”。这是韦伯斯特必须说的
 
 		Random note:
 		Should this be "insure" or "ensure".  I know I've seen "ensure" used
@@ -211,6 +224,11 @@ public class BshClassPath
 			doubt and suspense from a person's mind. SECURE
 			implies action taken to guard against attack or
 			loss.
+
+	 主条目：确保发音：in-shur功能：和物动词变体形式：确保；保证：确保，确定或安全：
+	 保证同义词ENSURE，INSURE，ASSURE，SECURE表示确保事物或人的确定。在很多情况下，
+	 ENSURE，INSURE和ASSURE可以互换，它们表明结果是确定的或不可避免的，但是INSURE有时会强调事先采取必要的措施，
+	 而ASSURE则明显地意味着消除了人们的疑虑和悬念。 SECURE（安全）表示为防止攻击或损失而采取的措施
 	*/
 	public void insureInitialized() 
 	{
@@ -220,11 +238,15 @@ public class BshClassPath
 	/**
 		@param topPath indicates that this is the top level classpath
 		component and it should send the startClassMapping message
+
+		指示这是顶级类路径组件，它应该发送startClassMapping消息
 	*/
 	protected synchronized void insureInitialized( boolean topPath ) 
 	{
 		// If we are the top path and haven't been initialized before
 		// inform the listeners we are going to do expensive map
+
+		//如果我们是最主要的路径，并且在未通知之前未初始化//我们将进行昂贵的映射
 		if ( topPath && !mapsInitialized )
 			startClassMapping();
 
@@ -247,6 +269,8 @@ public class BshClassPath
 		Get the full path including component paths.
 		(component paths listed first, in order)
 		Duplicate path components are removed.
+
+	 获取完整路径，包括组件路径。 （按顺序列出了第一个组件路径）删除了重复的路径组件。
 	*/
 	protected List getFullPath() 
 	{
@@ -274,6 +298,10 @@ public class BshClassPath
 		Get the full name associated with the unqualified name in this 
 		classpath.  Returns either the String name or an AmbiguousName object
 		encapsulating the various names.
+
+
+	 	支持超级导入“ *”；获取与此类路径中非限定名称关联的全名。返回String名称或封装各种名称的AmbiguousName对象。
+
 	*/
 	public String getClassNameByUnqName( String name ) 
 		throws ClassPathException
