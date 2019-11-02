@@ -18,5 +18,8 @@ public class Fields {
 
     // ambiguity in field vs method
     public String ambigName = "field";
-    public String ambigName() { return "method"; }
+
+    public String ambigName() {
+        return "method";
+    }
 }

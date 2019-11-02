@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
@@ -52,30 +52,30 @@ public class GoogleReportsTest {
         } while (false);
         assertEquals(1, loopCount);
         loopCount = (Integer) eval("int loopCount = 0;",
-                                  "do{",
-                                  "    loopCount++;",
-                                  "    if (loopCount > 100) break;",
-                                  "    if (true) continue;",
-                                  "} while (false);",
-                                  "return loopCount");
+                "do{",
+                "    loopCount++;",
+                "    if (loopCount > 100) break;",
+                "    if (true) continue;",
+                "} while (false);",
+                "return loopCount");
         assertEquals(1, loopCount);
         loopCount = (Integer) eval("int loopCount = 0;",
-                                   "while (loopCount < 1) {",
-                                   "    loopCount++;",
-                                   "    if (loopCount > 100) return loopCount;",
-                                   "    if (true) continue;",
-                                   "}",
-                                   "return loopCount");
+                "while (loopCount < 1) {",
+                "    loopCount++;",
+                "    if (loopCount > 100) return loopCount;",
+                "    if (true) continue;",
+                "}",
+                "return loopCount");
         assertEquals(1, loopCount);
         assertEquals(Boolean.TRUE, eval("while(true) { break; return false; } return true;"));
         assertEquals(Boolean.TRUE, eval("do { break; return false; } while(true); return true;"));
         loopCount = (Integer) eval("int loopCount = 0;",
-                                   "while (++loopCount < 2);",
-                                   "return loopCount");
+                "while (++loopCount < 2);",
+                "return loopCount");
         assertEquals(2, loopCount);
         loopCount = (Integer) eval("int loopCount = 0;",
-                                   "do { } while (++loopCount < 2);",
-                                   "return loopCount");
+                "do { } while (++loopCount < 2);",
+                "return loopCount");
         assertEquals(2, loopCount);
     }
 
@@ -195,8 +195,8 @@ public class GoogleReportsTest {
     public void issue_60() throws Exception {
         final String script =
                 "String foo = null;" +
-                "if (foo != null && foo.length() > 0) return \"not empty\";" +
-                "return \"empty\";";
+                        "if (foo != null && foo.length() > 0) return \"not empty\";" +
+                        "return \"empty\";";
         final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
         scriptEngineManager.registerEngineName("beanshell", new BshScriptEngineFactory());
         final ScriptEngine engine = scriptEngineManager.getEngineByName("beanshell");

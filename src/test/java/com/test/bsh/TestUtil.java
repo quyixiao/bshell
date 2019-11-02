@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
@@ -25,7 +25,6 @@ import bsh.Interpreter;
 
 import java.io.*;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -63,7 +62,7 @@ public class TestUtil {
     }
 
     static {
-       Capabilities.instance.accept(Boolean.valueOf(System.getProperty("accessibility")));
+        Capabilities.instance.accept(Boolean.valueOf(System.getProperty("accessibility")));
     }
 
 
@@ -114,8 +113,8 @@ public class TestUtil {
      * Adds {@code cause} as root-cause to {@code throwable} and returns {@code throwable}.
      *
      * @param throwable exception which root-cause should be extended.
-     * @param cause new root-cause, usually a caller-stack.
-     * @param <T> type of given throwable.
+     * @param cause     new root-cause, usually a caller-stack.
+     * @param <T>       type of given throwable.
      * @return {@code throwable} extended with the given {@code cause}.
      */
     static <T extends Throwable> T combineTraces(final T throwable, final Exception cause) {
@@ -126,33 +125,33 @@ public class TestUtil {
         return throwable;
     }
 
-    public static String script(final String ... code) {
+    public static String script(final String... code) {
         final StringBuffer buffer = new StringBuffer();
         for (final String s : code)
             buffer.append(s).append('\n');
         return buffer.toString();
     }
 
-    public static Object eval(final String ... code) throws Exception {
+    public static Object eval(final String... code) throws Exception {
         return eval(Collections.<String, Integer>emptyMap(), code);
     }
 
-    public static Object eval(final Map<String, ?> params, final String ... code) throws Exception {
+    public static Object eval(final Map<String, ?> params, final String... code) throws Exception {
         final Interpreter interpreter = new Interpreter();
         for (final Map.Entry<String, ?> entry : params.entrySet())
             interpreter.set(entry.getKey(), entry.getValue());
         return interpreter.eval(script(code));
     }
 
-    public static <K,E> Map<K,E> emptyMap() {
-        return Collections.<K,E>emptyMap();
+    public static <K, E> Map<K, E> emptyMap() {
+        return Collections.<K, E>emptyMap();
     }
 
-    public static <K,E> Map<K,E> toMap(K key, E value) {
+    public static <K, E> Map<K, E> toMap(K key, E value) {
         return Collections.singletonMap(key, value);
     }
 
-    public static <K,E> Map<K,E> mapOf(Object... input) {
+    public static <K, E> Map<K, E> mapOf(Object... input) {
       /*  Map<K,E> map = new HashMap<>(input.length >> 1);
         for ( int i = 0; i < input.length; i += 2 ) {
             @SuppressWarnings("unchecked")

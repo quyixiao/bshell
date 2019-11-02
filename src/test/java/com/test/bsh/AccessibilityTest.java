@@ -5,8 +5,6 @@ import org.junit.runner.RunWith;
 
 import static com.test.bsh.TestUtil.eval;
 import static com.test.bsh.TestUtil.toMap;
-
-
 import static org.junit.Assert.assertEquals;
 
 @RunWith(FilteredTestRunner.class)

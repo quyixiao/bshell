@@ -16,11 +16,14 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
-import bsh.*;
+import bsh.Capabilities;
+import bsh.EvalError;
+import bsh.Interpreter;
+import bsh.UtilEvalError;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -57,38 +60,38 @@ public class ClassGeneratorTest {
     @Test
     public void create_instance() throws Exception {
         assertNotNull(
-            eval(
-                "class X2 {}",
-                "return new X2();"
-        ));
+                eval(
+                        "class X2 {}",
+                        "return new X2();"
+                ));
     }
 
 
     @Test
     public void constructor_args() throws Exception {
         final Object[] oa = (Object[]) eval(
-            "class X3 implements IntSupplier {",
+                "class X3 implements IntSupplier {",
                 "final Object _instanceVar;",
                 "public X3(Object arg) { _instanceVar = arg; }",
                 "public int getAsInt() { return _instanceVar; }",
-            "}",
-            "return new Object[] { new X3(0), new X3(1) } ");
-        assertEquals(0, ( (IntSupplier) oa[0] ).getAsInt());
-        assertEquals(1, ( (IntSupplier) oa[1] ).getAsInt());
+                "}",
+                "return new Object[] { new X3(0), new X3(1) } ");
+        assertEquals(0, ((IntSupplier) oa[0]).getAsInt());
+        assertEquals(1, ((IntSupplier) oa[1]).getAsInt());
     }
 
 
     @Test
     public void call_protected_constructor_from_script() throws Exception {
         final Object[] oa = (Object[]) TestUtil.eval(
-            "class X4 implements java.util.concurrent.Callable {",
+                "class X4 implements java.util.concurrent.Callable {",
                 "final Object _instanceVar;",
                 "X4(Object arg) { _instanceVar = arg; }",
                 "public Object call() { return _instanceVar; }",
-            "}",
-            "return new Object[] { new X4(0), new X4(1) } ");
-        assertEquals(0, ( (Callable<?>) oa[0] ).call());
-        assertEquals(1, ( (Callable<?>) oa[1] ).call());
+                "}",
+                "return new Object[] { new X4(0), new X4(1) } ");
+        assertEquals(0, ((Callable<?>) oa[0]).call());
+        assertEquals(1, ((Callable<?>) oa[1]).call());
     }
 
     @Test
@@ -107,7 +110,7 @@ public class ClassGeneratorTest {
         Capabilities.setAccessibility(false);
 
         Class<?> cls = (Class<?>) TestUtil.eval(
-            "abstract class X6 {",
+                "abstract class X6 {",
                 "public Object public_var;",
                 "private Object private_var = null;",
                 "protected Object protected_var = null;",
@@ -131,8 +134,8 @@ public class ClassGeneratorTest {
                 "public public_method() {}",
                 "private private_method() {}",
                 "protected protected_method() {}",
-            "}",
-            "return X6.class;");
+                "}",
+                "return X6.class;");
 
         // public class
         //assertTrue("class has public modifier", Reflect.getClassModifiers(cls).hasModifier("public"));
@@ -197,31 +200,31 @@ public class ClassGeneratorTest {
 
     private boolean meth(Class<?> type, String meth, String mod) throws UtilEvalError {
         //BshMethod m = Reflect.getDeclaredMethod(type, meth, new Class<?>[0]);
-       // return null != m && m.hasModifier(mod);
-        return  true;
+        // return null != m && m.hasModifier(mod);
+        return true;
     }
 
     @Test
     public void outer_namespace_visibility() throws Exception {
         final IntSupplier supplier = (IntSupplier) eval(
-            "class X4 implements IntSupplier {",
+                "class X4 implements IntSupplier {",
                 "public int getAsInt() { return var; }",
-            "}",
-            "var = 0;",
-            "a = new X4();",
-            "var = 1;",
-            "return a;");
+                "}",
+                "var = 0;",
+                "a = new X4();",
+                "var = 1;",
+                "return a;");
         assertEquals(1, supplier.getAsInt());
     }
 
 
     @Test
     public void static_fields_should_be_frozen() throws Exception {
-        final IntSupplier supplier =  (IntSupplier)eval(
+        final IntSupplier supplier = (IntSupplier) eval(
                 "var = 0;",
                 "class X5 implements IntSupplier {",
-                    "static final Object VAR = var;",
-                    "public int getAsInt() { return VAR; }",
+                "static final Object VAR = var;",
+                "public int getAsInt() { return VAR; }",
                 "}",
                 "var = 1;", // class not initialized yet
                 "a = new X5();", // lazy initialize
@@ -231,7 +234,7 @@ public class ClassGeneratorTest {
         assertEquals(1, supplier.getAsInt());
     }
 
-   @Test
+    @Test
     public void primitive_data_types_class() throws Exception {
       /*  Object object = eval("class Test { public static final int x = 4; }; new Test();");
         assertThat(Reflect.getVariable(object, "x").getValue(), instanceOf(Primitive.class));
@@ -253,7 +256,7 @@ public class ClassGeneratorTest {
         assertThat(Reflect.getVariable(object, "x").getValue(), instanceOf(Primitive.class));*/
     }
 
-   @Test
+    @Test
     public void primitive_data_types_interface() throws Exception {
      /*   Class<?> type = (Class<?>) eval("interface Test { public static final int x = 4; }; Test.class;");
         assertThat(Reflect.getVariable(type, "x").getValue(), instanceOf(Primitive.class));
@@ -275,7 +278,7 @@ public class ClassGeneratorTest {
         assertThat(Reflect.getVariable(type, "x").getValue(), instanceOf(Primitive.class));*/
     }
 
-   @Test
+    @Test
     public void unwrapped_return_types_class() throws Exception {
         Object x = eval("class Test { public static final int x = 4; }; Test.x;");
         assertThat(x, instanceOf(Integer.class));
@@ -297,7 +300,7 @@ public class ClassGeneratorTest {
         assertThat(x, instanceOf(Integer.class));
     }
 
-   @Test
+    @Test
     public void unwrapped_return_types_interface() throws Exception {
         Object x = eval("interface Test { public static final int x = 4; }; Test.x;");
         assertThat(x, instanceOf(Integer.class));

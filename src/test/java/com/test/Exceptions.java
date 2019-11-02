@@ -1,8 +1,8 @@
 package com.test;
 
 /**
-    test misc. generation of exceptions
-*/
+ * test misc. generation of exceptions
+ */
 public class Exceptions {
 
     public static void throwRuntime() {

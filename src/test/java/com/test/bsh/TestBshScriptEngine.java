@@ -1,21 +1,19 @@
 package com.test.bsh;
 
 
-import bsh.Interpreter;
-import bsh.Primitive;
-import bsh.This;
-import bsh.engine.BshScriptEngine;
 import bsh.engine.BshScriptEngineFactory;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import javax.script.*;
-import java.io.*;
-import java.lang.reflect.Method;
+import javax.script.Compilable;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.containsString;
 
 public class TestBshScriptEngine {
     @Rule

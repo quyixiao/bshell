@@ -5,10 +5,10 @@
 
 package bsh.engine;
 
-import java.util.Arrays;
-import java.util.List;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
+import java.util.Arrays;
+import java.util.List;
 
 public class BshScriptEngineFactory implements ScriptEngineFactory {
     final List<String> extensions = Arrays.asList("bsh", "java");
@@ -73,7 +73,7 @@ public class BshScriptEngineFactory implements ScriptEngineFactory {
             sb.append(" ");
         }
 
-        for(int i = 0; i < args.length; ++i) {
+        for (int i = 0; i < args.length; ++i) {
             sb.append((args[i] == null ? "null" : args[i]) + (i < args.length - 1 ? ", " : " "));
         }
 
@@ -88,7 +88,7 @@ public class BshScriptEngineFactory implements ScriptEngineFactory {
     public String getProgram(String... statements) {
         StringBuffer sb = new StringBuffer();
 
-        for(int i = 0; i < statements.length; ++i) {
+        for (int i = 0; i < statements.length; ++i) {
             sb.append(statements[i]);
             if (!statements[i].endsWith(";")) {
                 sb.append(";");

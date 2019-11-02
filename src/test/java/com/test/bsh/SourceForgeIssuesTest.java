@@ -31,12 +31,9 @@ import org.junit.runner.RunWith;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
 
-import static bsh.Capabilities.haveAccessibility;
 import static com.test.bsh.TestUtil.eval;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
 @RunWith(FilteredTestRunner.class)
 public class SourceForgeIssuesTest {
@@ -78,7 +75,7 @@ public class SourceForgeIssuesTest {
 
 
         String a = eval(CODE_2898046).toString();
-        System.out.println(a );
+        System.out.println(a);
     }
 
 

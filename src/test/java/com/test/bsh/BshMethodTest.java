@@ -16,15 +16,10 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
-import bsh.BSHBlock;
-import bsh.BshMethod;
-import bsh.Modifiers;
-import bsh.NameSpace;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class BshMethodTest {
@@ -36,7 +31,7 @@ public class BshMethodTest {
     @SuppressWarnings("serial")
     @Test
     public void testEqualsObject_subclassEquality() {
-       // define a simple subclass of BshMethod:
+        // define a simple subclass of BshMethod:
        /*class SubMethod extends BshMethod {
           public SubMethod(String name, Class<?> returnType, String[] paramNames,
                            Class<?>[] paramTypes, Modifiers[] paramModifiers, BSHBlock methodBody,
@@ -63,7 +58,7 @@ public class BshMethodTest {
      */
     @Test
     public void testHashCode_contract() {
-       final String name = "testMethod";
+        final String name = "testMethod";
       /* final BshMethod method1 = new BshMethod(name,
              Integer.class, new String[0], new Class[0], new Modifiers[0], null, null, null);
        final BshMethod method2 = new BshMethod(name,

@@ -16,14 +16,15 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.junit.Assert.assertEquals;
+
 import static com.test.bsh.TestUtil.eval;
+import static org.junit.Assert.assertEquals;
 
 
 /**
@@ -35,8 +36,8 @@ public class AnnotationsParsingTest {
     @Test
     public void annotation_on_method_declaration() throws Exception {
         assertEquals(42, eval("public int myMethod(final int i) {",
-                              "   return i * 7;",
-                              "}",
-                              "return myMethod(6);"));
+                "   return i * 7;",
+                "}",
+                "return myMethod(6);"));
     }
 }

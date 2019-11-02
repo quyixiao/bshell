@@ -62,7 +62,7 @@ public class CodeWriter implements CodeVisitor {
             this.exceptionCount = exceptions.length;
             this.exceptions = new int[this.exceptionCount];
 
-            for(size = 0; size < this.exceptionCount; ++size) {
+            for (size = 0; size < this.exceptionCount; ++size) {
                 this.exceptions[size] = this.cw.newClass(exceptions[size]).index;
             }
         }
@@ -175,18 +175,19 @@ public class CodeWriter implements CodeVisitor {
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
         if (this.computeMaxs) {
             int size;
-            label70: {
+            label70:
+            {
                 char c = desc.charAt(0);
-                switch(opcode) {
-                case 178:
-                    size = this.stackSize + (c != 'D' && c != 'J' ? 1 : 2);
-                    break label70;
-                case 179:
-                    size = this.stackSize + (c != 'D' && c != 'J' ? -1 : -2);
-                    break label70;
-                case 180:
-                    size = this.stackSize + (c != 'D' && c != 'J' ? 0 : 1);
-                    break label70;
+                switch (opcode) {
+                    case 178:
+                        size = this.stackSize + (c != 'D' && c != 'J' ? 1 : 2);
+                        break label70;
+                    case 179:
+                        size = this.stackSize + (c != 'D' && c != 'J' ? -1 : -2);
+                        break label70;
+                    case 180:
+                        size = this.stackSize + (c != 'D' && c != 'J' ? 0 : 1);
+                        break label70;
                 }
 
                 size = this.stackSize + (c != 'D' && c != 'J' ? -2 : -3);
@@ -352,7 +353,7 @@ public class CodeWriter implements CodeVisitor {
                 this.currentBlock.maxStackSize = this.maxStackSize;
                 this.addSuccessor(this.stackSize, dflt);
 
-                for(source = 0; source < labels.length; ++source) {
+                for (source = 0; source < labels.length; ++source) {
                     this.addSuccessor(this.stackSize, labels[source]);
                 }
 
@@ -363,14 +364,14 @@ public class CodeWriter implements CodeVisitor {
         source = this.code.length;
         this.code.put1(170);
 
-        while(this.code.length % 4 != 0) {
+        while (this.code.length % 4 != 0) {
             this.code.put1(0);
         }
 
         dflt.put(this, this.code, source, true);
         this.code.put4(min).put4(max);
 
-        for(int i = 0; i < labels.length; ++i) {
+        for (int i = 0; i < labels.length; ++i) {
             labels[i].put(this, this.code, source, true);
         }
 
@@ -384,7 +385,7 @@ public class CodeWriter implements CodeVisitor {
                 this.currentBlock.maxStackSize = this.maxStackSize;
                 this.addSuccessor(this.stackSize, dflt);
 
-                for(source = 0; source < labels.length; ++source) {
+                for (source = 0; source < labels.length; ++source) {
                     this.addSuccessor(this.stackSize, labels[source]);
                 }
 
@@ -395,14 +396,14 @@ public class CodeWriter implements CodeVisitor {
         source = this.code.length;
         this.code.put1(171);
 
-        while(this.code.length % 4 != 0) {
+        while (this.code.length % 4 != 0) {
             this.code.put1(0);
         }
 
         dflt.put(this, this.code, source, true);
         this.code.put4(labels.length);
 
-        for(int i = 0; i < labels.length; ++i) {
+        for (int i = 0; i < labels.length; ++i) {
             this.code.put4(keys[i]);
             labels[i].put(this, this.code, source, true);
         }
@@ -442,7 +443,7 @@ public class CodeWriter implements CodeVisitor {
             int max = 0;
             Label stack = this.blockStack;
 
-            while(stack != null) {
+            while (stack != null) {
                 Label l = stack;
                 stack = stack.next;
                 int start = l.beginStackSize;
@@ -451,7 +452,7 @@ public class CodeWriter implements CodeVisitor {
                     max = blockMax;
                 }
 
-                for(Edge b = l.successors; b != null; b = b.next) {
+                for (Edge b = l.successors; b != null; b = b.next) {
                     l = b.successor;
                     if (!l.pushed) {
                         l.beginStackSize = start + b.stackSize;
@@ -464,7 +465,7 @@ public class CodeWriter implements CodeVisitor {
 
             this.maxStack = max;
             int[] var11 = SIZE;
-            synchronized(SIZE) {
+            synchronized (SIZE) {
                 if (this.tail != null) {
                     this.tail.poolNext = pool;
                     pool = this.head;
@@ -506,8 +507,8 @@ public class CodeWriter implements CodeVisitor {
         int n = 1;
         int c = 1;
 
-        while(true) {
-            while(true) {
+        while (true) {
+            while (true) {
                 char car = desc.charAt(c++);
                 if (car == ')') {
                     car = desc.charAt(c);
@@ -515,7 +516,7 @@ public class CodeWriter implements CodeVisitor {
                 }
 
                 if (car == 'L') {
-                    while(desc.charAt(c++) != ';') {
+                    while (desc.charAt(c++) != ';') {
                         ;
                     }
 
@@ -527,7 +528,7 @@ public class CodeWriter implements CodeVisitor {
                         n += 2;
                     }
                 } else {
-                    while((car = desc.charAt(c)) == '[') {
+                    while ((car = desc.charAt(c)) == '[') {
                         ++c;
                     }
 
@@ -542,7 +543,7 @@ public class CodeWriter implements CodeVisitor {
     private void addSuccessor(int stackSize, Label successor) {
         int[] var4 = SIZE;
         Edge b;
-        synchronized(SIZE) {
+        synchronized (SIZE) {
             if (pool == null) {
                 b = new Edge();
             } else {
@@ -665,7 +666,7 @@ public class CodeWriter implements CodeVisitor {
             out.put2(this.cw.newUTF8("Exceptions").index).put4(2 * this.exceptionCount + 2);
             out.put2(this.exceptionCount);
 
-            for(i = 0; i < this.exceptionCount; ++i) {
+            for (i = 0; i < this.exceptionCount; ++i) {
                 out.put2(this.exceptions[i]);
             }
         }
@@ -700,88 +701,88 @@ public class CodeWriter implements CodeVisitor {
 
             u = 0;
 
-            while(u < b.length) {
+            while (u < b.length) {
                 opcode = b[u] & 255;
                 opcode = 0;
-                switch(ClassWriter.TYPE[opcode]) {
-                case 0:
-                case 4:
-                    ++u;
-                    break;
-                case 1:
-                case 3:
-                case 10:
-                    u += 2;
-                    break;
-                case 2:
-                case 5:
-                case 6:
-                case 11:
-                case 12:
-                    u += 3;
-                    break;
-                case 7:
-                    u += 5;
-                    break;
-                case 8:
-                    if (opcode > 201) {
-                        opcode = opcode < 218 ? opcode - 49 : opcode - 20;
-                        label = u + readUnsignedShort(b, u + 1);
-                    } else {
-                        label = u + readShort(b, u + 1);
-                    }
-
-                    newOffset = getNewOffset(allIndexes, allSizes, u, label);
-                    if ((newOffset < -32768 || newOffset > 32767) && !resize[u]) {
-                        if (opcode != 167 && opcode != 168) {
-                            opcode = 5;
+                switch (ClassWriter.TYPE[opcode]) {
+                    case 0:
+                    case 4:
+                        ++u;
+                        break;
+                    case 1:
+                    case 3:
+                    case 10:
+                        u += 2;
+                        break;
+                    case 2:
+                    case 5:
+                    case 6:
+                    case 11:
+                    case 12:
+                        u += 3;
+                        break;
+                    case 7:
+                        u += 5;
+                        break;
+                    case 8:
+                        if (opcode > 201) {
+                            opcode = opcode < 218 ? opcode - 49 : opcode - 20;
+                            label = u + readUnsignedShort(b, u + 1);
                         } else {
-                            opcode = 2;
+                            label = u + readShort(b, u + 1);
                         }
 
-                        resize[u] = true;
-                    }
+                        newOffset = getNewOffset(allIndexes, allSizes, u, label);
+                        if ((newOffset < -32768 || newOffset > 32767) && !resize[u]) {
+                            if (opcode != 167 && opcode != 168) {
+                                opcode = 5;
+                            } else {
+                                opcode = 2;
+                            }
 
-                    u += 3;
-                    break;
-                case 9:
-                    u += 5;
-                    break;
-                case 13:
-                    if (state == 1) {
-                        newOffset = getNewOffset(allIndexes, allSizes, 0, u);
-                        opcode = -(newOffset & 3);
-                    } else if (!resize[u]) {
-                        opcode = u & 3;
-                        resize[u] = true;
-                    }
+                            resize[u] = true;
+                        }
 
-                    u = u + 4 - (u & 3);
-                    u += 4 * (readInt(b, u + 8) - readInt(b, u + 4) + 1) + 12;
-                    break;
-                case 14:
-                    if (state == 1) {
-                        newOffset = getNewOffset(allIndexes, allSizes, 0, u);
-                        opcode = -(newOffset & 3);
-                    } else if (!resize[u]) {
-                        opcode = u & 3;
-                        resize[u] = true;
-                    }
+                        u += 3;
+                        break;
+                    case 9:
+                        u += 5;
+                        break;
+                    case 13:
+                        if (state == 1) {
+                            newOffset = getNewOffset(allIndexes, allSizes, 0, u);
+                            opcode = -(newOffset & 3);
+                        } else if (!resize[u]) {
+                            opcode = u & 3;
+                            resize[u] = true;
+                        }
 
-                    u = u + 4 - (u & 3);
-                    u += 8 * readInt(b, u + 4) + 8;
-                    break;
-                case 15:
-                default:
-                    u += 4;
-                    break;
-                case 16:
-                    opcode = b[u + 1] & 255;
-                    if (opcode == 132) {
-                        u += 6;
-                    } else {
+                        u = u + 4 - (u & 3);
+                        u += 4 * (readInt(b, u + 8) - readInt(b, u + 4) + 1) + 12;
+                        break;
+                    case 14:
+                        if (state == 1) {
+                            newOffset = getNewOffset(allIndexes, allSizes, 0, u);
+                            opcode = -(newOffset & 3);
+                        } else if (!resize[u]) {
+                            opcode = u & 3;
+                            resize[u] = true;
+                        }
+
+                        u = u + 4 - (u & 3);
+                        u += 8 * readInt(b, u + 4) + 8;
+                        break;
+                    case 15:
+                    default:
                         u += 4;
-                    }
+                        break;
+                    case 16:
+                        opcode = b[u + 1] & 255;
+                        if (opcode == 132) {
+                            u += 6;
+                        } else {
+                            u += 4;
+                        }
                 }
 
                 if (opcode != 0) {
@@ -802,18 +803,18 @@ public class CodeWriter implements CodeVisitor {
             if (state < 3) {
                 --state;
             }
-        } while(state != 0);
+        } while (state != 0);
 
         ByteVector newCode = new ByteVector(this.code.length);
         u = 0;
 
-        while(true) {
+        while (true) {
             label205:
-            while(u < this.code.length) {
-                for(int i = allIndexes.length - 1; i >= 0; --i) {
+            while (u < this.code.length) {
+                for (int i = allIndexes.length - 1; i >= 0; --i) {
                     if (allIndexes[i] == u && i < len) {
                         if (sizes[i] > 0) {
-                            newCode.putByteArray((byte[])null, 0, sizes[i]);
+                            newCode.putByteArray((byte[]) null, 0, sizes[i]);
                         } else {
                             newCode.length += sizes[i];
                         }
@@ -826,150 +827,150 @@ public class CodeWriter implements CodeVisitor {
                 int v;
                 int j;
                 int source;
-                switch(ClassWriter.TYPE[opcode]) {
-                case 0:
-                case 4:
-                    newCode.put1(opcode);
-                    ++u;
-                    break;
-                case 1:
-                case 3:
-                case 10:
-                    newCode.putByteArray(b, u, 2);
-                    u += 2;
-                    break;
-                case 2:
-                case 5:
-                case 6:
-                case 11:
-                case 12:
-                    newCode.putByteArray(b, u, 3);
-                    u += 3;
-                    break;
-                case 7:
-                    newCode.putByteArray(b, u, 5);
-                    u += 5;
-                    break;
-                case 8:
-                    if (opcode > 201) {
-                        opcode = opcode < 218 ? opcode - 49 : opcode - 20;
-                        label = u + readUnsignedShort(b, u + 1);
-                    } else {
-                        label = u + readShort(b, u + 1);
-                    }
-
-                    newOffset = getNewOffset(allIndexes, allSizes, u, label);
-                    if (newOffset >= -32768 && newOffset <= 32767) {
+                switch (ClassWriter.TYPE[opcode]) {
+                    case 0:
+                    case 4:
                         newCode.put1(opcode);
-                        newCode.put2(newOffset);
-                    } else {
-                        if (opcode == 167) {
-                            newCode.put1(200);
-                        } else if (opcode == 168) {
-                            newCode.put1(201);
+                        ++u;
+                        break;
+                    case 1:
+                    case 3:
+                    case 10:
+                        newCode.putByteArray(b, u, 2);
+                        u += 2;
+                        break;
+                    case 2:
+                    case 5:
+                    case 6:
+                    case 11:
+                    case 12:
+                        newCode.putByteArray(b, u, 3);
+                        u += 3;
+                        break;
+                    case 7:
+                        newCode.putByteArray(b, u, 5);
+                        u += 5;
+                        break;
+                    case 8:
+                        if (opcode > 201) {
+                            opcode = opcode < 218 ? opcode - 49 : opcode - 20;
+                            label = u + readUnsignedShort(b, u + 1);
                         } else {
-                            newCode.put1(opcode <= 166 ? (opcode + 1 ^ 1) - 1 : opcode ^ 1);
-                            newCode.put2(8);
-                            newCode.put1(200);
-                            newOffset -= 3;
+                            label = u + readShort(b, u + 1);
                         }
 
+                        newOffset = getNewOffset(allIndexes, allSizes, u, label);
+                        if (newOffset >= -32768 && newOffset <= 32767) {
+                            newCode.put1(opcode);
+                            newCode.put2(newOffset);
+                        } else {
+                            if (opcode == 167) {
+                                newCode.put1(200);
+                            } else if (opcode == 168) {
+                                newCode.put1(201);
+                            } else {
+                                newCode.put1(opcode <= 166 ? (opcode + 1 ^ 1) - 1 : opcode ^ 1);
+                                newCode.put2(8);
+                                newCode.put1(200);
+                                newOffset -= 3;
+                            }
+
+                            newCode.put4(newOffset);
+                        }
+
+                        u += 3;
+                        break;
+                    case 9:
+                        label = u + readInt(b, u + 1);
+                        newOffset = getNewOffset(allIndexes, allSizes, u, label);
+                        newCode.put1(opcode);
                         newCode.put4(newOffset);
-                    }
+                        u += 5;
+                        break;
+                    case 13:
+                        v = u;
+                        u = u + 4 - (u & 3);
+                        source = newCode.length;
+                        newCode.put1(170);
 
-                    u += 3;
-                    break;
-                case 9:
-                    label = u + readInt(b, u + 1);
-                    newOffset = getNewOffset(allIndexes, allSizes, u, label);
-                    newCode.put1(opcode);
-                    newCode.put4(newOffset);
-                    u += 5;
-                    break;
-                case 13:
-                    v = u;
-                    u = u + 4 - (u & 3);
-                    source = newCode.length;
-                    newCode.put1(170);
-
-                    while(newCode.length % 4 != 0) {
-                        newCode.put1(0);
-                    }
-
-                    label = v + readInt(b, u);
-                    u += 4;
-                    newOffset = getNewOffset(allIndexes, allSizes, v, label);
-                    newCode.put4(newOffset);
-                    j = readInt(b, u);
-                    u += 4;
-                    newCode.put4(j);
-                    j = readInt(b, u) - j + 1;
-                    u += 4;
-                    newCode.put4(readInt(b, u - 4));
-
-                    while(true) {
-                        if (j <= 0) {
-                            continue label205;
+                        while (newCode.length % 4 != 0) {
+                            newCode.put1(0);
                         }
 
                         label = v + readInt(b, u);
                         u += 4;
                         newOffset = getNewOffset(allIndexes, allSizes, v, label);
                         newCode.put4(newOffset);
-                        --j;
-                    }
-                case 14:
-                    v = u;
-                    u = u + 4 - (u & 3);
-                    source = newCode.length;
-                    newCode.put1(171);
+                        j = readInt(b, u);
+                        u += 4;
+                        newCode.put4(j);
+                        j = readInt(b, u) - j + 1;
+                        u += 4;
+                        newCode.put4(readInt(b, u - 4));
 
-                    while(newCode.length % 4 != 0) {
-                        newCode.put1(0);
-                    }
+                        while (true) {
+                            if (j <= 0) {
+                                continue label205;
+                            }
 
-                    label = v + readInt(b, u);
-                    u += 4;
-                    newOffset = getNewOffset(allIndexes, allSizes, v, label);
-                    newCode.put4(newOffset);
-                    j = readInt(b, u);
-                    u += 4;
-                    newCode.put4(j);
+                            label = v + readInt(b, u);
+                            u += 4;
+                            newOffset = getNewOffset(allIndexes, allSizes, v, label);
+                            newCode.put4(newOffset);
+                            --j;
+                        }
+                    case 14:
+                        v = u;
+                        u = u + 4 - (u & 3);
+                        source = newCode.length;
+                        newCode.put1(171);
 
-                    while(true) {
-                        if (j <= 0) {
-                            continue label205;
+                        while (newCode.length % 4 != 0) {
+                            newCode.put1(0);
                         }
 
-                        newCode.put4(readInt(b, u));
-                        u += 4;
                         label = v + readInt(b, u);
                         u += 4;
                         newOffset = getNewOffset(allIndexes, allSizes, v, label);
                         newCode.put4(newOffset);
-                        --j;
-                    }
-                case 15:
-                default:
-                    newCode.putByteArray(b, u, 4);
-                    u += 4;
-                    break;
-                case 16:
-                    opcode = b[u + 1] & 255;
-                    if (opcode == 132) {
-                        newCode.putByteArray(b, u, 6);
-                        u += 6;
-                    } else {
+                        j = readInt(b, u);
+                        u += 4;
+                        newCode.put4(j);
+
+                        while (true) {
+                            if (j <= 0) {
+                                continue label205;
+                            }
+
+                            newCode.put4(readInt(b, u));
+                            u += 4;
+                            label = v + readInt(b, u);
+                            u += 4;
+                            newOffset = getNewOffset(allIndexes, allSizes, v, label);
+                            newCode.put4(newOffset);
+                            --j;
+                        }
+                    case 15:
+                    default:
                         newCode.putByteArray(b, u, 4);
                         u += 4;
-                    }
+                        break;
+                    case 16:
+                        opcode = b[u + 1] & 255;
+                        if (opcode == 132) {
+                            newCode.putByteArray(b, u, 6);
+                            u += 6;
+                        } else {
+                            newCode.putByteArray(b, u, 4);
+                            u += 4;
+                        }
                 }
             }
 
             if (this.catchTable != null) {
                 b = this.catchTable.data;
 
-                for(u = 0; u < this.catchTable.length; u += 8) {
+                for (u = 0; u < this.catchTable.length; u += 8) {
                     writeShort(b, u, getNewOffset(allIndexes, allSizes, 0, readUnsignedShort(b, u)));
                     writeShort(b, u + 2, getNewOffset(allIndexes, allSizes, 0, readUnsignedShort(b, u + 2)));
                     writeShort(b, u + 4, getNewOffset(allIndexes, allSizes, 0, readUnsignedShort(b, u + 4)));
@@ -979,7 +980,7 @@ public class CodeWriter implements CodeVisitor {
             if (this.localVar != null) {
                 b = this.localVar.data;
 
-                for(u = 0; u < this.localVar.length; u += 10) {
+                for (u = 0; u < this.localVar.length; u += 10) {
                     label = readUnsignedShort(b, u);
                     newOffset = getNewOffset(allIndexes, allSizes, 0, label);
                     writeShort(b, u, newOffset);
@@ -992,7 +993,7 @@ public class CodeWriter implements CodeVisitor {
             if (this.lineNumber != null) {
                 b = this.lineNumber.data;
 
-                for(u = 0; u < this.lineNumber.length; u += 4) {
+                for (u = 0; u < this.lineNumber.length; u += 4) {
                     writeShort(b, u, getNewOffset(allIndexes, allSizes, 0, readUnsignedShort(b, u)));
                 }
             }
@@ -1007,7 +1008,7 @@ public class CodeWriter implements CodeVisitor {
     }
 
     static short readShort(byte[] b, int index) {
-        return (short)((b[index] & 255) << 8 | b[index + 1] & 255);
+        return (short) ((b[index] & 255) << 8 | b[index + 1] & 255);
     }
 
     static int readInt(byte[] b, int index) {
@@ -1015,14 +1016,14 @@ public class CodeWriter implements CodeVisitor {
     }
 
     static void writeShort(byte[] b, int index, int s) {
-        b[index] = (byte)(s >>> 8);
-        b[index + 1] = (byte)s;
+        b[index] = (byte) (s >>> 8);
+        b[index + 1] = (byte) s;
     }
 
     static int getNewOffset(int[] indexes, int[] sizes, int begin, int end) {
         int offset = end - begin;
 
-        for(int i = 0; i < indexes.length; ++i) {
+        for (int i = 0; i < indexes.length; ++i) {
             if (begin < indexes[i] && indexes[i] <= end) {
                 offset += sizes[i];
             } else if (end < indexes[i] && indexes[i] <= begin) {
@@ -1045,7 +1046,7 @@ public class CodeWriter implements CodeVisitor {
         int[] b = new int[202];
         String s = "EFFFFFFFFGGFFFGGFFFEEFGFGFEEEEEEEEEEEEEEEEEEEEDEDEDDDDDCDCDEEEEEEEEEEEEEEEEEEEEBABABBBBDCFFFGGGEDCDCDCDCDCDCDCDCDCDCEEEEDDDDDDDCDCDCEFEFDDEEFFDEDEEEBDDBBDDDDDDCCCCCCCCEFEDDDCDCDEEEEEEEEEEFEEEEEEDDEEDDEE";
 
-        for(int i = 0; i < b.length; ++i) {
+        for (int i = 0; i < b.length; ++i) {
             b[i] = s.charAt(i) - 69;
         }
 

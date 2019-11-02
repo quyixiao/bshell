@@ -57,7 +57,7 @@ public class ClassWriter implements ClassVisitor {
     static byte[] TYPE;
 
     public ClassWriter(boolean computeMaxs) {
-        this.threshold = (int)(0.75D * (double)this.table.length);
+        this.threshold = (int) (0.75D * (double) this.table.length);
         this.key = new Item();
         this.key2 = new Item();
         this.key3 = new Item();
@@ -72,7 +72,7 @@ public class ClassWriter implements ClassVisitor {
             this.interfaceCount = interfaces.length;
             this.interfaces = new int[this.interfaceCount];
 
-            for(int i = 0; i < this.interfaceCount; ++i) {
+            for (int i = 0; i < this.interfaceCount; ++i) {
                 this.interfaces[i] = this.newClass(interfaces[i]).index;
             }
         }
@@ -155,7 +155,7 @@ public class ClassWriter implements ClassVisitor {
         int nbMethods = 0;
 
         CodeWriter cb;
-        for(cb = this.firstMethod; cb != null; cb = cb.next) {
+        for (cb = this.firstMethod; cb != null; cb = cb.next) {
             ++nbMethods;
             size += cb.getSize();
         }
@@ -183,7 +183,7 @@ public class ClassWriter implements ClassVisitor {
         out.put2(this.access).put2(this.name).put2(this.superName);
         out.put2(this.interfaceCount);
 
-        for(int i = 0; i < this.interfaceCount; ++i) {
+        for (int i = 0; i < this.interfaceCount; ++i) {
             out.put2(this.interfaces[i]);
         }
 
@@ -194,7 +194,7 @@ public class ClassWriter implements ClassVisitor {
 
         out.put2(nbMethods);
 
-        for(cb = this.firstMethod; cb != null; cb = cb.next) {
+        for (cb = this.firstMethod; cb != null; cb = cb.next) {
             cb.put(out);
         }
 
@@ -218,26 +218,26 @@ public class ClassWriter implements ClassVisitor {
 
     Item newCst(Object cst) {
         if (cst instanceof Integer) {
-            int val = ((Integer)cst).intValue();
+            int val = ((Integer) cst).intValue();
             return this.newInteger(val);
         } else if (cst instanceof Float) {
-            float val = ((Float)cst).floatValue();
+            float val = ((Float) cst).floatValue();
             return this.newFloat(val);
         } else if (cst instanceof Long) {
-            long val = ((Long)cst).longValue();
+            long val = ((Long) cst).longValue();
             return this.newLong(val);
         } else if (cst instanceof Double) {
-            double val = ((Double)cst).doubleValue();
+            double val = ((Double) cst).doubleValue();
             return this.newDouble(val);
         } else if (cst instanceof String) {
-            return this.newString((String)cst);
+            return this.newString((String) cst);
         } else {
             throw new IllegalArgumentException("value " + cst);
         }
     }
 
     Item newUTF8(String value) {
-        this.key.set(1, value, (String)null, (String)null);
+        this.key.set(1, value, (String) null, (String) null);
         Item result = this.get(this.key);
         if (result == null) {
             this.pool.put1(1).putUTF(value);
@@ -249,7 +249,7 @@ public class ClassWriter implements ClassVisitor {
     }
 
     Item newClass(String value) {
-        this.key2.set(7, value, (String)null, (String)null);
+        this.key2.set(7, value, (String) null, (String) null);
         Item result = this.get(this.key2);
         if (result == null) {
             this.pool.put12(7, this.newUTF8(value).index);
@@ -327,7 +327,7 @@ public class ClassWriter implements ClassVisitor {
             this.pool.put1(5).put8(value);
             result = new Item(this.index, this.key);
             this.put(result);
-            this.index = (short)(this.index + 2);
+            this.index = (short) (this.index + 2);
         }
 
         return result;
@@ -340,14 +340,14 @@ public class ClassWriter implements ClassVisitor {
             this.pool.put1(6).put8(Double.doubleToLongBits(value));
             result = new Item(this.index, this.key);
             this.put(result);
-            this.index = (short)(this.index + 2);
+            this.index = (short) (this.index + 2);
         }
 
         return result;
     }
 
     private Item newString(String value) {
-        this.key2.set(8, value, (String)null, (String)null);
+        this.key2.set(8, value, (String) null, (String) null);
         Item result = this.get(this.key2);
         if (result == null) {
             this.pool.put12(8, this.newUTF8(value).index);
@@ -359,7 +359,7 @@ public class ClassWriter implements ClassVisitor {
     }
 
     private Item newNameType(String name, String desc) {
-        this.key2.set(12, name, desc, (String)null);
+        this.key2.set(12, name, desc, (String) null);
         Item result = this.get(this.key2);
         if (result == null) {
             this.put122(12, this.newUTF8(name).index, this.newUTF8(desc).index);
@@ -375,7 +375,7 @@ public class ClassWriter implements ClassVisitor {
         int hashCode = key.hashCode;
         int index = (hashCode & 2147483647) % tab.length;
 
-        for(Item i = tab[index]; i != null; i = i.next) {
+        for (Item i = tab[index]; i != null; i = i.next) {
             if (i.hashCode == hashCode && key.isEqualTo(i)) {
                 return i;
             }
@@ -391,14 +391,14 @@ public class ClassWriter implements ClassVisitor {
             Item[] oldMap = this.table;
             int newCapacity = index * 2 + 1;
             Item[] newMap = new Item[newCapacity];
-            this.threshold = (int)((double)newCapacity * 0.75D);
+            this.threshold = (int) ((double) newCapacity * 0.75D);
             this.table = newMap;
             int j = index;
 
             Item e;
-             index = 0;
-            while(j-- > 0) {
-                for(Item old = oldMap[j]; old != null; newMap[index] = e) {
+            index = 0;
+            while (j-- > 0) {
+                for (Item old = oldMap[j]; old != null; newMap[index] = e) {
                     e = old;
                     old = old.next;
                     index = (e.hashCode & 2147483647) % newCapacity;
@@ -420,8 +420,8 @@ public class ClassWriter implements ClassVisitor {
         byte[] b = new byte[220];
         String s = "AAAAAAAAAAAAAAAABCKLLDDDDDEEEEEEEEEEEEEEEEEEEEAAAAAAAADDDDDEEEEEEEEEEEEEEEEEEEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAIIIIIIIIIIIIIIIIDNOAAAAAAGGGGGGGHAFBFAAFFAAQPIIJJIIIIIIIIIIIIIIIIII";
 
-        for(int i = 0; i < b.length; ++i) {
-            b[i] = (byte)(s.charAt(i) - 65);
+        for (int i = 0; i < b.length; ++i) {
+            b[i] = (byte) (s.charAt(i) - 65);
         }
 
         TYPE = b;

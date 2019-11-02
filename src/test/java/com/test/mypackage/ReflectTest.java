@@ -6,7 +6,9 @@ package com.test.mypackage;
 public class ReflectTest {
     public Runnable getRunnable() {
         return new Runnable() {
-            public void run() { System.out.println("run!"); }
+            public void run() {
+                System.out.println("run!");
+            }
         };
     }
 }

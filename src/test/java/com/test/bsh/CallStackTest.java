@@ -16,14 +16,10 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
-import bsh.BshClassManager;
-import bsh.CallStack;
-import bsh.NameSpace;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class CallStackTest {
@@ -31,6 +27,7 @@ public class CallStackTest {
     /**
      * <a href="http://code.google.com/p/beanshell2/issues/detail?id=35">Issue 35 - CallStack class should be
      * Serializable</a>
+     *
      * @throws Exception in case of failure
      */
     @Test

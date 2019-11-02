@@ -5,15 +5,8 @@
 
 package bsh.engine;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
 import javax.script.ScriptContext;
+import java.util.*;
 
 public class ScriptContextEngineView implements Map<String, Object> {
     ScriptContext context;
@@ -31,7 +24,7 @@ public class ScriptContextEngineView implements Map<String, Object> {
     }
 
     public boolean containsKey(Object key) {
-        return this.context.getAttribute((String)key) != null;
+        return this.context.getAttribute((String) key) != null;
     }
 
     public boolean containsValue(Object value) {
@@ -40,7 +33,7 @@ public class ScriptContextEngineView implements Map<String, Object> {
     }
 
     public Object get(Object key) {
-        return this.context.getAttribute((String)key);
+        return this.context.getAttribute((String) key);
     }
 
     public Object put(String key, Object value) {
@@ -54,7 +47,7 @@ public class ScriptContextEngineView implements Map<String, Object> {
     }
 
     public Object remove(Object okey) {
-        String key = (String)okey;
+        String key = (String) okey;
         Object oldValue = this.context.getAttribute(key, 100);
         this.context.removeAttribute(key, 100);
         return oldValue;
@@ -81,8 +74,8 @@ public class ScriptContextEngineView implements Map<String, Object> {
         List<Integer> scopes = this.context.getScopes();
         Iterator var3 = scopes.iterator();
 
-        while(var3.hasNext()) {
-            int i = ((Integer)var3.next()).intValue();
+        while (var3.hasNext()) {
+            int i = ((Integer) var3.next()).intValue();
             keys.addAll(this.context.getBindings(i).keySet());
         }
 
@@ -94,8 +87,8 @@ public class ScriptContextEngineView implements Map<String, Object> {
         List<Integer> scopes = this.context.getScopes();
         Iterator var3 = scopes.iterator();
 
-        while(var3.hasNext()) {
-            int i = ((Integer)var3.next()).intValue();
+        while (var3.hasNext()) {
+            int i = ((Integer) var3.next()).intValue();
             values.addAll(this.context.getBindings(i).values());
         }
 

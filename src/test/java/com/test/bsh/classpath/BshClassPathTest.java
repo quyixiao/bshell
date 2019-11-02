@@ -1,34 +1,7 @@
 package com.test.bsh.classpath;
 
-import bsh.ClassPathException;
-import bsh.Interpreter;
-import bsh.NameSource;
 import bsh.classpath.BshClassPath;
-import bsh.classpath.BshClassPath.*;
-import bsh.classpath.ClassManagerImpl;
-import bsh.classpath.ClassPathListener;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import java.io.File;
-import java.net.URL;
-import java.nio.file.FileSystemNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.arrayWithSize;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.startsWith;
 
 import static org.junit.Assert.*;
 
@@ -74,7 +47,7 @@ public class BshClassPathTest {
         BshClassPath.addMappingFeedback(cpmf);
     }*/
 
-  //  @Test
+    //  @Test
 /*
     public void classpath_mapping_feedback() throws Exception {
         final Interpreter bsh = new Interpreter();
@@ -235,7 +208,7 @@ public class BshClassPathTest {
 
     @Test
     public void classpath_canon_classname() throws Exception {
-        assertEquals(String.class.getName(), BshClassPath.canonicalizeClassName(""+String.class));
+        assertEquals(String.class.getName(), BshClassPath.canonicalizeClassName("" + String.class));
         assertEquals("abc.ABC", BshClassPath.canonicalizeClassName("classes.abc.ABC"));
         assertEquals("abc.ABC", BshClassPath.canonicalizeClassName("abc/ABC"));
         assertEquals("abc.ABC", BshClassPath.canonicalizeClassName("abc\\ABC"));

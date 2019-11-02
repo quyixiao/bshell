@@ -5,31 +5,11 @@
 
 package bsh.engine;
 
-import bsh.EvalError;
-import bsh.ExternalNameSpace;
-import bsh.Interpreter;
-import bsh.InterpreterError;
-import bsh.NameSpace;
-import bsh.ParseException;
-import bsh.TargetError;
-import bsh.This;
-import bsh.UtilEvalError;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.Writer;
+import bsh.*;
+
+import javax.script.*;
+import java.io.*;
 import java.util.Map;
-import javax.script.AbstractScriptEngine;
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
 
 public class BshScriptEngine extends AbstractScriptEngine implements Compilable, Invocable {
     static final String engineNameSpaceKey = "org_beanshell_engine_namespace";
@@ -37,7 +17,7 @@ public class BshScriptEngine extends AbstractScriptEngine implements Compilable,
     private Interpreter interpreter;
 
     public BshScriptEngine() {
-        this((BshScriptEngineFactory)null);
+        this((BshScriptEngineFactory) null);
     }
 
     public BshScriptEngine(BshScriptEngineFactory factory) {
@@ -48,7 +28,7 @@ public class BshScriptEngine extends AbstractScriptEngine implements Compilable,
     protected Interpreter getInterpreter() {
         if (this.interpreter == null) {
             this.interpreter = new Interpreter();
-            this.interpreter.setNameSpace((NameSpace)null);
+            this.interpreter.setNameSpace((NameSpace) null);
         }
 
         return this.interpreter;
@@ -70,7 +50,7 @@ public class BshScriptEngine extends AbstractScriptEngine implements Compilable,
         bsh.setErr(new PrintStream(new BshScriptEngine.WriterOutputStream(scriptContext.getErrorWriter())));
 
         try {
-            return source instanceof Reader ? bsh.eval((Reader)source) : bsh.eval((String)source);
+            return source instanceof Reader ? bsh.eval((Reader) source) : bsh.eval((String) source);
         } catch (ParseException var7) {
             throw new ScriptException(var7.toString(), var7.getErrorSourceFile(), var7.getErrorLineNumber());
         } catch (TargetError var8) {
@@ -85,14 +65,14 @@ public class BshScriptEngine extends AbstractScriptEngine implements Compilable,
     }
 
     private static NameSpace getEngineNameSpace(ScriptContext scriptContext) {
-        NameSpace ns = (NameSpace)scriptContext.getAttribute("org_beanshell_engine_namespace", 100);
+        NameSpace ns = (NameSpace) scriptContext.getAttribute("org_beanshell_engine_namespace", 100);
         if (ns == null) {
             Map engineView = new ScriptContextEngineView(scriptContext);
-            ns = new ExternalNameSpace((NameSpace)null, "javax_script_context", engineView);
+            ns = new ExternalNameSpace((NameSpace) null, "javax_script_context", engineView);
             scriptContext.setAttribute("org_beanshell_engine_namespace", ns, 100);
         }
 
-        return (NameSpace)ns;
+        return (NameSpace) ns;
     }
 
     public Bindings createBindings() {
@@ -108,7 +88,7 @@ public class BshScriptEngine extends AbstractScriptEngine implements Compilable,
     }
 
     public CompiledScript compile(String script) throws ScriptException {
-        return this.compile((Reader)(new StringReader(script)));
+        return this.compile((Reader) (new StringReader(script)));
     }
 
     public CompiledScript compile(Reader script) throws ScriptException {
@@ -119,7 +99,7 @@ public class BshScriptEngine extends AbstractScriptEngine implements Compilable,
         if (!(thiz instanceof This)) {
             throw new ScriptException("Illegal objec type: " + thiz.getClass());
         } else {
-            This bshObject = (This)thiz;
+            This bshObject = (This) thiz;
 
             try {
                 return bshObject.invokeMethod(name, args);
@@ -143,7 +123,7 @@ public class BshScriptEngine extends AbstractScriptEngine implements Compilable,
 
     public <T> T getInterface(Class<T> clasz) {
         try {
-            return (T)this.getGlobal().getInterface(clasz);
+            return (T) this.getGlobal().getInterface(clasz);
         } catch (UtilEvalError var3) {
             var3.printStackTrace();
             return null;
@@ -155,8 +135,8 @@ public class BshScriptEngine extends AbstractScriptEngine implements Compilable,
             throw new IllegalArgumentException("invalid object type: " + thiz.getClass());
         } else {
             try {
-                This bshThis = (This)thiz;
-                return (T)bshThis.getInterface(clasz);
+                This bshThis = (This) thiz;
+                return (T) bshThis.getInterface(clasz);
             } catch (UtilEvalError var4) {
                 var4.printStackTrace(System.err);
                 return null;

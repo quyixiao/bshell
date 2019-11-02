@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
@@ -38,7 +38,7 @@ public class FilteredTestRunner extends BlockJUnit4ClassRunner {
 
     @Override
     protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
-        Description description= describeChild(method);
+        Description description = describeChild(method);
         final Category category = method.getAnnotation(Category.class);
         if (category != null) {
             final Class<?>[] value = category.value();

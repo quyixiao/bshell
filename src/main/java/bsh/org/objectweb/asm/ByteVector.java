@@ -23,7 +23,7 @@ final class ByteVector {
             this.enlarge(1);
         }
 
-        this.data[length++] = (byte)b;
+        this.data[length++] = (byte) b;
         this.length = length;
         return this;
     }
@@ -35,8 +35,8 @@ final class ByteVector {
         }
 
         byte[] data = this.data;
-        data[length++] = (byte)b1;
-        data[length++] = (byte)b2;
+        data[length++] = (byte) b1;
+        data[length++] = (byte) b2;
         this.length = length;
         return this;
     }
@@ -48,8 +48,8 @@ final class ByteVector {
         }
 
         byte[] data = this.data;
-        data[length++] = (byte)(s >>> 8);
-        data[length++] = (byte)s;
+        data[length++] = (byte) (s >>> 8);
+        data[length++] = (byte) s;
         this.length = length;
         return this;
     }
@@ -61,9 +61,9 @@ final class ByteVector {
         }
 
         byte[] data = this.data;
-        data[length++] = (byte)b;
-        data[length++] = (byte)(s >>> 8);
-        data[length++] = (byte)s;
+        data[length++] = (byte) b;
+        data[length++] = (byte) (s >>> 8);
+        data[length++] = (byte) s;
         this.length = length;
         return this;
     }
@@ -75,10 +75,10 @@ final class ByteVector {
         }
 
         byte[] data = this.data;
-        data[length++] = (byte)(i >>> 24);
-        data[length++] = (byte)(i >>> 16);
-        data[length++] = (byte)(i >>> 8);
-        data[length++] = (byte)i;
+        data[length++] = (byte) (i >>> 24);
+        data[length++] = (byte) (i >>> 16);
+        data[length++] = (byte) (i >>> 8);
+        data[length++] = (byte) i;
         this.length = length;
         return this;
     }
@@ -90,16 +90,16 @@ final class ByteVector {
         }
 
         byte[] data = this.data;
-        int i = (int)(l >>> 32);
-        data[length++] = (byte)(i >>> 24);
-        data[length++] = (byte)(i >>> 16);
-        data[length++] = (byte)(i >>> 8);
-        data[length++] = (byte)i;
-        i = (int)l;
-        data[length++] = (byte)(i >>> 24);
-        data[length++] = (byte)(i >>> 16);
-        data[length++] = (byte)(i >>> 8);
-        data[length++] = (byte)i;
+        int i = (int) (l >>> 32);
+        data[length++] = (byte) (i >>> 24);
+        data[length++] = (byte) (i >>> 16);
+        data[length++] = (byte) (i >>> 8);
+        data[length++] = (byte) i;
+        i = (int) l;
+        data[length++] = (byte) (i >>> 24);
+        data[length++] = (byte) (i >>> 16);
+        data[length++] = (byte) (i >>> 8);
+        data[length++] = (byte) i;
         this.length = length;
         return this;
     }
@@ -109,7 +109,7 @@ final class ByteVector {
         int byteLength = 0;
 
         int length;
-        for(length = 0; length < charLength; ++length) {
+        for (length = 0; length < charLength; ++length) {
             char c = s.charAt(length);
             if (c >= 1 && c <= 127) {
                 ++byteLength;
@@ -129,20 +129,20 @@ final class ByteVector {
             }
 
             byte[] data = this.data;
-            data[length++] = (byte)(byteLength >>> 8);
-            data[length++] = (byte)byteLength;
+            data[length++] = (byte) (byteLength >>> 8);
+            data[length++] = (byte) byteLength;
 
-            for(int i = 0; i < charLength; ++i) {
+            for (int i = 0; i < charLength; ++i) {
                 char c = s.charAt(i);
                 if (c >= 1 && c <= 127) {
-                    data[length++] = (byte)c;
+                    data[length++] = (byte) c;
                 } else if (c > 2047) {
-                    data[length++] = (byte)(224 | c >> 12 & 15);
-                    data[length++] = (byte)(128 | c >> 6 & 63);
-                    data[length++] = (byte)(128 | c & 63);
+                    data[length++] = (byte) (224 | c >> 12 & 15);
+                    data[length++] = (byte) (128 | c >> 6 & 63);
+                    data[length++] = (byte) (128 | c & 63);
                 } else {
-                    data[length++] = (byte)(192 | c >> 6 & 31);
-                    data[length++] = (byte)(128 | c & 63);
+                    data[length++] = (byte) (192 | c >> 6 & 31);
+                    data[length++] = (byte) (128 | c & 63);
                 }
             }
 

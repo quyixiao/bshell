@@ -26,12 +26,12 @@ public class Inherit {
 
         xa = Accessor.getXbyA();
         xb = Accessor.getXbyB();
-        x  = Accessor.getX();
+        x = Accessor.getX();
 
         ya = Accessor.getYbyA();
         yb = Accessor.getYbyB();
         yc = Accessor.getYbyC();
-        y  = Accessor.getY();
+        y = Accessor.getY();
 
         za = Accessor.getZbyA();
         zb = Accessor.getZbyB();

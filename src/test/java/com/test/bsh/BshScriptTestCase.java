@@ -16,57 +16,68 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 package com.test.bsh;
 
-import bsh.Capabilities;
-import bsh.Interpreter;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Arrays;
 
-import static java.lang.System.err;
-import static java.lang.System.out;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.isA;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeFalse;
 
-/** Run the old test scripts inherited from beanshell. It's not always clear
+/**
+ * Run the old test scripts inherited from beanshell. It's not always clear
  * what the test cases do so this will need some more investigations for failing
- * tests. */
+ * tests.
+ */
 @RunWith(AllTestsJUnit4Runner.class)
 public class BshScriptTestCase {
 
-    /** System property verbose */
+    /**
+     * System property verbose
+     */
     public static final boolean _VERBOSE =
-        Boolean.valueOf(System.getProperty("verbose"));
-    /** System property accessibility */
+            Boolean.valueOf(System.getProperty("verbose"));
+    /**
+     * System property accessibility
+     */
     public static final boolean _ACCESSIBILITY =
-        Boolean.valueOf(System.getProperty("accessibility"));
-    /** System property script */
+            Boolean.valueOf(System.getProperty("accessibility"));
+    /**
+     * System property script
+     */
     public static final String _SCRIPT = System.getProperty("script");
-    /** The Constant baseDir. */
+    /**
+     * The Constant baseDir.
+     */
     public static final File _TEST_SCRIPTS_DIR = new File(
-        "src/test/resources/test-scripts").getAbsoluteFile();
+            "src/test/resources/test-scripts").getAbsoluteFile();
+
     static {
         // List KNOWN_FAILING_TESTS here
         //KNOWN_FAILING_TESTS.add("Fail.bsh");
 
         // Set capabilities accessibility
-       // Capabilities.instance.accept(_ACCESSIBILITY);
+        // Capabilities.instance.accept(_ACCESSIBILITY);
     }
-    /** Constant padded spaces */
-    private static final String[] _PADS = new String[] {"", " ", "  ", "   "};
-    /** Constant tabs */
-    private static final String[] _TABS = new String[] {"", "\t", "\t\t",
-        "\t\t\t", "\t\t\t\t", "\t\t\t\t\t", "\t\t\t\t\t\t", "\t\t\t\t\t\t\t"};
+
+    /**
+     * Constant padded spaces
+     */
+    private static final String[] _PADS = new String[]{"", " ", "  ", "   "};
+    /**
+     * Constant tabs
+     */
+    private static final String[] _TABS = new String[]{"", "\t", "\t\t",
+            "\t\t\t", "\t\t\t\t", "\t\t\t\t\t", "\t\t\t\t\t\t", "\t\t\t\t\t\t\t"};
 
     @Test
     public void testFailScript() throws Throwable {
@@ -76,7 +87,7 @@ public class BshScriptTestCase {
             assertThat("test expected to fail", e, isA(Error.class));
             assertThat("with message", e.getMessage(),
                     containsString("Test FAILED: Line: 11 : assert ( false )"));
-            if ( _VERBOSE )
+            if (_VERBOSE)
                 System.out.println("success");
         } catch (Throwable t) {
             t.printStackTrace();
@@ -84,90 +95,118 @@ public class BshScriptTestCase {
         }
     }
 
-    /** Test suite entry method for framework.
+    /**
+     * Test suite entry method for framework.
+     *
      * @return the unit test populated test suite.
-     * @throws Exception the exception */
+     * @throws Exception the exception
+     */
     public static junit.framework.Test suite() throws Throwable {
         final TestSuite suite = new TestSuite();
         addTests(suite);
         return suite;
     }
 
-    /** Adds the test scripts to the provided test suite.
-     * @param suite the suite */
+    /**
+     * Adds the test scripts to the provided test suite.
+     *
+     * @param suite the suite
+     */
     private static void addTests(final TestSuite suite) {
-        if ( !isUnderScrutiny(suite) ) {
+        if (!isUnderScrutiny(suite)) {
             final File[] files = _TEST_SCRIPTS_DIR.listFiles(
-                new FilenameFilter() {
-                    public boolean accept(File dir, String name) {
-                        return name.endsWith(".bsh")
-                            && !"TestHarness.bsh".equals(name)
-                            && !"RunAllTests.bsh".equals(name)
-                            && !"Assert.bsh".equals(name)
-                            && !"Fail.bsh".equals(name);
-                    }
-                });
-            if ( _VERBOSE )
+                    new FilenameFilter() {
+                        public boolean accept(File dir, String name) {
+                            return name.endsWith(".bsh")
+                                    && !"TestHarness.bsh".equals(name)
+                                    && !"RunAllTests.bsh".equals(name)
+                                    && !"Assert.bsh".equals(name)
+                                    && !"Fail.bsh".equals(name);
+                        }
+                    });
+            if (_VERBOSE)
                 Arrays.sort(files);
-            if ( null != files ) for ( final File file : files )
-                if ( file.isFile() )
+            if (null != files) for (final File file : files)
+                if (file.isFile())
                     suite.addTest(new Script(file));
         }
     }
 
-    /** Checks if is under scrutiny. Helper function to simplify singling out
+    /**
+     * Checks if is under scrutiny. Helper function to simplify singling out
      * a specific test for scrutiny when fault finding. Simply assign a value
      * to trouble_maker and the other tests will go on hold.
+     *
      * @param suite the suite
-     * @return true, if is under scrutiny */
+     * @return true, if is under scrutiny
+     */
     private static boolean isUnderScrutiny(final TestSuite suite) {
         // test file(s) under scrutiny
         final String trouble_maker = _SCRIPT;
         if (trouble_maker.isEmpty())
             return false;
-        for (String f:trouble_maker.split(","))
+        for (String f : trouble_maker.split(","))
             suite.addTest(new Script(f));
         return true;
     }
 
-    /** The bsh script unit test case. */
+    /**
+     * The bsh script unit test case.
+     */
     static class Script extends TestCase {
-        /** The file. */
+        /**
+         * The file.
+         */
         private final File _file;
-        /** script timer **/
+        /**
+         * script timer
+         **/
         private long _start;
-        /** skipped test **/
+        /**
+         * skipped test
+         **/
         private boolean _skipped = false;
 
-        /** Instantiates a new test bsh script.
-         * @param file the file */
+        /**
+         * Instantiates a new test bsh script.
+         *
+         * @param file the file
+         */
         public Script(final File file) {
             super(file.getName());
             _file = file;
         }
 
-        /** Instantiates a new test bsh script.
-         * @param script the script file name */
+        /**
+         * Instantiates a new test bsh script.
+         *
+         * @param script the script file name
+         */
         public Script(String script) {
             this(new File(_TEST_SCRIPTS_DIR, script));
         }
 
-        /** Get the duration stop time padded with spaces. */
+        /**
+         * Get the duration stop time padded with spaces.
+         */
         private String stopTime() {
             long stop = (System.nanoTime() - _start) / 1000000;
             int cnt = 3 - (stop > 0 ? (int) Math.log10(stop) : 0);
-            return _PADS[cnt] +  stop + "ms";
+            return _PADS[cnt] + stop + "ms";
         }
 
-        /** Determine if the exception is assumed for skipping a test.
+        /**
+         * Determine if the exception is assumed for skipping a test.
          * Either thrown locally from the list of known failed scripts or by
          * script as the cause of the exception argument.
+         *
          * @param assumption the exception argument to check.
-         * @throws Throwable re-thrown identified assumption. */
+         * @throws Throwable re-thrown identified assumption.
+         */
         private void skipAssumptions(Throwable assumption) throws Throwable {
-            while ( null != assumption )
-                if ( assumption instanceof AssumptionViolatedException ) {
-                    if ( _VERBOSE ) {
+            while (null != assumption)
+                if (assumption instanceof AssumptionViolatedException) {
+                    if (_VERBOSE) {
                         System.out.println(stopTime() + " - SKIPPED *");
                         _skipped = true;
                     }
@@ -176,7 +215,9 @@ public class BshScriptTestCase {
                     assumption = assumption.getCause();
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public void runTest() throws Throwable {
             /*if ( _VERBOSE ) {

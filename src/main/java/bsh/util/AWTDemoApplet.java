@@ -27,23 +27,22 @@
 
 package bsh.util;
 
+import bsh.ConsoleInterface;
+import bsh.Interpreter;
+
 import java.applet.Applet;
 import java.awt.*;
-import bsh.*;
-import bsh.util.*;
 
 /**
-	Run bsh as an applet for demo purposes.
-*/
-public class AWTDemoApplet extends Applet
-{
-	public void init()
-	{
-		setLayout(new BorderLayout());
-		ConsoleInterface console = new AWTConsole();
-		add("Center", (Component)console);
-		Interpreter interpreter = new Interpreter( console );
-		new Thread(interpreter).start();
-	}
+ * Run bsh as an applet for demo purposes.
+ */
+public class AWTDemoApplet extends Applet {
+    public void init() {
+        setLayout(new BorderLayout());
+        ConsoleInterface console = new AWTConsole();
+        add("Center", (Component) console);
+        Interpreter interpreter = new Interpreter(console);
+        new Thread(interpreter).start();
+    }
 }
 

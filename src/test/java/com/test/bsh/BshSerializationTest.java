@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
@@ -30,12 +30,12 @@ import static org.junit.Assert.assertTrue;
  * This tests serialization of the beanshell interpreter
  *
  * @author Jessen Yu
- *
  */
 public class BshSerializationTest {
 
     /**
      * Tests that Special.NULL_VALUE is correctly serialized/deserialized
+     *
      * @throws Exception in case of failure
      */
     @Test
@@ -49,6 +49,7 @@ public class BshSerializationTest {
 
     /**
      * Tests that Primitive.NULL is correctly serialized/deserialized
+     *
      * @throws Exception in case of failure
      */
     @Test
@@ -62,6 +63,7 @@ public class BshSerializationTest {
 
     /**
      * Tests that Primitive.VOID is correctly serialized/deserialized
+     *
      * @throws Exception in case of failure
      */
     @Test

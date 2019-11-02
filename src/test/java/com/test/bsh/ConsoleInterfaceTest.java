@@ -31,8 +31,6 @@ import org.junit.Test;
 import java.io.PrintStream;
 import java.io.Reader;
 
-import static org.junit.Assert.assertEquals;
-
 /**
  *
  */
@@ -71,7 +69,7 @@ public class ConsoleInterfaceTest {
             }
         };
 
-      //  c.prompt("hello "); assertEquals("hello ", S.toString());
+        //  c.prompt("hello "); assertEquals("hello ", S.toString());
         //c.prompt("world"); assertEquals("hello world", S.toString());*/
     }
 
@@ -107,7 +105,7 @@ public class ConsoleInterfaceTest {
             public void error(Object o) {
             }
 
-         //   @Override
+            //   @Override
             public void prompt(String prompt) {
                 S.append('#').append(prompt).append('#');
             }

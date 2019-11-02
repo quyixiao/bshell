@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
@@ -59,8 +59,8 @@ public class InterpreterConcurrencyTest {
     @Test
     public void single_threaded() throws Exception {
         final This callable = createCallable();
-        assertEquals("foo", callable.invokeMethod("call", new Object[] { "foo" }));
-        assertEquals(42, callable.invokeMethod("call", new Object[] { 42 }));
+        assertEquals("foo", callable.invokeMethod("call", new Object[]{"foo"}));
+        assertEquals(42, callable.invokeMethod("call", new Object[]{42}));
     }
 
 
@@ -72,14 +72,14 @@ public class InterpreterConcurrencyTest {
                 "   return v;",
                 "}",
                 "return this;"
-            );
+        );
         final Interpreter interpreter = new Interpreter();
         final This callable = (This) interpreter.eval(script);
         final Runnable runnable = new Runnable() {
             public void run() {
                 final int value = counter.incrementAndGet();
                 try {
-                    assertEquals(value, callable.invokeMethod("call", new Object[] { value }  ));
+                    assertEquals(value, callable.invokeMethod("call", new Object[]{value}));
                 } catch (final EvalError evalError) {
                     throw new RuntimeException(evalError);
                 }

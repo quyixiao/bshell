@@ -58,8 +58,8 @@ public class Label {
         this.position = position;
         int i = 0;
 
-        while(true) {
-            while(i < this.referenceCount) {
+        while (true) {
+            while (i < this.referenceCount) {
                 int source = this.srcAndRefPositions[i++];
                 int reference = this.srcAndRefPositions[i++];
                 int offset;
@@ -68,22 +68,22 @@ public class Label {
                     if (offset < -32768 || offset > 32767) {
                         int opcode = data[reference - 1] & 255;
                         if (opcode <= 168) {
-                            data[reference - 1] = (byte)(opcode + 49);
+                            data[reference - 1] = (byte) (opcode + 49);
                         } else {
-                            data[reference - 1] = (byte)(opcode + 20);
+                            data[reference - 1] = (byte) (opcode + 20);
                         }
 
                         needUpdate = true;
                     }
 
-                    data[reference++] = (byte)(offset >>> 8);
-                    data[reference] = (byte)offset;
+                    data[reference++] = (byte) (offset >>> 8);
+                    data[reference] = (byte) offset;
                 } else {
                     offset = position + source + 1;
-                    data[reference++] = (byte)(offset >>> 24);
-                    data[reference++] = (byte)(offset >>> 16);
-                    data[reference++] = (byte)(offset >>> 8);
-                    data[reference] = (byte)offset;
+                    data[reference++] = (byte) (offset >>> 24);
+                    data[reference++] = (byte) (offset >>> 16);
+                    data[reference++] = (byte) (offset >>> 8);
+                    data[reference] = (byte) offset;
                 }
             }
 

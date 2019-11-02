@@ -16,11 +16,14 @@
  * specific language governing permissions and limitations                   *
  * under the License.                                                        *
  *                                                                           *
-/****************************************************************************/
+ /****************************************************************************/
 
 package com.test.bsh;
 
-import bsh.*;
+import bsh.ExternalNameSpace;
+import bsh.Interpreter;
+import bsh.NameSpace;
+import bsh.Primitive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -33,7 +36,6 @@ import static org.junit.Assert.*;
  */
 @RunWith(FilteredTestRunner.class)
 public class Namespace_Chaining_Test {
-
 
 
     @Test

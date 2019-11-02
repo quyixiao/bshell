@@ -26,7 +26,6 @@
 package bsh;
 
 
-
 /**
  * Implementation of the enhanced for(:) statement.
  * This statement uses BshIterable to support iteration over a wide variety

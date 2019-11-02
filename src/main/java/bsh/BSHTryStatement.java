@@ -110,7 +110,7 @@ class BSHTryStatement extends SimpleNode {
                         thrown = (Throwable) Types.castObject(
                                 thrown/*rsh*/, fp.type/*lhsType*/, Types.ASSIGNMENT);
                     } catch (UtilEvalError e) {
-						/*
+                        /*
 							Catch the mismatch and continue to try the next
 							Note: this is innefficient, should have an
 							isAssignableFrom() that doesn't throw

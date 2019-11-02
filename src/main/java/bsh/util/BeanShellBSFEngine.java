@@ -5,17 +5,13 @@
 
 package bsh.util;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-import bsh.InterpreterError;
-import bsh.Primitive;
-import bsh.TargetError;
-import bsh.This;
-import java.util.Vector;
+import bsh.*;
 import org.apache.bsf.BSFDeclaredBean;
 import org.apache.bsf.BSFException;
 import org.apache.bsf.BSFManager;
 import org.apache.bsf.util.BSFEngineImpl;
+
+import java.util.Vector;
 
 public class BeanShellBSFEngine extends BSFEngineImpl {
     Interpreter interpreter;
@@ -35,8 +31,8 @@ public class BeanShellBSFEngine extends BSFEngineImpl {
             throw new BSFException("bsh internal error: " + var6.toString());
         }
 
-        for(int i = 0; i < declaredBeans.size(); ++i) {
-            BSFDeclaredBean bean = (BSFDeclaredBean)declaredBeans.get(i);
+        for (int i = 0; i < declaredBeans.size(); ++i) {
+            BSFDeclaredBean bean = (BSFDeclaredBean) declaredBeans.get(i);
             this.declareBean(bean);
         }
 
@@ -58,7 +54,7 @@ public class BeanShellBSFEngine extends BSFEngineImpl {
 
         if (object instanceof This) {
             try {
-                Object value = ((This)object).invokeMethod(name, args);
+                Object value = ((This) object).invokeMethod(name, args);
                 return Primitive.unwrap(value);
             } catch (InterpreterError var5) {
                 throw new BSFException("BeanShell interpreter internal error: " + var5);
@@ -89,8 +85,8 @@ public class BeanShellBSFEngine extends BSFEngineImpl {
                     this.installedApplyMethod = true;
                 }
 
-                This global = (This)this.interpreter.get("global");
-                Object value = global.invokeMethod("_bsfApply", new Object[]{names, args, (String)funcBody});
+                This global = (This) this.interpreter.get("global");
+                Object value = global.invokeMethod("_bsfApply", new Object[]{names, args, (String) funcBody});
                 return Primitive.unwrap(value);
             } catch (InterpreterError var11) {
                 throw new BSFException("BeanShell interpreter internal error: " + var11 + this.sourceInfo(source, lineNo, columnNo));
@@ -107,7 +103,7 @@ public class BeanShellBSFEngine extends BSFEngineImpl {
             throw new BSFException("BeanShell expression must be a string");
         } else {
             try {
-                return this.interpreter.eval((String)expr);
+                return this.interpreter.eval((String) expr);
             } catch (InterpreterError var6) {
                 throw new BSFException("BeanShell interpreter internal error: " + var6 + this.sourceInfo(source, lineNo, columnNo));
             } catch (TargetError var7) {

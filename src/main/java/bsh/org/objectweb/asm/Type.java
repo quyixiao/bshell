@@ -78,14 +78,14 @@ public class Type {
         int off = 1;
         int size = 0;
 
-        while(true) {
-            while(true) {
+        while (true) {
+            while (true) {
                 char car = buf[off++];
                 if (car == ')') {
                     Type[] args = new Type[size];
                     off = 1;
 
-                    for(size = 0; buf[off] != ')'; ++size) {
+                    for (size = 0; buf[off] != ')'; ++size) {
                         args[size] = getType(buf, off);
                         off += args[size].len;
                     }
@@ -94,7 +94,7 @@ public class Type {
                 }
 
                 if (car == 'L') {
-                    while(buf[off++] != ';') {
+                    while (buf[off++] != ';') {
                         ;
                     }
 
@@ -110,7 +110,7 @@ public class Type {
         Class[] classes = method.getParameterTypes();
         Type[] types = new Type[classes.length];
 
-        for(int i = classes.length - 1; i >= 0; --i) {
+        for (int i = classes.length - 1; i >= 0; --i) {
             types[i] = getType(classes[i]);
         }
 
@@ -128,61 +128,61 @@ public class Type {
 
     private static Type getType(char[] buf, int off) {
         int len;
-        switch(buf[off]) {
-        case 'B':
-            return BYTE_TYPE;
-        case 'C':
-            return CHAR_TYPE;
-        case 'D':
-            return DOUBLE_TYPE;
-        case 'E':
-        case 'G':
-        case 'H':
-        case 'K':
-        case 'L':
-        case 'M':
-        case 'N':
-        case 'O':
-        case 'P':
-        case 'Q':
-        case 'R':
-        case 'T':
-        case 'U':
-        case 'W':
-        case 'X':
-        case 'Y':
-        default:
-            for(len = 1; buf[off + len] != ';'; ++len) {
-                ;
-            }
-
-            return new Type(10, buf, off, len + 1);
-        case 'F':
-            return FLOAT_TYPE;
-        case 'I':
-            return INT_TYPE;
-        case 'J':
-            return LONG_TYPE;
-        case 'S':
-            return SHORT_TYPE;
-        case 'V':
-            return VOID_TYPE;
-        case 'Z':
-            return BOOLEAN_TYPE;
-        case '[':
-            for(len = 1; buf[off + len] == '['; ++len) {
-                ;
-            }
-
-            if (buf[off + len] == 'L') {
-                ++len;
-
-                while(buf[off + len] != ';') {
-                    ++len;
+        switch (buf[off]) {
+            case 'B':
+                return BYTE_TYPE;
+            case 'C':
+                return CHAR_TYPE;
+            case 'D':
+                return DOUBLE_TYPE;
+            case 'E':
+            case 'G':
+            case 'H':
+            case 'K':
+            case 'L':
+            case 'M':
+            case 'N':
+            case 'O':
+            case 'P':
+            case 'Q':
+            case 'R':
+            case 'T':
+            case 'U':
+            case 'W':
+            case 'X':
+            case 'Y':
+            default:
+                for (len = 1; buf[off + len] != ';'; ++len) {
+                    ;
                 }
-            }
 
-            return new Type(9, buf, off, len + 1);
+                return new Type(10, buf, off, len + 1);
+            case 'F':
+                return FLOAT_TYPE;
+            case 'I':
+                return INT_TYPE;
+            case 'J':
+                return LONG_TYPE;
+            case 'S':
+                return SHORT_TYPE;
+            case 'V':
+                return VOID_TYPE;
+            case 'Z':
+                return BOOLEAN_TYPE;
+            case '[':
+                for (len = 1; buf[off + len] == '['; ++len) {
+                    ;
+                }
+
+                if (buf[off + len] == 'L') {
+                    ++len;
+
+                    while (buf[off + len] != ';') {
+                        ++len;
+                    }
+                }
+
+                return new Type(9, buf, off, len + 1);
         }
     }
 
@@ -192,7 +192,7 @@ public class Type {
 
     public int getDimensions() {
         int i;
-        for(i = 1; this.buf[this.off + i] == '['; ++i) {
+        for (i = 1; this.buf[this.off + i] == '['; ++i) {
             ;
         }
 
@@ -221,7 +221,7 @@ public class Type {
         StringBuffer buf = new StringBuffer();
         buf.append('(');
 
-        for(int i = 0; i < argumentTypes.length; ++i) {
+        for (int i = 0; i < argumentTypes.length; ++i) {
             argumentTypes[i].getDescriptor(buf);
         }
 
@@ -231,36 +231,36 @@ public class Type {
     }
 
     private void getDescriptor(StringBuffer buf) {
-        switch(this.sort) {
-        case 0:
-            buf.append('V');
-            return;
-        case 1:
-            buf.append('Z');
-            return;
-        case 2:
-            buf.append('C');
-            return;
-        case 3:
-            buf.append('B');
-            return;
-        case 4:
-            buf.append('S');
-            return;
-        case 5:
-            buf.append('I');
-            return;
-        case 6:
-            buf.append('F');
-            return;
-        case 7:
-            buf.append('J');
-            return;
-        case 8:
-            buf.append('D');
-            return;
-        default:
-            buf.append(this.buf, this.off, this.len);
+        switch (this.sort) {
+            case 0:
+                buf.append('V');
+                return;
+            case 1:
+                buf.append('Z');
+                return;
+            case 2:
+                buf.append('C');
+                return;
+            case 3:
+                buf.append('B');
+                return;
+            case 4:
+                buf.append('S');
+                return;
+            case 5:
+                buf.append('I');
+                return;
+            case 6:
+                buf.append('F');
+                return;
+            case 7:
+                buf.append('J');
+                return;
+            case 8:
+                buf.append('D');
+                return;
+            default:
+                buf.append(this.buf, this.off, this.len);
         }
     }
 
@@ -279,7 +279,7 @@ public class Type {
         StringBuffer buf = new StringBuffer();
         buf.append('(');
 
-        for(int i = 0; i < parameters.length; ++i) {
+        for (int i = 0; i < parameters.length; ++i) {
             getDescriptor(buf, parameters[i]);
         }
 
@@ -290,13 +290,13 @@ public class Type {
 
     private static void getDescriptor(StringBuffer buf, Class c) {
         Class d;
-        for(d = c; !d.isPrimitive(); d = d.getComponentType()) {
+        for (d = c; !d.isPrimitive(); d = d.getComponentType()) {
             if (!d.isArray()) {
                 buf.append('L');
                 String name = d.getName();
                 int len = name.length();
 
-                for(int i = 0; i < len; ++i) {
+                for (int i = 0; i < len; ++i) {
                     char car = name.charAt(i);
                     buf.append(car == '.' ? '/' : car);
                 }
@@ -338,43 +338,43 @@ public class Type {
 
     public int getOpcode(int opcode) {
         if (opcode != 46 && opcode != 79) {
-            switch(this.sort) {
-            case 0:
-                return opcode + 5;
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-                return opcode;
-            case 6:
-                return opcode + 2;
-            case 7:
-                return opcode + 1;
-            case 8:
-                return opcode + 3;
-            default:
-                return opcode + 4;
+            switch (this.sort) {
+                case 0:
+                    return opcode + 5;
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                    return opcode;
+                case 6:
+                    return opcode + 2;
+                case 7:
+                    return opcode + 1;
+                case 8:
+                    return opcode + 3;
+                default:
+                    return opcode + 4;
             }
         } else {
-            switch(this.sort) {
-            case 1:
-            case 3:
-                return opcode + 5;
-            case 2:
-                return opcode + 6;
-            case 4:
-                return opcode + 7;
-            case 5:
-                return opcode;
-            case 6:
-                return opcode + 2;
-            case 7:
-                return opcode + 1;
-            case 8:
-                return opcode + 3;
-            default:
-                return opcode + 4;
+            switch (this.sort) {
+                case 1:
+                case 3:
+                    return opcode + 5;
+                case 2:
+                    return opcode + 6;
+                case 4:
+                    return opcode + 7;
+                case 5:
+                    return opcode;
+                case 6:
+                    return opcode + 2;
+                case 7:
+                    return opcode + 1;
+                case 8:
+                    return opcode + 3;
+                default:
+                    return opcode + 4;
             }
         }
     }
@@ -383,7 +383,7 @@ public class Type {
         if (this == o) {
             return true;
         } else if (o != null && o instanceof Type) {
-            Type t = (Type)o;
+            Type t = (Type) o;
             if (this.sort != t.sort) {
                 return false;
             } else {
@@ -395,7 +395,7 @@ public class Type {
                     int i = this.off;
                     int j = t.off;
 
-                    for(int end = i + this.len; i < end; ++j) {
+                    for (int end = i + this.len; i < end; ++j) {
                         if (this.buf[i] != t.buf[j]) {
                             return false;
                         }
@@ -416,7 +416,7 @@ public class Type {
         if (this.sort == 10 || this.sort == 9) {
             int i = this.off;
 
-            for(int end = i + this.len; i < end; ++i) {
+            for (int end = i + this.len; i < end; ++i) {
                 hc = 17 * (hc + this.buf[i]);
             }
         }

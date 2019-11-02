@@ -43,11 +43,11 @@ public class StringLiteralTest {
         assertStringParsing(
                 "\\\n\t\r\"\'",
                 ESCAPE_CHAR + '\\' +
-                ESCAPE_CHAR + "n" +
-                ESCAPE_CHAR + "t" +
-                ESCAPE_CHAR + "r" +
-                ESCAPE_CHAR + '"' +
-                ESCAPE_CHAR + "'",
+                        ESCAPE_CHAR + "n" +
+                        ESCAPE_CHAR + "t" +
+                        ESCAPE_CHAR + "r" +
+                        ESCAPE_CHAR + '"' +
+                        ESCAPE_CHAR + "'",
                 DelimiterMode.SINGLE_LINE);
     }
 
@@ -61,7 +61,9 @@ public class StringLiteralTest {
     }
 
 
-    /** http://sourceforge.net/tracker/?func=detail&aid=1898217&group_id=4075&atid=104075 */
+    /**
+     * http://sourceforge.net/tracker/?func=detail&aid=1898217&group_id=4075&atid=104075
+     */
     @Test
     public void parse_unicode_literals() throws Exception {
         assertStringParsing("\u00FF", "\\u00FF", DelimiterMode.SINGLE_LINE);
