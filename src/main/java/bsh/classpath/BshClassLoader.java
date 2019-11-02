@@ -51,6 +51,7 @@ public class BshClassLoader extends URLClassLoader {
 
     /**
      * @param bases URLs JARClassLoader seems to require absolute paths
+     *  URL JARClassLoader似乎需要绝对路径
      */
     public BshClassLoader(BshClassManager classManager, BshClassPath bcp) {
         this(classManager, bcp.getPathComponents());
@@ -60,6 +61,7 @@ public class BshClassLoader extends URLClassLoader {
      * For use by children
      *
      * @param bases URLs JARClassLoader seems to require absolute paths
+     *              URL JARClassLoader似乎需要绝对路径
      */
     protected BshClassLoader(BshClassManager classManager) {
         this(classManager, new URL[]{});
@@ -74,9 +76,18 @@ public class BshClassLoader extends URLClassLoader {
      * This modification allows us to reload classes which are in the
      * Java VM user classpath.  We search first rather than delegate to
      * the parent classloader (or bootstrap path) first.
+     *
+     * 此修改使我们可以重新加载Java VM用户类路径中的类 。
+     * 我们首先搜索而不是委托给父类加载器（或引导路径）。
+     *
      * <p>
      * An exception is for BeanShell core classes which are always loaded from
      * the same classloader as the interpreter.
+     *
+     *
+     * BeanShell核心类是一个例外，这些核心类总是从与解释器相同的类加载器加载的。
+     *
+     *
      */
     public Class loadClass(String name, boolean resolve)
             throws ClassNotFoundException {
@@ -85,6 +96,10 @@ public class BshClassLoader extends URLClassLoader {
 		/*
             Check first for classes loaded through this loader.
 			The VM will not allow a class to be loaded twice.
+
+			首先检查通过此加载器加载的类。 VM将不允许类加载两次。
+
+
 		*/
         c = findLoadedClass(name);
         if (c != null)
@@ -92,6 +107,8 @@ public class BshClassLoader extends URLClassLoader {
 
 // This is copied from ClassManagerImpl
 // We should refactor this somehow if it sticks around
+//这是从ClassManagerImpl复制的
+//如果仍然存在，我们应该以某种方式重构它
         if (name.startsWith(ClassManagerImpl.BSH_PACKAGE))
             try {
                 return bsh.Interpreter.class.getClassLoader().loadClass(name);
@@ -101,6 +118,8 @@ public class BshClassLoader extends URLClassLoader {
 		/*
 			Try to find the class using our classloading mechanism.
 			Note: I wish we didn't have to catch the exception here... slow
+
+			尝试使用我们的类加载机制查找类。注意：我希望我们不必在这里捕获异常...慢
 		*/
         try {
             c = findClass(name);
