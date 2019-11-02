@@ -144,6 +144,7 @@ public class BshClassLoader extends URLClassLoader {
      * Try system ???
      */
     // add some caching for not found classes?
+    // 为找不到的类添加一些缓存
     protected Class findClass(String name)
             throws ClassNotFoundException {
         // Deal with this cast somehow... maybe have this class use
