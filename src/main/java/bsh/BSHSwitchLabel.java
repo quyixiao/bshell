@@ -27,6 +27,8 @@
 
 package bsh;
 
+import com.alibaba.fastjson.JSON;
+
 class BSHSwitchLabel extends SimpleNode {
     boolean isDefault;
 
@@ -39,6 +41,7 @@ class BSHSwitchLabel extends SimpleNode {
         if (isDefault)
             return null; // should probably error
         SimpleNode label = ((SimpleNode) jjtGetChild(0));
+        System.out.println("===============BSHSwitchLabel.eval==========" + JSON.toJSONString(label));
         return label.eval(callstack, interpreter);
     }
 }

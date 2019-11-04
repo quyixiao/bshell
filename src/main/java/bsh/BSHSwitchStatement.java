@@ -41,6 +41,7 @@ class BSHSwitchStatement
         int child = 0;
         SimpleNode switchExp = ((SimpleNode) jjtGetChild(child++));
         Object switchVal = switchExp.eval(callstack, interpreter);
+        System.out.println("=======switchVal========"+ switchVal);
 
 		/*
             Note: this could be made clearer by adding an inner class for the
@@ -51,6 +52,7 @@ class BSHSwitchStatement
         Object node;
         ReturnControl returnControl = null;
 
+        System.out.println("==========child====55======>" + child + "=========numchild=======" + numchild);
         // get the first label
         if (child >= numchild)
             throw new EvalError("Empty switch statement.", this, callstack);
@@ -58,6 +60,7 @@ class BSHSwitchStatement
 
         // while more labels or blocks and haven't hit return control
         while (child < numchild && returnControl == null) {
+            System.out.println("==========child====63======>" + child + "=========numchild=======" + numchild);
             // if label is default or equals switchVal
             if (label.isDefault
                     || primitiveEquals(

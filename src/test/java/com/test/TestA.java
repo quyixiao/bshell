@@ -24,7 +24,6 @@ public class TestA {
 
     @Test
     public void testSwith() throws Exception {
-
         Interpreter i = new Interpreter();  // Construct an interpreter
         Interpreter.DEBUG = true;
         try {

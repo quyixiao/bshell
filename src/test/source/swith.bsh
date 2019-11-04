@@ -1,2 +1,12 @@
- int a  = 1;
-  System.out.println(a);
+int a = 2 ;
+        switch (a){
+            case  1 :
+                System.out.println("111111111");
+                break;
+                            case  2 :
+                                System.out.println("222222222");
+                                break;
+            default:
+                System.out.println("oooooooooooooooo");
+                break;
+        }
