@@ -46,21 +46,23 @@ class BSHSwitchStatement
 		/*
             Note: this could be made clearer by adding an inner class for the
 			cases and an object context for the child traversal.
+
+			注意：通过为案例添加内部类和为子遍历添加对象上下文，可以使这一点更加清晰
 		*/
-        // first label
+        // first label  第一个标签
         BSHSwitchLabel label;
         Object node;
         ReturnControl returnControl = null;
 
         System.out.println("==========child====55======>" + child + "=========numchild=======" + numchild);
-        // get the first label
+        // get the first label    得到第一个标签
         if (child >= numchild)
             throw new EvalError("Empty switch statement.", this, callstack);
         label = ((BSHSwitchLabel) jjtGetChild(child++));
 
-        // while more labels or blocks and haven't hit return control
+        // while more labels or blocks and haven't hit return control 而更多的标签或图块却未按退货控制
         while (child < numchild && returnControl == null) {
-            System.out.println("==========child====63======>" + child + "=========numchild=======" + numchild);
+            System.out.println("==child====63======>" + child + "=numchild===" + numchild + ",switchVal= " + switchVal);
             // if label is default or equals switchVal
             if (label.isDefault
                     || primitiveEquals(
